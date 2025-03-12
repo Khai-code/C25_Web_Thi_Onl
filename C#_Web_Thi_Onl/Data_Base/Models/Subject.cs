@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -13,10 +14,11 @@ namespace Data_Base.Models
     public class Subject
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [StringLength(20, ErrorMessage = "Tên mông không quá 20 ký tự")]
         public string Subject_Name { get; set; }
-        [StringLength(8, ErrorMessage = "Mã môn không quá 8 ký tự")]
+        [StringLength(14, ErrorMessage = "Mã môn không quá 14 ký tự")]
         public string Subject_Code { get; set; }
         [JsonIgnore]
         public virtual ICollection<Subject_Grade> Subject_Grade { get; set; }

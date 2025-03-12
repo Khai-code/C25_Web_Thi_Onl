@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class User
     {
         [Key]
+        [StringLength(8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
         public int Id { get; set; }
         [StringLength(100, ErrorMessage = "Tên người dùng không được quá 100 ký tự")]
         public string Full_Name { get; set; }

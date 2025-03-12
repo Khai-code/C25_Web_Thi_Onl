@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -12,12 +13,13 @@ namespace Data_Base.Models
     public class Summary
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
         public int Start_Time { get; set; }
         [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
         public int End_Time { get; set; }
-        [StringLength(8, ErrorMessage = "Mã kỳ không quá 8 ký tự")]
+        [StringLength(14, ErrorMessage = "Mã kỳ không quá 14 ký tự")]
         public int Summary_Code { get; set; }
         [StringLength(50, ErrorMessage = "Tên kỳ không quá 50 ký tự")]
         public string Summary_Name { get; set; }

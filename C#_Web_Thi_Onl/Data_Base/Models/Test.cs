@@ -13,7 +13,9 @@ namespace Data_Base.Models
     public class Test
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+        [StringLength(8, ErrorMessage = "Mã đề không quá 8 ký tự")]
         public string Test_Code { get; set; }
         public int Status { get; set; }
         [ForeignKey("Id")]

@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class Student_Class
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [ForeignKey("Id")]
         public int Student_Id { get; set; }

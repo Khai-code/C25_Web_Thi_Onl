@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class Package // gói để
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [ForeignKey("Id")]
         public int Class_Id { get; set; }

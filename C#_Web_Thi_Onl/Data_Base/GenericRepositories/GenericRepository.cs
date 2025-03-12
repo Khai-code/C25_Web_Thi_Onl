@@ -1,4 +1,5 @@
 ﻿using Data_Base.App_DbContext;
+using Data_Base.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -57,5 +58,27 @@ namespace Data_Base.GenericRepositories
             _dbSet.Remove(entity);
             return await _context.SaveChangesAsync() > 0;
         }
+
+        // 🏫 Lấy mã Student lớn nhất từ DB
+        public async Task<string> GetLastStudentCodeAsync()
+        {
+            return await _context.Set<Student>()
+                .OrderByDescending(s => s.Student_Code)
+                .Select(s => s.Student_Code)
+                .FirstOrDefaultAsync();
+        }
+
+        // 🏫 Lấy mã Teacher lớn nhất từ DB
+        public async Task<string> GetLastTeacherCodeAsync(int yearOfBirth)
+        {
+            string prefix = $"TEA{yearOfBirth % 100:D2}";
+
+            return await _context.Set<Teacher>()
+                .Where(t => t.Teacher_Code.StartsWith(prefix))
+                .OrderByDescending(t => t.Teacher_Code)
+                .Select(t => t.Teacher_Code)
+                .FirstOrDefaultAsync();
+        }
+
     }
 }

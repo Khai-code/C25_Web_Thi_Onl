@@ -12,10 +12,11 @@ namespace Data_Base.Models
     public class Grade
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
         [StringLength(10, ErrorMessage = "Tên khối không quá 10 ký tự")]
         public string Grade_Name { get; set; }
-        [StringLength(8, ErrorMessage = "Mã lớp không quá 8 ký tự")]
+        [StringLength(14, ErrorMessage = "Mã lớp không quá 14 ký tự")]
         public string Grade_Code { get; set; }
         [JsonIgnore]
         public virtual ICollection<Subject_Grade> Subject_Grades { get; set; }

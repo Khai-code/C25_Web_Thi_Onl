@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class Test_Question
     {
         [Key]
+        [StringLength(8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
         public int Id { get; set; }
         [ForeignKey("Id")]
         public int Question_Id { get; set; }

@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class Learning_Summary
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         public double Attendance { get; set; }
         public double Point_15 { get; set; }

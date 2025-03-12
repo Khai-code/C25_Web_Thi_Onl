@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class Exam_Room
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
         public int Start_Time { get; set; }

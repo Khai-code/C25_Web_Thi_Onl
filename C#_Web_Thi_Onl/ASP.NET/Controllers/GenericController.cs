@@ -1,7 +1,9 @@
-﻿using Data_Base.GenericRepositories;
+﻿using Data_Base.App_DbContext;
+using Data_Base.GenericRepositories;
 using Data_Base.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace ASP.NET.Controllers
 {
@@ -9,6 +11,7 @@ namespace ASP.NET.Controllers
     public class GenericController<T> : ControllerBase where T : class
     {
         private readonly GenericRepository<T> _repository;
+        private readonly Db_Context _context;
 
         public GenericController(GenericRepository<T> repository)
         {
@@ -37,6 +40,28 @@ namespace ASP.NET.Controllers
         public async Task<IActionResult> Create([FromBody] T entity)
         {
             if (entity == null) return BadRequest();
+
+            string entityName = typeof(T).Name;
+
+            if (entityName == "Student")
+            {
+                var lastCode = await _repository.GetLastStudentCodeAsync();
+                entity.GetType().GetProperty("Student_Code")?.SetValue(entity, GenerateStudentCode(lastCode));
+            }
+            else if (entityName == "Teacher")
+            {
+                var userIdProperty = entity.GetType().GetProperty("User_Id");
+                if (userIdProperty == null) return BadRequest("Missing UserId property!");
+
+                int userId = (int)userIdProperty.GetValue(entity);
+                var user = await _context.Set<User>().FindAsync(userId);
+                if (user == null) return BadRequest("User not found!");
+
+                int yearOfBirth = Convert.ToDateTime(user.Data_Of_Birth).Year;
+                var lastCode = await _repository.GetLastTeacherCodeAsync(yearOfBirth);
+                entity.GetType().GetProperty("Teacher_Code")?.SetValue(entity, GenerateTeacherCode(yearOfBirth, lastCode));
+            }
+
             var createdEntity = await _repository.CreateAsync(entity);
             return CreatedAtAction(nameof(GetById), new { id = createdEntity }, createdEntity);
         }
@@ -59,5 +84,22 @@ namespace ASP.NET.Controllers
             if (!deleted) return NotFound();
             return NoContent();
         }
+
+        // 🔥 Hàm tạo Student_Code
+        private string GenerateStudentCode(string lastCode)
+        {
+            string year = DateTime.Now.ToString("yy"); // Lấy 2 số cuối của năm hiện tại
+            long lastNumber = lastCode != null ? long.Parse(lastCode.Substring(5)) : 0;
+            return $"STU{year}{(lastNumber + 1):D9}";
+        }
+
+        // 🔥 Hàm tạo Teacher_Code
+        private string GenerateTeacherCode(int yearOfBirth, string lastCode)
+        {
+            string year = (yearOfBirth % 100).ToString("D2"); // Lấy 2 số cuối của năm sinh
+            long lastNumber = lastCode != null ? long.Parse(lastCode.Substring(5)) : 0;
+            return $"TEA{year}{(lastNumber + 1):D9}";
+        }
+
     }
 }

@@ -12,6 +12,7 @@ namespace Data_Base.Models
     public class Teacher
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [StringLength(8, ErrorMessage = "Mã giáo viên không hợp lệ")]
         public string Teacher_Code { get; set; }

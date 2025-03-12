@@ -11,7 +11,8 @@ namespace Data_Base.Models
 {
     public class Point_Type_Subject
     {
-        [Key] 
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [ForeignKey("Id")]
         public int Subject_Id { get; set; }

@@ -13,12 +13,13 @@ namespace Data_Base.Models
     public class Class
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [ForeignKey("Id")]
         public int Grade_Id { get; set; }
         [ForeignKey("Id")]
         public int Teacher_Id { get; set; }
-        [StringLength(8, ErrorMessage = "Mã lớp không hợp lệ")]
+        [StringLength(14, ErrorMessage = "Mã lớp không hợp lệ")]
         public string Class_Code { get; set; }
         [StringLength(10, ErrorMessage = "Tên lớp không quá 10 ký tự")]
         public string Class_Name { get; set; }

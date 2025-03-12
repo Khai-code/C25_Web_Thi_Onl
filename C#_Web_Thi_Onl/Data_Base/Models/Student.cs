@@ -13,8 +13,9 @@ namespace Data_Base.Models
     public class Student
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(8, ErrorMessage = "Mã học sinh không hợp lệ")]
+        [StringLength(14, ErrorMessage = "Mã học sinh không hợp lệ")]
         public string Student_Code { get; set; }
         [ForeignKey("Id")]
         public int User_Id { get; set; }

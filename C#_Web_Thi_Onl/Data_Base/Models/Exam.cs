@@ -12,12 +12,13 @@ namespace Data_Base.Models
     public class Exam // đề thì 
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [ForeignKey("Id")]
         public int Subject_Id { get; set; }
         [StringLength(50, ErrorMessage = "Tên bài thi không quá 50 ký tự")]
         public string Exam_Name { get; set; }
-        [StringLength(8, ErrorMessage = "Mã bài thi không quá 8 ký tự")]
+        [StringLength(14, ErrorMessage = "Mã bài thi không quá 14 ký tự")]
         public string Exam_Code { get; set; }
         [JsonIgnore]
         public virtual Subject Subjects { get; set; }
