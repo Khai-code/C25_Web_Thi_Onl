@@ -1,5 +1,6 @@
 ﻿using Data_Base.App_DbContext;
-using Data_Base.Models;
+using Data_Base.Models.S;
+using Data_Base.Models.T;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
