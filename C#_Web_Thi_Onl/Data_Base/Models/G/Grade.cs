@@ -1,5 +1,6 @@
 ﻿using Data_Base.Models.C;
 using Data_Base.Models.S;
+using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -21,9 +22,9 @@ namespace Data_Base.Models.G
         [StringLength(14, ErrorMessage = "Mã lớp không quá 14 ký tự")]
         public string Grade_Code { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Subject_Grade> Subject_Grades { get; set; }
+        public virtual ICollection<Subject_Grade> Subject_Grades { get; set; } = new List<Subject_Grade>();
         [JsonIgnore]
-        public virtual ICollection<Class> Classes { get; set; }
+        public virtual ICollection<Class> Classes { get; set; } = new List<Class>();
 
     }
 }

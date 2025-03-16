@@ -27,8 +27,8 @@ namespace Data_Base.Models.E
         [JsonIgnore]
         public virtual Student Students { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; }
+        public virtual ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
         [JsonIgnore]
-        public virtual ICollection<Exam_HisTory> Exam_HisTories { get; set; }
+        public virtual ICollection<Exam_HisTory> Exam_HisTories { get; set; } = new List<Exam_HisTory>();
     }
 }

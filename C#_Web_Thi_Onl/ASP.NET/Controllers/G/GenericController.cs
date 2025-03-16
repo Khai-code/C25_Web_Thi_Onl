@@ -43,6 +43,14 @@ namespace ASP.NET.Controllers.G
 
             string entityName = typeof(T).Name;
 
+            foreach (var prop in entity.GetType().GetProperties())
+            {
+                if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                {
+                    prop.SetValue(entity, null);
+                }
+            }
+
             if (entityName == "Student")
             {
                 var lastCode = await _repository.GetLastStudentCodeAsync();

@@ -1,4 +1,5 @@
 ﻿using Data_Base.Models.E;
+using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -20,6 +21,6 @@ namespace Data_Base.Models.R
         [StringLength(14, ErrorMessage = "Mã phòng không quá 14 ký tự")]
         public string Room_Code { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Exam_Room> Exam_Room { get; set; }
+        public virtual ICollection<Exam_Room> Exam_Room { get; set; } = new List<Exam_Room>();
     }
 }

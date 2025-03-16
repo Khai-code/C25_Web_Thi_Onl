@@ -22,7 +22,7 @@ namespace Data_Base.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
 
-            modelBuilder.Entity("Data_Base.Models.Answers", b =>
+            modelBuilder.Entity("Data_Base.Models.A.Answers", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -32,8 +32,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Answers_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Answers_Name")
                         .IsRequired()
@@ -56,7 +56,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Answerses");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Class", b =>
+            modelBuilder.Entity("Data_Base.Models.C.Class", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -66,8 +66,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Class_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Class_Name")
                         .IsRequired()
@@ -94,7 +94,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Classes");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -104,8 +104,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Exam_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Exam_Name")
                         .IsRequired()
@@ -125,7 +125,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exams");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_HisTory", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_HisTory", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -153,7 +153,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exam_HisTories");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -190,7 +190,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exam_Rooms");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Package", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Package", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -219,7 +219,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exam_Room_Packages");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Student", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Student", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -252,7 +252,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exam_Room_Students");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Student_Answer_HisTory", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Student_Answer_HisTory", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -281,7 +281,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exam_Room_Student_Answer_HisTories");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Teacher", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Teacher", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -310,7 +310,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Exam_Room_Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Grade", b =>
+            modelBuilder.Entity("Data_Base.Models.G.Grade", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -320,8 +320,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Grade_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Grade_Name")
                         .IsRequired()
@@ -333,7 +333,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Grades");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Learning_Summary", b =>
+            modelBuilder.Entity("Data_Base.Models.L.Learning_Summary", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -393,7 +393,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Learning_Summaries");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Package", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Package", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -451,7 +451,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Packages");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Point_Type", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Point_Type", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -477,7 +477,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Point_Types");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Point_Type_Subject", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Point_Type_Subject", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -509,7 +509,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Point_Type_Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Question", b =>
+            modelBuilder.Entity("Data_Base.Models.Q.Question", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -528,8 +528,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Question_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Question_Name")
                         .IsRequired()
@@ -546,7 +546,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Questions");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Role", b =>
+            modelBuilder.Entity("Data_Base.Models.R.Role", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -572,7 +572,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Roles");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Room", b =>
+            modelBuilder.Entity("Data_Base.Models.R.Room", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -582,8 +582,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Room_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Room_Name")
                         .IsRequired()
@@ -595,7 +595,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Rooms");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Score", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Score", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -635,7 +635,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Scores");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Student", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Student", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -645,8 +645,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Student_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<int>("User_Id")
                         .HasColumnType("int");
@@ -661,7 +661,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Student_Class", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Student_Class", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -695,7 +695,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Student_Classes");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Subject", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Subject", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -705,8 +705,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Subject_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Subject_Name")
                         .IsRequired()
@@ -718,7 +718,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Subject_Grade", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Subject_Grade", b =>
                 {
                     b.Property<int>("ID")
                         .ValueGeneratedOnAdd()
@@ -747,7 +747,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Subject_Grades");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Summary", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Summary", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -764,7 +764,7 @@ namespace Data_Base.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Summary_Code")
-                        .HasMaxLength(8)
+                        .HasMaxLength(14)
                         .HasColumnType("int");
 
                     b.Property<string>("Summary_Name")
@@ -777,7 +777,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Summaries");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -803,7 +803,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher_Class", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher_Class", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -832,7 +832,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Teacher_Classes");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher_Subject", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher_Subject", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -861,7 +861,7 @@ namespace Data_Base.Migrations
                     b.ToTable("Teacher_Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Test", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Test", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -880,7 +880,8 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Test_Code")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(8)
+                        .HasColumnType("nvarchar(8)");
 
                     b.HasKey("Id");
 
@@ -889,10 +890,11 @@ namespace Data_Base.Migrations
                     b.ToTable("Tests");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Test_Question", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Test_Question", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
@@ -918,10 +920,11 @@ namespace Data_Base.Migrations
                     b.ToTable("Test_Questions");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.User", b =>
+            modelBuilder.Entity("Data_Base.Models.U.User", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasMaxLength(8)
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
@@ -962,7 +965,7 @@ namespace Data_Base.Migrations
                     b.Property<int>("RolesId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Ststus")
+                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.Property<string>("User_Name")
@@ -982,9 +985,9 @@ namespace Data_Base.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Answers", b =>
+            modelBuilder.Entity("Data_Base.Models.A.Answers", b =>
                 {
-                    b.HasOne("Data_Base.Models.Question", "Questions")
+                    b.HasOne("Data_Base.Models.Q.Question", "Questions")
                         .WithMany("Answerses")
                         .HasForeignKey("QuestionsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -993,9 +996,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Questions");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Class", b =>
+            modelBuilder.Entity("Data_Base.Models.C.Class", b =>
                 {
-                    b.HasOne("Data_Base.Models.Grade", "Grades")
+                    b.HasOne("Data_Base.Models.G.Grade", "Grades")
                         .WithMany("Classes")
                         .HasForeignKey("GradesID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1004,9 +1007,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Grades");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam", b =>
                 {
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("Exams")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1015,9 +1018,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_HisTory", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_HisTory", b =>
                 {
-                    b.HasOne("Data_Base.Models.Exam_Room_Student", "Exam_Room_Students")
+                    b.HasOne("Data_Base.Models.E.Exam_Room_Student", "Exam_Room_Students")
                         .WithMany("Exam_HisTories")
                         .HasForeignKey("Exam_Room_StudentsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1026,15 +1029,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Exam_Room_Students");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room", b =>
                 {
-                    b.HasOne("Data_Base.Models.Exam", "Exams")
+                    b.HasOne("Data_Base.Models.E.Exam", "Exams")
                         .WithMany("Exam_Rooms")
                         .HasForeignKey("ExamsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Room", "Rooms")
+                    b.HasOne("Data_Base.Models.R.Room", "Rooms")
                         .WithMany("Exam_Room")
                         .HasForeignKey("RoomsID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1045,15 +1048,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Rooms");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Package", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Package", b =>
                 {
-                    b.HasOne("Data_Base.Models.Exam_Room", "Exam_Rooms")
+                    b.HasOne("Data_Base.Models.E.Exam_Room", "Exam_Rooms")
                         .WithMany("Exam_Room_Packages")
                         .HasForeignKey("Exam_RoomsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Package", "Packages")
+                    b.HasOne("Data_Base.Models.P.Package", "Packages")
                         .WithMany("Exam_Room_Packages")
                         .HasForeignKey("PackagesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1064,15 +1067,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Packages");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Student", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Student", b =>
                 {
-                    b.HasOne("Data_Base.Models.Exam_Room_Package", "Exam_Room_Packages")
+                    b.HasOne("Data_Base.Models.E.Exam_Room_Package", "Exam_Room_Packages")
                         .WithMany()
                         .HasForeignKey("Exam_Room_PackagesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Student", "Students")
+                    b.HasOne("Data_Base.Models.S.Student", "Students")
                         .WithMany("Exam_Room_Students")
                         .HasForeignKey("StudentsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1083,15 +1086,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Students");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Student_Answer_HisTory", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Student_Answer_HisTory", b =>
                 {
-                    b.HasOne("Data_Base.Models.Answers", "Answers")
+                    b.HasOne("Data_Base.Models.A.Answers", "Answers")
                         .WithMany("Exam_Room_Student_Answer_HisTories")
                         .HasForeignKey("AnswersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Exam_Room_Student", "Exam_Room_Students")
+                    b.HasOne("Data_Base.Models.E.Exam_Room_Student", "Exam_Room_Students")
                         .WithMany("Exam_Room_Student_Answer_HisTories")
                         .HasForeignKey("Exam_Room_StudentsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1102,15 +1105,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Exam_Room_Students");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Teacher", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Teacher", b =>
                 {
-                    b.HasOne("Data_Base.Models.Exam_Room", "Exam_Rooms")
+                    b.HasOne("Data_Base.Models.E.Exam_Room", "Exam_Rooms")
                         .WithMany("Exam_Room_Teachers")
                         .HasForeignKey("Exam_RoomsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Teacher", "Teachers")
+                    b.HasOne("Data_Base.Models.T.Teacher", "Teachers")
                         .WithMany("Exam_Room_Teachers")
                         .HasForeignKey("TeachersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1121,25 +1124,25 @@ namespace Data_Base.Migrations
                     b.Navigation("Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Learning_Summary", b =>
+            modelBuilder.Entity("Data_Base.Models.L.Learning_Summary", b =>
                 {
-                    b.HasOne("Data_Base.Models.Point_Type", null)
+                    b.HasOne("Data_Base.Models.P.Point_Type", null)
                         .WithMany("Learning_Summaries")
                         .HasForeignKey("Point_TypeId");
 
-                    b.HasOne("Data_Base.Models.Student", "Students")
+                    b.HasOne("Data_Base.Models.S.Student", "Students")
                         .WithMany("Learning_Summaries")
                         .HasForeignKey("StudentsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("Learning_Summaries")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Summary", "Summaries")
+                    b.HasOne("Data_Base.Models.S.Summary", "Summaries")
                         .WithMany("Learning_Summaries")
                         .HasForeignKey("SummariesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1152,25 +1155,25 @@ namespace Data_Base.Migrations
                     b.Navigation("Summaries");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Package", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Package", b =>
                 {
-                    b.HasOne("Data_Base.Models.Class", "Classes")
+                    b.HasOne("Data_Base.Models.C.Class", "Classes")
                         .WithMany()
                         .HasForeignKey("ClassesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Package", null)
+                    b.HasOne("Data_Base.Models.P.Package", null)
                         .WithMany("Packages")
                         .HasForeignKey("PackageId");
 
-                    b.HasOne("Data_Base.Models.Point_Type", "Point_Types")
+                    b.HasOne("Data_Base.Models.P.Point_Type", "Point_Types")
                         .WithMany("Packages")
                         .HasForeignKey("Point_TypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("Packages")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1183,9 +1186,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Point_Type", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Point_Type", b =>
                 {
-                    b.HasOne("Data_Base.Models.Summary", "Summaries")
+                    b.HasOne("Data_Base.Models.S.Summary", "Summaries")
                         .WithMany("Point_Types")
                         .HasForeignKey("SummariesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1194,15 +1197,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Summaries");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Point_Type_Subject", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Point_Type_Subject", b =>
                 {
-                    b.HasOne("Data_Base.Models.Point_Type", "Point_Types")
+                    b.HasOne("Data_Base.Models.P.Point_Type", "Point_Types")
                         .WithMany("Point_Type_Subjects")
                         .HasForeignKey("Point_TypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("PointType_Subjects")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1213,28 +1216,28 @@ namespace Data_Base.Migrations
                     b.Navigation("Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Question", b =>
+            modelBuilder.Entity("Data_Base.Models.Q.Question", b =>
                 {
-                    b.HasOne("Data_Base.Models.Package", null)
+                    b.HasOne("Data_Base.Models.P.Package", null)
                         .WithMany("Questions")
                         .HasForeignKey("PackageId");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Score", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Score", b =>
                 {
-                    b.HasOne("Data_Base.Models.Point_Type", "Point_Types")
+                    b.HasOne("Data_Base.Models.P.Point_Type", "Point_Types")
                         .WithMany("Scores")
                         .HasForeignKey("Point_TypesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Student", "Students")
+                    b.HasOne("Data_Base.Models.S.Student", "Students")
                         .WithMany("Scores")
                         .HasForeignKey("StudentsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("Scores")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1247,9 +1250,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Student", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Student", b =>
                 {
-                    b.HasOne("Data_Base.Models.User", "Users")
+                    b.HasOne("Data_Base.Models.U.User", "Users")
                         .WithMany("Students")
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1258,19 +1261,19 @@ namespace Data_Base.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Student_Class", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Student_Class", b =>
                 {
-                    b.HasOne("Data_Base.Models.Class", null)
+                    b.HasOne("Data_Base.Models.C.Class", null)
                         .WithMany("Student_Classes")
                         .HasForeignKey("ClassId");
 
-                    b.HasOne("Data_Base.Models.Student", "Students")
+                    b.HasOne("Data_Base.Models.S.Student", "Students")
                         .WithMany("Student_Classes")
                         .HasForeignKey("StudentsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Teacher", "Teachers")
+                    b.HasOne("Data_Base.Models.T.Teacher", "Teachers")
                         .WithMany()
                         .HasForeignKey("TeachersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1281,15 +1284,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Subject_Grade", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Subject_Grade", b =>
                 {
-                    b.HasOne("Data_Base.Models.Grade", "Grades")
+                    b.HasOne("Data_Base.Models.G.Grade", "Grades")
                         .WithMany("Subject_Grades")
                         .HasForeignKey("GradesID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("Subject_Grade")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1300,9 +1303,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Subjects");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher", b =>
                 {
-                    b.HasOne("Data_Base.Models.User", "User")
+                    b.HasOne("Data_Base.Models.U.User", "User")
                         .WithMany("Teachers")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1311,15 +1314,15 @@ namespace Data_Base.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher_Class", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher_Class", b =>
                 {
-                    b.HasOne("Data_Base.Models.Class", "Classes")
+                    b.HasOne("Data_Base.Models.C.Class", "Classes")
                         .WithMany("Teacher_Classes")
                         .HasForeignKey("ClassesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Teacher", "Teachers")
+                    b.HasOne("Data_Base.Models.T.Teacher", "Teachers")
                         .WithMany("Teacher_Classes")
                         .HasForeignKey("TeachersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1330,15 +1333,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher_Subject", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher_Subject", b =>
                 {
-                    b.HasOne("Data_Base.Models.Subject", "Subjects")
+                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
                         .WithMany("Teacher_Subject")
                         .HasForeignKey("SubjectsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Teacher", "Teachers")
+                    b.HasOne("Data_Base.Models.T.Teacher", "Teachers")
                         .WithMany("Teacher_Subject")
                         .HasForeignKey("TeachersId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1349,9 +1352,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Test", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Test", b =>
                 {
-                    b.HasOne("Data_Base.Models.Package", "Packages")
+                    b.HasOne("Data_Base.Models.P.Package", "Packages")
                         .WithMany()
                         .HasForeignKey("PackagesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1360,15 +1363,15 @@ namespace Data_Base.Migrations
                     b.Navigation("Packages");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Test_Question", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Test_Question", b =>
                 {
-                    b.HasOne("Data_Base.Models.Question", "Questions")
+                    b.HasOne("Data_Base.Models.Q.Question", "Questions")
                         .WithMany("Test_Questions")
                         .HasForeignKey("QuestionsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Data_Base.Models.Test", "Tests")
+                    b.HasOne("Data_Base.Models.T.Test", "Tests")
                         .WithMany("Test_Questions")
                         .HasForeignKey("TestsId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1379,9 +1382,9 @@ namespace Data_Base.Migrations
                     b.Navigation("Tests");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.User", b =>
+            modelBuilder.Entity("Data_Base.Models.U.User", b =>
                 {
-                    b.HasOne("Data_Base.Models.Role", "Roles")
+                    b.HasOne("Data_Base.Models.R.Role", "Roles")
                         .WithMany("Users")
                         .HasForeignKey("RolesId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1390,45 +1393,45 @@ namespace Data_Base.Migrations
                     b.Navigation("Roles");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Answers", b =>
+            modelBuilder.Entity("Data_Base.Models.A.Answers", b =>
                 {
                     b.Navigation("Exam_Room_Student_Answer_HisTories");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Class", b =>
+            modelBuilder.Entity("Data_Base.Models.C.Class", b =>
                 {
                     b.Navigation("Student_Classes");
 
                     b.Navigation("Teacher_Classes");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam", b =>
                 {
                     b.Navigation("Exam_Rooms");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room", b =>
                 {
                     b.Navigation("Exam_Room_Packages");
 
                     b.Navigation("Exam_Room_Teachers");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Exam_Room_Student", b =>
+            modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Student", b =>
                 {
                     b.Navigation("Exam_HisTories");
 
                     b.Navigation("Exam_Room_Student_Answer_HisTories");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Grade", b =>
+            modelBuilder.Entity("Data_Base.Models.G.Grade", b =>
                 {
                     b.Navigation("Classes");
 
                     b.Navigation("Subject_Grades");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Package", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Package", b =>
                 {
                     b.Navigation("Exam_Room_Packages");
 
@@ -1437,7 +1440,7 @@ namespace Data_Base.Migrations
                     b.Navigation("Questions");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Point_Type", b =>
+            modelBuilder.Entity("Data_Base.Models.P.Point_Type", b =>
                 {
                     b.Navigation("Learning_Summaries");
 
@@ -1448,24 +1451,24 @@ namespace Data_Base.Migrations
                     b.Navigation("Scores");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Question", b =>
+            modelBuilder.Entity("Data_Base.Models.Q.Question", b =>
                 {
                     b.Navigation("Answerses");
 
                     b.Navigation("Test_Questions");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Role", b =>
+            modelBuilder.Entity("Data_Base.Models.R.Role", b =>
                 {
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Room", b =>
+            modelBuilder.Entity("Data_Base.Models.R.Room", b =>
                 {
                     b.Navigation("Exam_Room");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Student", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Student", b =>
                 {
                     b.Navigation("Exam_Room_Students");
 
@@ -1476,7 +1479,7 @@ namespace Data_Base.Migrations
                     b.Navigation("Student_Classes");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Subject", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Subject", b =>
                 {
                     b.Navigation("Exams");
 
@@ -1493,14 +1496,14 @@ namespace Data_Base.Migrations
                     b.Navigation("Teacher_Subject");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Summary", b =>
+            modelBuilder.Entity("Data_Base.Models.S.Summary", b =>
                 {
                     b.Navigation("Learning_Summaries");
 
                     b.Navigation("Point_Types");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Teacher", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Teacher", b =>
                 {
                     b.Navigation("Exam_Room_Teachers");
 
@@ -1509,12 +1512,12 @@ namespace Data_Base.Migrations
                     b.Navigation("Teacher_Subject");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.Test", b =>
+            modelBuilder.Entity("Data_Base.Models.T.Test", b =>
                 {
                     b.Navigation("Test_Questions");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.User", b =>
+            modelBuilder.Entity("Data_Base.Models.U.User", b =>
                 {
                     b.Navigation("Students");
 

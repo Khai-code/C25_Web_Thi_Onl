@@ -22,6 +22,6 @@ namespace Data_Base.Models.R
         public string Role_Code { get; set; }
         public int Status { get; set; }
         [JsonIgnore]
-        public virtual ICollection<User> Users { get; set; }
+        public ICollection<User> Users { get; set; } = new List<User>();
     }
 }

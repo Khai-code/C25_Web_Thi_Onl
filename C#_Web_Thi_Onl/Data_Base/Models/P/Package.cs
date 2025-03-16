@@ -2,6 +2,7 @@
 using Data_Base.Models.E;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
+using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -38,10 +39,10 @@ namespace Data_Base.Models.P
         [JsonIgnore]
         public virtual Point_Type Point_Types { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Question> Questions { get; set; }
+        public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
         [JsonIgnore]
-        public virtual ICollection<Package> Packages { get; set; }
+        public virtual ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; }
+        public virtual ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
     }
 }

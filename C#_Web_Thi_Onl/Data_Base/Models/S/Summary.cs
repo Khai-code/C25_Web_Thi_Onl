@@ -26,8 +26,8 @@ namespace Data_Base.Models.S
         [StringLength(50, ErrorMessage = "Tên kỳ không quá 50 ký tự")]
         public string Summary_Name { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Point_Type> Point_Types { get; set; }
+        public virtual ICollection<Point_Type> Point_Types { get; set; } = new List<Point_Type>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; }
+        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
     }
 }

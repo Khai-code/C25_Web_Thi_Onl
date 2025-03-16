@@ -1,5 +1,6 @@
 ﻿using Data_Base.Models.A;
 using Data_Base.Models.T;
+using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -25,8 +26,8 @@ namespace Data_Base.Models.Q
         public int Type { get; set; }
         public int Level { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Answers> Answerses { get; set; }
+        public virtual ICollection<Answers> Answerses { get; set; } = new List<Answers>();
         [JsonIgnore]
-        public virtual ICollection<Test_Question> Test_Questions { get; set; }
+        public virtual ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
     }
 }

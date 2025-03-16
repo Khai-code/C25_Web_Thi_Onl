@@ -24,6 +24,6 @@ namespace Data_Base.Models.T
         [JsonIgnore]
         public virtual Package Packages { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Test_Question> Test_Questions { get; set; }
+        public virtual ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
     }
 }
