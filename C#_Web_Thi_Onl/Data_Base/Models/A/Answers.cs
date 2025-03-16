@@ -1,5 +1,6 @@
 ﻿using Data_Base.Models.E;
 using Data_Base.Models.Q;
+using Data_Base.Models.S;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -26,6 +27,6 @@ namespace Data_Base.Models.A
         [JsonIgnore]
         public virtual Question Questions { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; }
+        public virtual ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
     }
 }

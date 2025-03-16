@@ -1,5 +1,6 @@
 ﻿using Data_Base.Models.L;
 using Data_Base.Models.S;
+using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -23,13 +24,13 @@ namespace Data_Base.Models.P
         [JsonIgnore]
         public virtual Summary Summaries { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Package> Packages { get; set; }
+        public virtual ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; }
+        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
         [JsonIgnore]
-        public virtual ICollection<Point_Type_Subject> Point_Type_Subjects { get; set; }
+        public virtual ICollection<Point_Type_Subject> Point_Type_Subjects { get; set; } = new List<Point_Type_Subject>();
         [JsonIgnore]
-        public virtual ICollection<Score> Scores { get; set; }
+        public virtual ICollection<Score> Scores { get; set; } = new List<Score>();
 
     }
 }

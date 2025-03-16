@@ -39,10 +39,11 @@ namespace Data_Base.Models.U
         [ForeignKey("Id")]
         public int Role_Id { get; set; }
         [JsonIgnore]
-        public virtual Role Roles { get; set; }
+        public Role Roles { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Student> Students { get; set; }
+        public ICollection<Student> Students { get; set; } = new List<Student>();
+        [NotMapped]
         [JsonIgnore]
-        public virtual ICollection<Teacher> Teachers { get; set; }
+        public ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
     }
 }

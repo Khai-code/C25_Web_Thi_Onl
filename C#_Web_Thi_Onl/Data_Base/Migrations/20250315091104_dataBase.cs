@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Data_Base.Migrations
 {
-    public partial class data_20250311235300 : Migration
+    public partial class dataBase : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -16,7 +16,7 @@ namespace Data_Base.Migrations
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Grade_Name = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
-                    Grade_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false)
+                    Grade_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -45,7 +45,7 @@ namespace Data_Base.Migrations
                     ID = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Room_Name = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Room_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false)
+                    Room_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,7 +59,7 @@ namespace Data_Base.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Subject_Name = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Subject_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false)
+                    Subject_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -74,7 +74,7 @@ namespace Data_Base.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Start_Time = table.Column<int>(type: "int", maxLength: 14, nullable: false),
                     End_Time = table.Column<int>(type: "int", maxLength: 14, nullable: false),
-                    Summary_Code = table.Column<int>(type: "int", maxLength: 8, nullable: false),
+                    Summary_Code = table.Column<int>(type: "int", maxLength: 14, nullable: false),
                     Summary_Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false)
                 },
                 constraints: table =>
@@ -90,7 +90,7 @@ namespace Data_Base.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Grade_Id = table.Column<int>(type: "int", nullable: false),
                     Teacher_Id = table.Column<int>(type: "int", nullable: false),
-                    Class_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    Class_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
                     Class_Name = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false),
                     Max_Student = table.Column<int>(type: "int", maxLength: 50, nullable: false),
                     GradesID = table.Column<int>(type: "int", nullable: false)
@@ -110,7 +110,7 @@ namespace Data_Base.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", maxLength: 8, nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Full_Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     User_Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
@@ -121,7 +121,7 @@ namespace Data_Base.Migrations
                     Create_Time = table.Column<int>(type: "int", maxLength: 14, nullable: false),
                     Last_Mordification_Time = table.Column<int>(type: "int", maxLength: 14, nullable: false),
                     Avatar = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Ststus = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
                     Role_Id = table.Column<int>(type: "int", nullable: false),
                     RolesId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -144,7 +144,7 @@ namespace Data_Base.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Subject_Id = table.Column<int>(type: "int", nullable: false),
                     Exam_Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    Exam_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    Exam_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
                     SubjectsId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
@@ -213,7 +213,7 @@ namespace Data_Base.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Student_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    Student_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
                     User_Id = table.Column<int>(type: "int", nullable: false),
                     UsersId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -593,7 +593,7 @@ namespace Data_Base.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Package_Id = table.Column<int>(type: "int", nullable: false),
                     Question_Name = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
-                    Question_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    Question_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
                     Type = table.Column<int>(type: "int", nullable: false),
                     Level = table.Column<int>(type: "int", nullable: false),
                     PackageId = table.Column<int>(type: "int", nullable: true)
@@ -614,7 +614,7 @@ namespace Data_Base.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Test_Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Test_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
                     Status = table.Column<int>(type: "int", nullable: false),
                     Package_Id = table.Column<int>(type: "int", nullable: false),
                     PackagesId = table.Column<int>(type: "int", nullable: false)
@@ -667,7 +667,7 @@ namespace Data_Base.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Question_Id = table.Column<int>(type: "int", nullable: false),
                     Answers_Name = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
-                    Answers_Code = table.Column<string>(type: "nvarchar(8)", maxLength: 8, nullable: false),
+                    Answers_Code = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: false),
                     Right_Answer = table.Column<int>(type: "int", nullable: false),
                     QuestionsId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -686,7 +686,7 @@ namespace Data_Base.Migrations
                 name: "Test_Questions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "int", maxLength: 8, nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Question_Id = table.Column<int>(type: "int", nullable: false),
                     Test_Id = table.Column<int>(type: "int", nullable: false),

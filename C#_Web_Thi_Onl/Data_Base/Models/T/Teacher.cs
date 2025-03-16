@@ -1,4 +1,5 @@
 ﻿using Data_Base.Models.E;
+using Data_Base.Models.P;
 using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
@@ -23,10 +24,10 @@ namespace Data_Base.Models.T
         [JsonIgnore]
         public virtual User User { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Teacher_Class> Teacher_Classes { get; set; }
+        public virtual ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; }
+        public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]
-        public virtual ICollection<Teacher_Subject> Teacher_Subject { get; set; }
+        public virtual ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();
     }
 }

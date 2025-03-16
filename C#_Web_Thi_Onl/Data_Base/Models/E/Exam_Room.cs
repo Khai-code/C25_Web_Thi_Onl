@@ -28,8 +28,8 @@ namespace Data_Base.Models.E
         [JsonIgnore]
         public virtual Exam Exams { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; }
+        public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; }
+        public virtual ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
     }
 }

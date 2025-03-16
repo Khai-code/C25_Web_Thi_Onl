@@ -24,7 +24,7 @@ namespace Data_Base.Models.E
         [JsonIgnore]
         public virtual Subject Subjects { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Exam_Room> Exam_Rooms { get; set; }
+        public virtual ICollection<Exam_Room> Exam_Rooms { get; set; } = new List<Exam_Room>();
 
     }
 }

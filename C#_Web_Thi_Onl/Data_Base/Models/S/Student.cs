@@ -25,12 +25,12 @@ namespace Data_Base.Models.S
         [JsonIgnore]
         public virtual User Users { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Student_Class> Student_Classes { get; set; }
+        public virtual ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Student> Exam_Room_Students { get; set; }
+        public virtual ICollection<Exam_Room_Student> Exam_Room_Students { get; set; } = new List<Exam_Room_Student>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; }
+        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
         [JsonIgnore]
-        public virtual ICollection<Score> Scores { get; set; }
+        public virtual ICollection<Score> Scores { get; set; } = new List<Score>();
     }
 }

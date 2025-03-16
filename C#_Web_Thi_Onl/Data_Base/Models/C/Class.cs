@@ -29,11 +29,11 @@ namespace Data_Base.Models.C
         [StringLength(50, ErrorMessage = "Một lớp không qua 50 học sinh")]
         public int Max_Student { get; set; }
         [JsonIgnore]
-        public virtual Grade Grades { get; set; }
+        public Grade Grades { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Student_Class> Student_Classes { get; set; }
+        public ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();
         [JsonIgnore]
-        public virtual ICollection<Teacher_Class> Teacher_Classes { get; set; }
+        public ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
 
 
 
