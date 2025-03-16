@@ -17,17 +17,19 @@ namespace Data_Base.Models.S
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
-        public int Start_Time { get; set; }
-        [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
-        public int End_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Start_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long End_Time { get; set; }
         [StringLength(14, ErrorMessage = "Mã kỳ không quá 14 ký tự")]
         public int Summary_Code { get; set; }
         [StringLength(50, ErrorMessage = "Tên kỳ không quá 50 ký tự")]
         public string Summary_Name { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Point_Type> Point_Types { get; set; } = new List<Point_Type>();
+        public ICollection<Point_Type> Point_Types { get; set; } = new List<Point_Type>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
+        public ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
     }
 }

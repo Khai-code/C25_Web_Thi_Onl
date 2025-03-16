@@ -1,0 +1,43 @@
+﻿@inherits LayoutComponentBase
+
+@inject NavigationManager Navigation
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
+
+
+<div>
+    <article class="content px-4">
+        @Body
+    </article>
+</div>
+
+@code {
+    private string userRole = "default";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await SessionStorage.GetAsync<string>("userRole");
+        if (result.Success && !string.IsNullOrEmpty(result.Value))
+        {
+            userRole = result.Value;
+        }
+    }
+}
+
+@if (userRole == "1")
+{
+    <StudentLayout>
+        @Body
+    </StudentLayout>
+}
+else if (userRole == "2")
+{
+    <TeacherLayout>
+        @Body
+    </TeacherLayout>
+}
+else
+{
+    <DefaultLayout>
+        @Body
+    </DefaultLayout>
+}

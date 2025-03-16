@@ -15,14 +15,14 @@ namespace Data_Base.Models.P
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
-        public int Subject_Id { get; set; }
-        [ForeignKey("Id")]
-        public int Point_Type_Id { get; set; }
         public int Quantity { get; set; }
+        [ForeignKey("Point_Type_Id")]
         [JsonIgnore]
         public virtual Point_Type Point_Types { get; set; }
+        public int Point_Type_Id { get; set; }
+        [ForeignKey("Subject_Id")]
         [JsonIgnore]
         public virtual Subject Subjects { get; set; }
+        public int Subject_Id { get; set; }
     }
 }

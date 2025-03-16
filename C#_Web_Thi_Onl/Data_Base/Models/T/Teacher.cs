@@ -17,17 +17,17 @@ namespace Data_Base.Models.T
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(8, ErrorMessage = "Mã giáo viên không hợp lệ")]
+        [StringLength(14, ErrorMessage = "Mã giáo viên không hợp lệ")]
         public string Teacher_Code { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("User_Id")]
+        [JsonIgnore]
+        public User User { get; set; }
         public int User_Id { get; set; }
         [JsonIgnore]
-        public virtual User User { get; set; }
+        public ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
         [JsonIgnore]
-        public virtual ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
+        public ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
-        [JsonIgnore]
-        public virtual ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();
+        public ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();
     }
 }

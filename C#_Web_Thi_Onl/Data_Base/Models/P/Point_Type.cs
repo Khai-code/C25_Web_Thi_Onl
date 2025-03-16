@@ -17,20 +17,20 @@ namespace Data_Base.Models.P
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
-        public int Summary_Id { get; set; }
         [StringLength(20, ErrorMessage = "Tên kiêu điểm không quá 20 ký tự")]
         public string Point_Type_Name { get; set; }
+        [ForeignKey("Summary_Id")]
         [JsonIgnore]
         public virtual Summary Summaries { get; set; }
+        public int Summary_Id { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Package> Packages { get; set; } = new List<Package>();
+        public ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
+        public ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
         [JsonIgnore]
-        public virtual ICollection<Point_Type_Subject> Point_Type_Subjects { get; set; } = new List<Point_Type_Subject>();
+        public ICollection<Point_Type_Subject> Point_Type_Subjects { get; set; } = new List<Point_Type_Subject>();
         [JsonIgnore]
-        public virtual ICollection<Score> Scores { get; set; } = new List<Score>();
+        public ICollection<Score> Scores { get; set; } = new List<Score>();
 
     }
 }

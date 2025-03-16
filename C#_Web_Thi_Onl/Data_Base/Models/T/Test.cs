@@ -19,11 +19,11 @@ namespace Data_Base.Models.T
         [StringLength(8, ErrorMessage = "Mã đề không quá 8 ký tự")]
         public string Test_Code { get; set; }
         public int Status { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Package_Id")]
+        [JsonIgnore]
+        public Package Packages { get; set; }
         public int Package_Id { get; set; }
         [JsonIgnore]
-        public virtual Package Packages { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
+        public ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
     }
 }

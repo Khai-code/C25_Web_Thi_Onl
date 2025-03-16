@@ -15,14 +15,14 @@ namespace Data_Base.Models.E
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
-        public int Subject_Id { get; set; }
         [StringLength(50, ErrorMessage = "Tên bài thi không quá 50 ký tự")]
         public string Exam_Name { get; set; }
         [StringLength(14, ErrorMessage = "Mã bài thi không quá 14 ký tự")]
         public string Exam_Code { get; set; }
+        [ForeignKey("Subject_Id")]
         [JsonIgnore]
         public virtual Subject Subjects { get; set; }
+        public int Subject_Id { get; set; }
         [JsonIgnore]
         public virtual ICollection<Exam_Room> Exam_Rooms { get; set; } = new List<Exam_Room>();
 

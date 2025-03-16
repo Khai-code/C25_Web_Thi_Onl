@@ -14,12 +14,13 @@ namespace Data_Base.Models.E
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
-        [ForeignKey("Id")]
-        public int Exam_Room_Student_Id { get; set; }
         public double Score { get; set; }
-        [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
-        public int Create_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Create_Time { get; set; }
+        [ForeignKey("Exam_Room_Student_Id")]
         [JsonIgnore]
-        public virtual Exam_Room_Student Exam_Room_Students { get; set; }
+        public Exam_Room_Student Exam_Room_Students { get; set; }
+        public int Exam_Room_Student_Id { get; set; }
     }
 }

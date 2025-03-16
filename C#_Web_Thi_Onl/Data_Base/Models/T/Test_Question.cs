@@ -13,15 +13,15 @@ namespace Data_Base.Models.T
     public class Test_Question
     {
         [Key]
-        [StringLength(8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Question_Id")]
+        [JsonIgnore]
+        public Question Questions { get; set; }
         public int Question_Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Test_Id")]
+        [JsonIgnore]
+        public Test Tests { get; set; }
         public int Test_Id { get; set; }
-        [JsonIgnore]
-        public virtual Test Tests { get; set; }
-        [JsonIgnore]
-        public virtual Question Questions { get; set; }
     }
 }

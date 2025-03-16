@@ -15,18 +15,20 @@ namespace Data_Base.Models.E
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
-        public int Start_Time { get; set; }
-        [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
-        public int End_Time { get; set; }
-        [ForeignKey("Id")]
-        public Guid Room_Id { get; set; }
-        [ForeignKey("Id")]
-        public Guid Exam_Id { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Start_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long End_Time { get; set; }
+        [ForeignKey("Room_Id")]
         [JsonIgnore]
-        public virtual Room Rooms { get; set; }
+        public Room Rooms { get; set; }
+        public int Room_Id { get; set; }
+        [ForeignKey("Exam_Id")]
         [JsonIgnore]
-        public virtual Exam Exams { get; set; }
+        public Exam Exams { get; set; }
+        public int Exam_Id { get; set; }
         [JsonIgnore]
         public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]
