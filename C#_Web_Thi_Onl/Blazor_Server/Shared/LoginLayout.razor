@@ -12,13 +12,18 @@
 
 @code {
     private string userRole = "default";
+    private bool _isRendered;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var result = await SessionStorage.GetAsync<string>("userRole");
-        if (result.Success && !string.IsNullOrEmpty(result.Value))
+        if (firstRender)
         {
-            userRole = result.Value;
+            var result = await SessionStorage.GetAsync<string>("userRole");
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
+            {
+                userRole = result.Value;
+                StateHasChanged(); // Cập nhật lại UI sau khi có dữ liệu
+            }
         }
     }
 }
