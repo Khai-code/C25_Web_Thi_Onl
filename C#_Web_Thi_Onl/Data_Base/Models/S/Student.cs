@@ -20,17 +20,17 @@ namespace Data_Base.Models.S
         public int Id { get; set; }
         [StringLength(14, ErrorMessage = "Mã học sinh không hợp lệ")]
         public string Student_Code { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("User_Id")]
+        [JsonIgnore]
+        public User Users { get; set; }
         public int User_Id { get; set; }
         [JsonIgnore]
-        public virtual User Users { get; set; }
+        public ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();
         [JsonIgnore]
-        public virtual ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();
+        public ICollection<Exam_Room_Student> Exam_Room_Students { get; set; } = new List<Exam_Room_Student>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Student> Exam_Room_Students { get; set; } = new List<Exam_Room_Student>();
+        public ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
-        [JsonIgnore]
-        public virtual ICollection<Score> Scores { get; set; } = new List<Score>();
+        public ICollection<Score> Scores { get; set; } = new List<Score>();
     }
 }

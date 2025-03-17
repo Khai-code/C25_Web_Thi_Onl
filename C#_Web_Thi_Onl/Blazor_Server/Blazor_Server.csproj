@@ -21,4 +21,9 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ASP.NET\ASP.NET.csproj" />
+    <ProjectReference Include="..\Data_Base\Data_Base.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -1,5 +1,7 @@
 using Blazor_Server.Data;
+using Blazor_Server.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,6 +14,8 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped(C =>
  new HttpClient { BaseAddress = new Uri("https://localhost:7187") });
 
+builder.Services.AddScoped<ProtectedSessionStorage>();
+builder.Services.AddScoped<AuthSerrvice>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

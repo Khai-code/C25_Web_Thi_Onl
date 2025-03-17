@@ -19,30 +19,31 @@ namespace Data_Base.Models.P
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
-        public int Class_Id { get; set; }
-        [ForeignKey("Id")]
-        public int Subject_Id { get; set; }
-        [ForeignKey("Id")]
-        public int Point_Type_Id { get; set; }
         [StringLength(8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
         public int Package_Code { get; set; }
         [StringLength(50, ErrorMessage = "Tên gói đề không quá 50 ký tự")]
         public string Package_Name { get; set; }
-        [StringLength(14, ErrorMessage = "Sai định dạng thời gian")]
-        public int Create_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Create_Time { get; set; }
         public int Status { get; set; }
+        [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public virtual Subject Subjects { get; set; }
+        public Subject Subjects { get; set; }
+        public int Subject_Id { get; set; }
+        [ForeignKey("Class_Id")]
         [JsonIgnore]
-        public virtual Class Classes { get; set; }
+        public Class Classes { get; set; }
+        public int Class_Id { get; set; }
+        [ForeignKey("Point_Type_Id")]
         [JsonIgnore]
-        public virtual Point_Type Point_Types { get; set; }
+        public Point_Type Point_Types { get; set; }
+        public int Point_Type_Id { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Question> Questions { get; set; } = new List<Question>();
+        public ICollection<Question> Questions { get; set; } = new List<Question>();
         [JsonIgnore]
-        public virtual ICollection<Package> Packages { get; set; } = new List<Package>();
+        public ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
+        public ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
     }
 }

@@ -21,17 +21,17 @@ namespace Data_Base.Models.L
         public double Point_Midterm { get; set; }
         public double Point_Final { get; set; }
         public double Point_Summary { get; set; }
-        [ForeignKey("Id")]
-        public int Summary_ID { get; set; }
-        [ForeignKey("Id")]
-        public int Student_Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Subject_Id")]
+        [JsonIgnore]
+        public Subject Subjects { get; set; }
         public int Subject_Id { get; set; }
+        [ForeignKey("Student_Id")]
         [JsonIgnore]
-        public virtual Subject Subjects { get; set; }
+        public Student Students { get; set; }
+        public int Student_Id { get; set; }
+        [ForeignKey("Summary_ID")]
         [JsonIgnore]
-        public virtual Student Students { get; set; }
-        [JsonIgnore]
-        public virtual Summary Summaries { get; set; }
+        public Summary Summaries { get; set; }
+        public int Summary_ID { get; set; }
     }
 }

@@ -16,19 +16,20 @@ namespace Data_Base.Models.E
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
-        public int Student_Id { get; set; }
-        [ForeignKey("Id")]
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Check_Time { get; set; }
+        [ForeignKey("Exam_Room_Package_Id")]
+        [JsonIgnore]
+        public Exam_Room_Package Exam_Room_Packages { get; set; }
         public int Exam_Room_Package_Id { get; set; }
-        [StringLength(14, ErrorMessage = "Không đúng định dạng thời gian")]
-        public int Check_Time { get; set; }
+        [ForeignKey("Student_Id")]
         [JsonIgnore]
-        public virtual Exam_Room_Package Exam_Room_Packages { get; set; }
+        public Student Students { get; set; }
+        public int Student_Id { get; set; }
         [JsonIgnore]
-        public virtual Student Students { get; set; }
+        public ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
-        [JsonIgnore]
-        public virtual ICollection<Exam_HisTory> Exam_HisTories { get; set; } = new List<Exam_HisTory>();
+        public ICollection<Exam_HisTory> Exam_HisTories { get; set; } = new List<Exam_HisTory>();
     }
 }

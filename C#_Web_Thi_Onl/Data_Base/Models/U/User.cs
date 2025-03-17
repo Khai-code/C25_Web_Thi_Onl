@@ -15,7 +15,7 @@ namespace Data_Base.Models.U
     public class User
     {
         [Key]
-        [StringLength(8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [StringLength(100, ErrorMessage = "Tên người dùng không được quá 100 ký tự")]
         public string Full_Name { get; set; }
@@ -28,12 +28,15 @@ namespace Data_Base.Models.U
         public string Email { get; set; }
         [StringLength(10, ErrorMessage = "Số điện thoại không được quá 10 ký tự")]
         public string Phone_Number { get; set; }
-        [StringLength(14, ErrorMessage = "Ngày tháng năm không hợp lệ")]
-        public int Data_Of_Birth { get; set; }
-        [StringLength(14, ErrorMessage = "Ngày tháng năm không hợp lệ")]
-        public int Create_Time { get; set; }
-        [StringLength(14, ErrorMessage = "Ngày tháng năm không hợp lệ")]
-        public int Last_Mordification_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Data_Of_Birth { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Create_Time { get; set; }
+        [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
+        [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
+        public long Last_Mordification_Time { get; set; }
         public string? Avatar { get; set; }
         public int Status { get; set; }
         [ForeignKey("Id")]

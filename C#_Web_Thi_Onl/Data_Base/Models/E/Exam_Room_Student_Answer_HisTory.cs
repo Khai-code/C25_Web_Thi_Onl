@@ -15,13 +15,13 @@ namespace Data_Base.Models.E
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int ID { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Answer_Id")]
+        [JsonIgnore]
+        public Answers Answers { get; set; }
         public int Answer_Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Exam_Room_Student_Id")]
+        [JsonIgnore]
+        public Exam_Room_Student Exam_Room_Students { get; set; }
         public int Exam_Room_Student_Id { get; set; }
-        [JsonIgnore]
-        public virtual Answers Answers { get; set; }
-        [JsonIgnore]
-        public virtual Exam_Room_Student Exam_Room_Students { get; set; }
     }
 }

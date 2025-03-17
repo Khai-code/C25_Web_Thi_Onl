@@ -15,18 +15,21 @@ namespace Data_Base.Models.S
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Student_Id")]
+        [JsonIgnore]
+        public Student Students { get; set; }
         public int Student_Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Subject_Id")]
+        [JsonIgnore]
+        public Subject Subjects { get; set; }
         public int Subject_Id { get; set; }
-        [ForeignKey("Id")]
+        [ForeignKey("Point_Type_Id")]
+        [JsonIgnore]
+        public Point_Type Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
         public double Point { get; set; }
-        [JsonIgnore]
-        public virtual Subject Subjects { get; set; }
-        [JsonIgnore]
-        public virtual Student Students { get; set; }
-        [JsonIgnore]
-        public virtual Point_Type Point_Types { get; set; }
+        
+        
+        
     }
 }

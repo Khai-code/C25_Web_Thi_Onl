@@ -25,18 +25,18 @@ namespace Data_Base.Models.S
         [StringLength(14, ErrorMessage = "Mã môn không quá 14 ký tự")]
         public string Subject_Code { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Subject_Grade> Subject_Grade { get; set; } = new List<Subject_Grade>();
+        public ICollection<Subject_Grade> Subject_Grade { get; set; } = new List<Subject_Grade>();
         [JsonIgnore]
-        public virtual ICollection<Package> Packages { get; set; } = new List<Package>();
+        public ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]
-        public virtual ICollection<Exam> Exams { get; set; } = new List<Exam>();
+        public ICollection<Exam> Exams { get; set; } = new List<Exam>();
         [JsonIgnore]
-        public virtual ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();
+        public ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();
         [JsonIgnore]
-        public virtual ICollection<Score> Scores { get; set; } = new List<Score>();
+        public ICollection<Score> Scores { get; set; } = new List<Score>();
         [JsonIgnore]
-        public virtual ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
+        public ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
         [JsonIgnore]
-        public virtual ICollection<Point_Type_Subject> PointType_Subjects { get; set; } = new List<Point_Type_Subject>();
+        public ICollection<Point_Type_Subject> PointType_Subjects { get; set; } = new List<Point_Type_Subject>();
     }
 }
