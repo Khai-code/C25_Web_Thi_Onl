@@ -1,39 +1,72 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿<nav class="navbar navbar-expand-md navbar-light bg-transparent fixed-top">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">Blazor_Server</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+        <a class="navbar-brand d-none d-md-flex align-items-center" href="/" style="padding-left:30px">
+            <img src="image/LogoHome.png" alt="Logo" class="me-2 logo" width="60" height="60" />
+            <span class="fw-bold navbar-brand text-uppercase"
+                  style="font-family: 'Poppins', sans-serif;
+                     font-size: 1.5rem;
+                     font-weight: 600;
+                     letter-spacing: 1px;
+                     transition: color 0.3s ease-in-out;
+               color: #007bff;">Smart School
+            </span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
+        <div class="collapse navbar-collapse  justify-content-center" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link nav-text" href="/">
+                        <i class="bi bi-house-door me-2 nav-icon"></i> Trang chủ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-text" href="/bangdiem">
+                        <i class="bi bi-journal-text me-2 nav-icon"></i> Bảng điểm
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-text" href="/vaothi">
+                        <i class="bi bi-pencil-square me-2 nav-icon"></i> Vào thi
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link nav-text" href="/lienhe">
+                        <i class="bi bi-envelope me-2 nav-icon"></i> Liên hệ
+                    </a>
+                </li>
+            </ul>
+        </div>
+        <div class="auth-section d-flex align-items-center" style="padding-right:30px">
+            <span class="nav-text me-3 d-none d-md-inline">Xin chào, @username</span>
+            <div class="dropdown">
+                <span class="dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="image/LogoHome.png" class="avatar me-2" alt="Avatar">
+                </span>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/profile">Hồ sơ</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><button class="dropdown-item text-danger" @onclick="Logout">Đăng xuất</button></li>
+                </ul>
+            </div>
+        </div>
     </div>
-</div>
-
-<div class="@NavMenuCssClass" @onclick="ToggleNavMenu">
-    <nav class="flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="oi oi-home" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="oi oi-plus" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="fetchdata">
-                <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
-            </NavLink>
-        </div>
-    </nav>
-</div>
-
+</nav>
 @code {
-    private bool collapseNavMenu = true;
+    private bool isLoggedIn = false;
+    private string username = "Người dùng";
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
-
-    private void ToggleNavMenu()
+    protected override void OnInitialized()
     {
-        collapseNavMenu = !collapseNavMenu;
+       
+        isLoggedIn = true;
+    }
+
+    private void Logout()
+    {
+        isLoggedIn = false;
+        username = "";
     }
 }

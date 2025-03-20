@@ -1,0 +1,123 @@
+﻿.sidebar {
+    width: 250px;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    transition: width 0.3s ease-in-out;
+    overflow: hidden;
+    white-space: nowrap;
+    background-color: #66b3ff !important; /* Màu xanh nước biển */
+}
+    .sidebar .nav-link {
+        color: white;
+        padding: 10px 15px;
+        border-radius: 5px;
+        transition: background 0.3s ease, padding-left 0.3s ease;
+    }
+
+        .sidebar .nav-link:hover {
+            background-color: #0056b3; /* Xanh đậm hơn khi hover */
+            padding-left: 20px;
+        }
+    .sidebar.collapsed {
+        width: 60px;
+    }
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+    .sidebar .nav-link i {
+        margin-right: 10px;
+    }
+.nav-link i {
+    font-size: 1.3rem;
+    margin-right: 8px;
+}
+.sidebar.collapsed:hover {
+    width: 250px;
+}
+    .sidebar.collapsed:hover .sidebar-text {
+        display: inline;
+    }
+
+.logo-container img {
+    height: 60px;
+}
+.container-fluid {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.top-navbar {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #ddd;
+    height: 60px;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1030;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px; 
+}
+    /* Đổi màu chữ Xin chào, Người dùng */
+    .top-navbar .nav-text {
+        color: black !important;
+        font-weight: normal; 
+        font-family: sans-serif; 
+    }
+
+    /* Đổi màu icon menu thành đen */
+    .top-navbar button i {
+        color: black !important;
+        font-weight: bold;
+    }
+/* Đổi màu dropdown text */
+.dropdown-menu .dropdown-item {
+    color: black !important;
+    font-weight: normal; 
+    font-family: sans-serif; 
+}
+.main-layout {
+    display: flex;
+    flex-grow: 1;
+    margin-top: 60px; 
+}
+.fixed-sidebar {
+    width: 250px;
+    background-color: #343a40;
+    color: white;
+    height: calc(100vh - 60px);
+    position: fixed;
+    top: 60px;
+    left: 0;
+    overflow-y: auto;
+    z-index: 1050;
+}
+
+  
+.content {
+    flex-grow: 1;
+    margin-left: 250px; 
+    padding: 20px;
+    background: #f8f9fa;
+    min-height: calc(100vh - 60px);
+    overflow-y: auto;
+    transition: margin-left 0.3s ease-in-out;
+}
+.sidebar.collapsed + .content {
+    margin-left: 60px;
+}
+.avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%; /* Biến avatar thành hình tròn */
+    object-fit: cover; /* Cắt ảnh vừa khung hình */
+    border: 2px solid #ddd; /* Viền nhẹ */
+}
+body {
+    background: url('/image/Untitled-1.png') no-repeat center center fixed;
+    background-size: cover;
+}
