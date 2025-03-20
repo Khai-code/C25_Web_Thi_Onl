@@ -24,6 +24,7 @@
             </div>
         </div>
     </nav>
+    
     <div class="main-layout d-flex">
         <aside class="sidebar fixed-sidebar p-3 @(isSidebarVisible ? "expanded" : "collapsed")">
             <nav class="nav flex-column">
@@ -42,93 +43,6 @@
         </main>
     </div>
 </div>
-<style>
-    /* Đổi màu chữ navbar thành đen và in đậm */
-    .top-navbar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 60px; /* Đảm bảo chiều cao đủ */
-        padding: 0 20px; /* Căn lề hai bên */
-    }
-
-        /* Đổi màu chữ Xin chào, Người dùng */
-        .top-navbar .nav-text {
-            color: black !important;
-            font-weight: bold;
-        }
-        /* Đổi màu icon menu thành đen */
-        .top-navbar button i {
-            color: black !important;
-            font-weight: bold;
-        }
-
-
-    /* Đổi màu dropdown text */
-    .dropdown-menu .dropdown-item {
-        color: black !important;
-        font-weight: bold;
-    }
-
-
-    .logo {
-        max-height: 100px;
-    }
-
-    /* Đổi màu nền sidebar thành xanh nước biển */
-    .sidebar {
-        background-color: #007bff !important; /* Màu xanh nước biển */
-        color: white;
-        min-width: 250px;
-        transition: width 0.3s ease;
-        height: 100vh;
-        padding-top: 20px;
-    }
-
-        /* Chỉnh màu khi hover vào menu */
-        .sidebar .nav-link {
-            color: white;
-            padding: 10px 15px;
-            border-radius: 5px;
-            transition: background 0.3s ease, padding-left 0.3s ease;
-        }
-
-            .sidebar .nav-link:hover {
-                background-color: #0056b3; /* Xanh đậm hơn khi hover */
-                padding-left: 20px;
-            }
-
-        /* Sidebar thu gọn */
-        .sidebar.collapsed {
-            min-width: 60px;
-        }
-
-            .sidebar.collapsed .sidebar-text {
-                display: none;
-            }
-
-
-    .content {
-        background-color: #f8f9fa;
-    }
-
-    .auth-section .dropdown-menu {
-        background-color: white;
-        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .auth-section .dropdown-item:hover {
-        background-color: #007bff;
-        color: white;
-    }
-
-    button {
-        background: none;
-        border: none;
-        color: white;
-    }
-
-</style>
 
 @code {
     private bool isLoggedIn = true;
