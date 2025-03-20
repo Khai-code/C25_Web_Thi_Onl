@@ -1,43 +1,11 @@
 ﻿@page "/"
 @layout TeacherLayout
-
-<main class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-4">
-            <NavMenuTeacher />
-        </div>
-
-        <!-- Main Content -->
-        <div class="col-md-8 d-flex align-items-center justify-content-center">
-            <div class="welcome-container">
-                <!-- Welcome Section -->
-                <div class="card p-4 text-center shadow-sm">
-                    <h2>👋 Chào mừng bạn đến với</h2>
-                    <h3 class="text-primary fw-bold">Hệ thống thi online SmartSchool!</h3>
-                    <p class="text-muted">🌟 Chúc bạn một ngày làm việc hiệu quả và thành công! 🌟</p>
-                </div>
-            </div>
-        </div>
+<div class="welcome-container">
+    <div class="card p-4 text-center shadow-sm">
+        <h2>👋 Chào mừng bạn đến với</h2>
+        <h3 class="text-primary fw-bold">Hệ thống thi online SmartSchool!</h3>
+        <p class="text-muted">🌟 Chúc bạn một ngày làm việc hiệu quả và thành công! 🌟</p>
     </div>
-</main>
+</div>
+           
 
-@* CSS *@
-<style>
-    .container-fluid {
-        padding: 0;
-    }
-
-    /* Căn giữa cả ngang và dọc */
-    .col-md-8 {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 30vh; /* Chiều cao bằng cả màn hình */
-    }
-
-    .welcome-container {
-        max-width: 1000px; /* Giới hạn độ rộng của phần chào mừng */
-        text-align: center;
-    }
-</style>

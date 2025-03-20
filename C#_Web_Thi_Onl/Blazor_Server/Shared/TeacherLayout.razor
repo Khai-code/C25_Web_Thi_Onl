@@ -1,15 +1,62 @@
 ﻿@inherits LayoutComponentBase
+<div class="container-fluid d-flex flex-column p-0">
+    <nav class="top-navbar d-flex align-items-center justify-content-between fixed-top p-2">
+        <div class="d-flex align-items-center" style="padding-left:10px">
+            <button class="d-flex align-items-center justify-content-center p-2" style="width: 45px; height: 45px;" @onclick="ToggleSidebar">
+                <i class="bi bi-list fs-4"></i>
+            </button>
 
-<div class="d-flex">
-    <NavMenuTeacher />
-
-    <div class="content flex-grow-1 p-4">
-        @Body
+            <div class="logo-container">
+                <img src="image/LogoHome.png" alt="SmartSchool" class="logo" />
+            </div>
+        </div>
+        <div class="auth-section d-flex align-items-center" style="padding-right:30px">
+            <span class="nav-text me-3 d-none d-md-inline">Xin chào, @username</span>
+            <div class="dropdown">
+                <span class="dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="image/LogoHome.png" class="avatar me-2" alt="Avatar">
+                </span>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="/profile">Hồ sơ</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><button class="dropdown-item text-danger" @onclick="Logout">Đăng xuất</button></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="main-layout d-flex">
+        <aside class="sidebar fixed-sidebar p-3 @(isSidebarVisible ? "expanded" : "collapsed")">
+            <nav class="nav flex-column">
+                <a class="nav-link" href="/"><i class="bi bi-house-fill"></i> <span class="sidebar-text">Trang chủ</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-person-badge-fill"></i> <span class="sidebar-text">Danh sách giáo viên</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-people-fill"></i> <span class="sidebar-text">Quản lý lớp học</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-journal-bookmark-fill"></i> <span class="sidebar-text">Ngân hàng câu hỏi</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-file-earmark-text-fill"></i> <span class="sidebar-text">Quản lý bài thi</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-calendar-check-fill"></i> <span class="sidebar-text">Quản lý ca thi</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-exclamation-circle-fill"></i> <span class="sidebar-text">Quản lý phúc khảo</span></a>
+                <a class="nav-link" href="#"><i class="bi bi-bar-chart-fill"></i> <span class="sidebar-text">Bảng điểm</span></a>
+            </nav>
+        </aside>
+        <main class="content p-4 shadow flex-grow-1">
+            @Body
+        </main>
     </div>
 </div>
 
-<style>
-    .content {
-        margin-right: 400px;
+
+@code {
+    private bool isLoggedIn = true;
+    private string username = "Người dùng";
+    private bool isSidebarVisible = true;
+
+    private void ToggleSidebar()
+    {
+        isSidebarVisible = !isSidebarVisible;
     }
-</style>
+
+    private void Logout()
+    {
+        isLoggedIn = false;
+        username = "";
+    }
+}

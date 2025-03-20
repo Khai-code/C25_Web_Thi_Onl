@@ -34,3 +34,20 @@
         display: block;
     }
 }
+.avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 2px solid #ddd; 
+}
+
+@media (max-width: 988px) { 
+    .navbar-collapse.show + .auth-section {
+        display: none; 
+    }
+    .navbar-collapse.show {
+        background-color: rgba(241, 245, 236, 0.95) !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+}
