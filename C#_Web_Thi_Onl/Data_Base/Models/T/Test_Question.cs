@@ -21,7 +21,7 @@ namespace Data_Base.Models.T
         public int Question_Id { get; set; }
         [ForeignKey("Test_Id")]
         [JsonIgnore]
-        public Test Tests { get; set; }
+        public Test? Tests { get; set; }
         public int Test_Id { get; set; }
     }
 }

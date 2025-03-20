@@ -24,9 +24,9 @@ namespace Data_Base.Models.A
         public int Right_Answer { get; set; }
         [ForeignKey("Question_Id")]
         [JsonIgnore]
-        public virtual Question Questions { get; set; }
+        public Question? Questions { get; set; }
         public int Question_Id { get; set; }
         [JsonIgnore]
-        public virtual ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
+        public ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
     }
 }

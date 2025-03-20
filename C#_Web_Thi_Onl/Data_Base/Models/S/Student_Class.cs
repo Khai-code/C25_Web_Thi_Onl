@@ -1,4 +1,5 @@
-﻿using Data_Base.Models.T;
+﻿using Data_Base.Models.C;
+using Data_Base.Models.T;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -17,12 +18,12 @@ namespace Data_Base.Models.S
         public int Id { get; set; }
         [ForeignKey("Student_Id")]
         [JsonIgnore]
-        public Student Students { get; set; }
+        public Student? Students { get; set; }
         public int Student_Id { get; set; }
-        [ForeignKey("Teacher_Id")]
+        [ForeignKey("Class_Id")]
         [JsonIgnore]
-        public Teacher Teachers { get; set; }
-        public int Teacher_Id { get; set; }
+        public Class? Classes { get; set; }
+        public int Class_Id { get; set; }
 
 
     }

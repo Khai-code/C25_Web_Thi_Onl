@@ -23,15 +23,15 @@ namespace Data_Base.Models.L
         public double Point_Summary { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public Subject Subjects { get; set; }
+        public Subject? Subjects { get; set; }
         public int Subject_Id { get; set; }
         [ForeignKey("Student_Id")]
         [JsonIgnore]
-        public Student Students { get; set; }
+        public Student? Students { get; set; }
         public int Student_Id { get; set; }
         [ForeignKey("Summary_ID")]
         [JsonIgnore]
-        public Summary Summaries { get; set; }
+        public Summary? Summaries { get; set; }
         public int Summary_ID { get; set; }
     }
 }

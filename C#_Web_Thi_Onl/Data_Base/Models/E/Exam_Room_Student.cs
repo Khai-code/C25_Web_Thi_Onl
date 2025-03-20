@@ -21,11 +21,11 @@ namespace Data_Base.Models.E
         public long Check_Time { get; set; }
         [ForeignKey("Exam_Room_Package_Id")]
         [JsonIgnore]
-        public Exam_Room_Package Exam_Room_Packages { get; set; }
+        public Exam_Room_Package? Exam_Room_Packages { get; set; }
         public int Exam_Room_Package_Id { get; set; }
         [ForeignKey("Student_Id")]
         [JsonIgnore]
-        public Student Students { get; set; }
+        public Student? Students { get; set; }
         public int Student_Id { get; set; }
         [JsonIgnore]
         public ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();

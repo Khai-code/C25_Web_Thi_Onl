@@ -17,11 +17,11 @@ namespace Data_Base.Models.S
         public int ID { get; set; }
         [ForeignKey("Grade_Id")]
         [JsonIgnore]
-        public Grade Grades { get; set; }
+        public Grade? Grades { get; set; }
         public int Grade_Id { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public Subject Subjects { get; set; }
+        public Subject? Subjects { get; set; }
         public int Subject_Id { get; set; }
     }
 }

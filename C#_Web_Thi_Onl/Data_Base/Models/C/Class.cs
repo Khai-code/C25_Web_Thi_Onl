@@ -26,11 +26,11 @@ namespace Data_Base.Models.C
         public int Max_Student { get; set; }
         [ForeignKey("Grade_Id")]
         [JsonIgnore]
-        public Grade Grades { get; set; }
+        public Grade? Grades { get; set; }
         public int Grade_Id { get; set; }
         [ForeignKey("Teacher_Id")]
         [JsonIgnore]
-        public Teacher Teachers { get; set; }
+        public Teacher? Teachers { get; set; }
         public int Teacher_Id { get; set; }
         [JsonIgnore]
         public ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();

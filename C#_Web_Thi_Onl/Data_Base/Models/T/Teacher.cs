@@ -21,7 +21,7 @@ namespace Data_Base.Models.T
         public string Teacher_Code { get; set; }
         [ForeignKey("User_Id")]
         [JsonIgnore]
-        public User User { get; set; }
+        public User? User { get; set; }
         public int User_Id { get; set; }
         [JsonIgnore]
         public ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();

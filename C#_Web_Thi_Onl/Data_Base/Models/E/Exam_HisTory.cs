@@ -20,7 +20,7 @@ namespace Data_Base.Models.E
         public long Create_Time { get; set; }
         [ForeignKey("Exam_Room_Student_Id")]
         [JsonIgnore]
-        public Exam_Room_Student Exam_Room_Students { get; set; }
+        public Exam_Room_Student? Exam_Room_Students { get; set; }
         public int Exam_Room_Student_Id { get; set; }
     }
 }

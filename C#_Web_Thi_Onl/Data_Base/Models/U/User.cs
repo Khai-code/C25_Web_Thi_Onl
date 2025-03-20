@@ -39,10 +39,10 @@ namespace Data_Base.Models.U
         public long Last_Mordification_Time { get; set; }
         public string? Avatar { get; set; }
         public int Status { get; set; }
-        [ForeignKey("Id")]
-        public int Role_Id { get; set; }
+        [ForeignKey("Role_Id")]
         [JsonIgnore]
-        public Role Roles { get; set; }
+        public Role? Roles { get; set; }
+        public int Role_Id { get; set; }
         [JsonIgnore]
         public ICollection<Student> Students { get; set; } = new List<Student>();
         [NotMapped]
