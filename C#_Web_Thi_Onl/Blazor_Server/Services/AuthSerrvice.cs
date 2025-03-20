@@ -21,7 +21,7 @@ namespace Blazor_Server.Services
         {
             var loginRequest = new { User_Name = username, User_Pass = password };
 
-            var response = await _httpClient.PostAsJsonAsync("api/Auth/login", loginRequest);
+            var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Auth/login", loginRequest);
 
             if (response.IsSuccessStatusCode)
             {
