@@ -21,7 +21,7 @@ namespace Data_Base.Models.E
         public string Exam_Code { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public virtual Subject Subjects { get; set; }
+        public Subject? Subjects { get; set; }
         public int Subject_Id { get; set; }
         [JsonIgnore]
         public virtual ICollection<Exam_Room> Exam_Rooms { get; set; } = new List<Exam_Room>();

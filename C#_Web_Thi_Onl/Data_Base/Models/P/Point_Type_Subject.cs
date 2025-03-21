@@ -18,11 +18,11 @@ namespace Data_Base.Models.P
         public int Quantity { get; set; }
         [ForeignKey("Point_Type_Id")]
         [JsonIgnore]
-        public virtual Point_Type Point_Types { get; set; }
+        public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public virtual Subject Subjects { get; set; }
+        public Subject? Subjects { get; set; }
         public int Subject_Id { get; set; }
     }
 }

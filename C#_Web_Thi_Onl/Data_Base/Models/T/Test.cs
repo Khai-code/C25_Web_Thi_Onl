@@ -21,7 +21,7 @@ namespace Data_Base.Models.T
         public int Status { get; set; }
         [ForeignKey("Package_Id")]
         [JsonIgnore]
-        public Package Packages { get; set; }
+        public Package? Packages { get; set; }
         public int Package_Id { get; set; }
         [JsonIgnore]
         public ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();

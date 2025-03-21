@@ -17,15 +17,15 @@ namespace Data_Base.Models.S
         public int Id { get; set; }
         [ForeignKey("Student_Id")]
         [JsonIgnore]
-        public Student Students { get; set; }
+        public Student? Students { get; set; }
         public int Student_Id { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public Subject Subjects { get; set; }
+        public Subject? Subjects { get; set; }
         public int Subject_Id { get; set; }
         [ForeignKey("Point_Type_Id")]
         [JsonIgnore]
-        public Point_Type Point_Types { get; set; }
+        public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
         public double Point { get; set; }
         

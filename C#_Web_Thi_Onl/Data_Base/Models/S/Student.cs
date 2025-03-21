@@ -22,7 +22,7 @@ namespace Data_Base.Models.S
         public string Student_Code { get; set; }
         [ForeignKey("User_Id")]
         [JsonIgnore]
-        public User Users { get; set; }
+        public User? Users { get; set; }
         public int User_Id { get; set; }
         [JsonIgnore]
         public ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();

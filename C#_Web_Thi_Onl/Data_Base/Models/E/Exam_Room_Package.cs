@@ -21,7 +21,7 @@ namespace Data_Base.Models.E
         public int Package_Id { get; set; }
         [ForeignKey("Exam_Room_Id")]
         [JsonIgnore]
-        public Exam_Room Exam_Rooms { get; set; }
+        public Exam_Room? Exam_Rooms { get; set; }
         public int Exam_Room_Id { get; set; }
     }
 }

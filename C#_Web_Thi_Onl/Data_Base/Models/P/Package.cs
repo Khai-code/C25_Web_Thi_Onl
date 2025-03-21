@@ -29,15 +29,15 @@ namespace Data_Base.Models.P
         public int Status { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
-        public Subject Subjects { get; set; }
+        public Subject? Subjects { get; set; }
         public int Subject_Id { get; set; }
         [ForeignKey("Class_Id")]
         [JsonIgnore]
-        public Class Classes { get; set; }
+        public Class? Classes { get; set; }
         public int Class_Id { get; set; }
         [ForeignKey("Point_Type_Id")]
         [JsonIgnore]
-        public Point_Type Point_Types { get; set; }
+        public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
         [JsonIgnore]
         public ICollection<Question> Questions { get; set; } = new List<Question>();

@@ -21,7 +21,7 @@ namespace Data_Base.Models.P
         public string Point_Type_Name { get; set; }
         [ForeignKey("Summary_Id")]
         [JsonIgnore]
-        public virtual Summary Summaries { get; set; }
+        public Summary? Summaries { get; set; }
         public int Summary_Id { get; set; }
         [JsonIgnore]
         public ICollection<Package> Packages { get; set; } = new List<Package>();

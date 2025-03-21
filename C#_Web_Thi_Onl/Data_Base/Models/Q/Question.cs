@@ -26,7 +26,7 @@ namespace Data_Base.Models.Q
         public int Level { get; set; }
         [ForeignKey("Package_Id")]
         [JsonIgnore]
-        public Package Packages { get; set; }
+        public Package? Packages { get; set; }
         public int Package_Id { get; set; }
         [JsonIgnore]
         public ICollection<Answers> Answerses { get; set; } = new List<Answers>();

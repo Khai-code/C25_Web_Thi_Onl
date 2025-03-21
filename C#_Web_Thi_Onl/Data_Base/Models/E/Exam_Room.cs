@@ -23,11 +23,11 @@ namespace Data_Base.Models.E
         public long End_Time { get; set; }
         [ForeignKey("Room_Id")]
         [JsonIgnore]
-        public Room Rooms { get; set; }
+        public Room? Rooms { get; set; }
         public int Room_Id { get; set; }
         [ForeignKey("Exam_Id")]
         [JsonIgnore]
-        public Exam Exams { get; set; }
+        public Exam? Exams { get; set; }
         public int Exam_Id { get; set; }
         [JsonIgnore]
         public virtual ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
