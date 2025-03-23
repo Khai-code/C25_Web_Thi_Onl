@@ -22,7 +22,7 @@ namespace Data_Base.Models.S
         public int Id { get; set; }
         [StringLength(20, ErrorMessage = "Tên mông không quá 20 ký tự")]
         public string Subject_Name { get; set; }
-        [StringLength(14, ErrorMessage = "Mã môn không quá 14 ký tự")]
+        [StringLength(8, ErrorMessage = "Mã môn không quá 8 ký tự")]
         public string Subject_Code { get; set; }
         [JsonIgnore]
         public ICollection<Subject_Grade> Subject_Grade { get; set; } = new List<Subject_Grade>();

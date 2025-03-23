@@ -17,7 +17,7 @@ namespace Data_Base.Models.T
         public int Id { get; set; }
         [ForeignKey("Teacher_Id")]
         [JsonIgnore]
-        public Teacher Teachers { get; set; }
+        public Teacher? Teachers { get; set; }
         public int Teacher_Id { get; set; }
         [ForeignKey("Class_Id")]
         [JsonIgnore]

@@ -28,21 +28,12 @@
     }
 }
 
+
 @if (userRole == "1")
 {
-    <StudentLayout>
-        @Body
-    </StudentLayout>
+    Navigation.NavigateTo("/StudentLayout", forceLoad: true);
 }
 else if (userRole == "2")
 {
-    <TeacherLayout>
-        @Body
-    </TeacherLayout>
+    Navigation.NavigateTo("/TeacherLayout", forceLoad: true);
 }
-@* else
-{
-    <DefaultLayout>
-        @Body
-    </DefaultLayout>
-} *@

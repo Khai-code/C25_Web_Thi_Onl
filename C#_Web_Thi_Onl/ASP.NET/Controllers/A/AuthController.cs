@@ -23,26 +23,13 @@ namespace ASP.NET.Controllers.A
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] User loginModel)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var user = await AuthenticateUser(loginModel);
+            var user = await AuthenticateUser(request.User_Name, request.User_Pass);
 
             if (user != null)
             {
                 var tokenString = GenerateToken(user);
-
-                // Kiểm tra Role_Id để lấy mã sinh viên hoặc giáo viên
-                string? studentCode = null;
-                string? teacherCode = null;
-
-                if (user.Role_Id == 1) // học sinh
-                {
-                    studentCode = user.Students?.FirstOrDefault()?.Student_Code;
-                }
-                else if (user.Role_Id == 2) // giáo viên
-                {
-                    teacherCode = user.Teachers?.FirstOrDefault()?.Teacher_Code;
-                }
 
                 return Ok(new
                 {
@@ -50,28 +37,36 @@ namespace ASP.NET.Controllers.A
                     Id = user.Id,
                     Full_Name = user.Full_Name,
                     Role_Id = user.Role_Id,
-                    Student_Code = studentCode,
-                    Teacher_Code = teacherCode
+                    Student_Code = user.Role_Id == 1 ? user.Students?.FirstOrDefault()?.Student_Code : null,
+                    Teacher_Code = user.Role_Id == 2 ? user.Teachers?.FirstOrDefault()?.Teacher_Code : null
                 });
             }
 
-            return Unauthorized();
+            return Unauthorized(new { Message = "Tên đăng nhập hoặc mật khẩu không chính xác!" });
         }
 
-        private async Task<User> AuthenticateUser(User loginModel)
+        private async Task<User?> AuthenticateUser(string User_Name, string User_Pass)
         {
-            var apiUrl = "https://localhost:7187/api/User/Get"; 
-
-            var response = await _httpClient.GetAsync(apiUrl);
-            if (!response.IsSuccessStatusCode)
+            try
             {
+                var apiUrl = "https://localhost:7187/api/User/Get";
+                var response = await _httpClient.GetAsync(apiUrl);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var jsonResponse = await response.Content.ReadAsStringAsync();
+                var users = JsonSerializer.Deserialize<List<User>>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return users?.FirstOrDefault(u => u.User_Name == User_Name && u.User_Pass == User_Pass);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi gọi API: {ex.Message}");
                 return null;
             }
-
-            var jsonResponse = await response.Content.ReadAsStringAsync();
-            var users = JsonSerializer.Deserialize<List<User>>(jsonResponse, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            return users?.FirstOrDefault(u => u.User_Name == loginModel.User_Name && u.User_Pass == loginModel.User_Pass);
         }
 
         private string GenerateToken(User user)
@@ -90,22 +85,13 @@ namespace ASP.NET.Controllers.A
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            // Kiểm tra Role_Id để lấy Student_Code hoặc Teacher_Code
-            if (user.Role_Id == 1) // Học sinh
+            if (user.Role_Id == 1 && user.Students?.FirstOrDefault() is { } student)
             {
-                var studentCode = user.Students?.FirstOrDefault()?.Student_Code;
-                if (!string.IsNullOrEmpty(studentCode))
-                {
-                    claims.Add(new Claim("Student_Code", studentCode));
-                }
+                claims.Add(new Claim("Student_Code", student.Student_Code));
             }
-            else if (user.Role_Id == 2) // Giáo viên
+            else if (user.Role_Id == 2 && user.Teachers?.FirstOrDefault() is { } teacher)
             {
-                var teacherCode = user.Teachers?.FirstOrDefault()?.Teacher_Code;
-                if (!string.IsNullOrEmpty(teacherCode))
-                {
-                    claims.Add(new Claim("Teacher_Code", teacherCode));
-                }
+                claims.Add(new Claim("Teacher_Code", teacher.Teacher_Code));
             }
 
             var token = new JwtSecurityToken(
@@ -119,7 +105,6 @@ namespace ASP.NET.Controllers.A
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-
         [HttpGet("get-all-token-info")]
         public IActionResult GetAllTokenInfo()
         {
@@ -131,6 +116,12 @@ namespace ASP.NET.Controllers.A
             }
 
             return Unauthorized();
+        }
+
+        public class LoginRequest
+        {
+            public string User_Name { get; set; }
+            public string User_Pass { get; set; }
         }
     }
 }

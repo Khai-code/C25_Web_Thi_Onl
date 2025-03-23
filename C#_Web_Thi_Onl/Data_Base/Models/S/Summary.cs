@@ -24,7 +24,7 @@ namespace Data_Base.Models.S
         [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
         public long End_Time { get; set; }
         [StringLength(14, ErrorMessage = "Mã kỳ không quá 14 ký tự")]
-        public int Summary_Code { get; set; }
+        public string Summary_Code { get; set; }
         [StringLength(50, ErrorMessage = "Tên kỳ không quá 50 ký tự")]
         public string Summary_Name { get; set; }
         [JsonIgnore]

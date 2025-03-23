@@ -19,7 +19,7 @@ namespace Data_Base.Models.P
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
+        [Range(1, 8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
         public int Package_Code { get; set; }
         [StringLength(50, ErrorMessage = "Tên gói đề không quá 50 ký tự")]
         public string Package_Name { get; set; }
@@ -40,10 +40,8 @@ namespace Data_Base.Models.P
         public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
         [JsonIgnore]
-        public ICollection<Question> Questions { get; set; } = new List<Question>();
+        public ICollection<Question> Questions { get; set; }
         [JsonIgnore]
-        public ICollection<Package> Packages { get; set; } = new List<Package>();
-        [JsonIgnore]
-        public ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
+        public ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; }
     }
 }

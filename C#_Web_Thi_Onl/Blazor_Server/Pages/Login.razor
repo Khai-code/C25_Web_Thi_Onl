@@ -37,10 +37,10 @@
     {
         var token = await AuthService.Login(username, password);
 
-        if (!string.IsNullOrEmpty(token))
+        if (!string.IsNullOrEmpty(token.Token))
         {
             var handler = new JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+            var jsonToken = handler.ReadToken(token.Token) as JwtSecurityToken;
             var roleIdClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Role");
 
             if (roleIdClaim != null)
