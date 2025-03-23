@@ -13,7 +13,7 @@ namespace Data_Base.Models.E
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int ID { get; set; }
+        public int Id { get; set; }
         public double Score { get; set; }
         [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
         [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]

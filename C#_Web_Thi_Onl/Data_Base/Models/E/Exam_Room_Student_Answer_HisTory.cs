@@ -17,7 +17,7 @@ namespace Data_Base.Models.E
         public int ID { get; set; }
         [ForeignKey("Answer_Id")]
         [JsonIgnore]
-        public Answers Answers { get; set; }
+        public Answers? Answers { get; set; }
         public int Answer_Id { get; set; }
         [ForeignKey("Exam_Room_Student_Id")]
         [JsonIgnore]

@@ -17,7 +17,7 @@ namespace Data_Base.Models.E
         public int Id { get; set; }
         [ForeignKey("Teacher_Id")]
         [JsonIgnore]
-        public virtual Teacher Teachers { get; set; }
+        public Teacher? Teachers { get; set; }
         public int Teacher_Id { get; set; }
         [ForeignKey("Exam_Room")]
         [JsonIgnore]
