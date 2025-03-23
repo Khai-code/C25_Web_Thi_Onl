@@ -18,11 +18,11 @@ namespace Data_Base.Models.C
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(14, ErrorMessage = "Mã lớp không hợp lệ")]
+        [StringLength(12, ErrorMessage = "Mã lớp không hợp lệ")]
         public string Class_Code { get; set; }
         [StringLength(10, ErrorMessage = "Tên lớp không quá 10 ký tự")]
         public string Class_Name { get; set; }
-        [StringLength(50, ErrorMessage = "Một lớp không qua 50 học sinh")]
+        [Range(1, 50, ErrorMessage = "Một lớp không quá 50 học sinh")]
         public int Max_Student { get; set; }
         [ForeignKey("Grade_Id")]
         [JsonIgnore]
@@ -33,11 +33,8 @@ namespace Data_Base.Models.C
         public Teacher? Teachers { get; set; }
         public int Teacher_Id { get; set; }
         [JsonIgnore]
-        public ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();
+        public ICollection<Student_Class> Student_Classes { get; set; }
         [JsonIgnore]
-        public ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
-
-
-
+        public ICollection<Teacher_Class> Teacher_Classes { get; set; }
     }
 }

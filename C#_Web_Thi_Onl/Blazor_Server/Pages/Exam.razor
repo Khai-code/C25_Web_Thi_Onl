@@ -1,0 +1,150 @@
+﻿@page "/add-question-answer"
+@using Blazor_Server.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.ExamService
+@inject NavigationManager Navigation
+@inject ExamService ExamSer
+@inject Notification notification
+@layout TeacherLayout
+@inject ProtectedSessionStorage SessionStorage
+
+<h3>Thêm Câu Hỏi và Đáp Án</h3>
+
+@page "/add-question"
+@inject ExamService ExamService
+
+<EditForm Model="questionViewModel" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div>
+        <label for="questionName">Tên Câu Hỏi:</label>
+        <InputText id="questionName" @bind-Value="questionViewModel.Question.Question_Name" />
+    </div>
+
+    <div>
+        <label for="questionType">Loại Câu Hỏi:</label>
+        <InputSelect id="questionType" @bind-Value="questionViewModel.Question.Type" @onchange="UpdateAnswers">
+            <option value="1">Vòng 1 (Chọn nhiều đáp án)</option>
+            <option value="2">Vòng 2 (Chọn 4 đáp án)</option>
+            <option value="3">Vòng 3 (True/False)</option>
+        </InputSelect>
+    </div>
+
+    <div>
+        <label>Các Đáp Án:</label>
+        <div id="answersContainer">
+            @foreach (var answer in questionViewModel.Answers)
+            {
+                <div>
+                    <InputText @bind-Value="answer.Answers_Name" placeholder="Nhập đáp án..." />
+
+                    @if (questionViewModel.Question.Type == 1)
+                    {
+                        <input type="checkbox"
+                               @checked="answer.Right_Answer == 1"
+                               @onchange="(e) => ToggleAnswer(answer, e.Value)" />
+                        <label>Đúng</label>
+                    }
+                    else
+                    {
+                        <input type="radio"
+                               name="correctAnswer"
+                               checked="@((answer.Right_Answer == 1))"
+                               @onclick="() => SetCorrectAnswer(answer)" />
+                        <label>Đúng</label>
+                    }
+                </div>
+            }
+
+            @if (questionViewModel.Question.Type == 2)
+            {
+                <button type="button" @onclick="AddAnswer">Thêm đáp án</button>
+            }
+        </div>
+    </div>
+
+    <button type="submit">Thêm Câu Hỏi</button>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <p>@message</p>
+    }
+</EditForm>
+
+@code {
+    private QuestionViewModel questionViewModel = new()
+        {
+            Question = new Data_Base.Models.Q.Question(),
+            Answers = new List<Data_Base.Models.A.Answers>()
+        };
+
+    private string message = "";
+
+    private void UpdateAnswers(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int type))
+        {
+            questionViewModel.Question.Type = type;
+            int maxAnswers = type switch
+            {
+                1 => 4, // Vòng 1: Chọn nhiều đáp án
+                2 => 4, // Vòng 2: 4 đáp án + có thể thêm
+                3 => 2, // Vòng 3: True/False
+                _ => 0
+            };
+
+            questionViewModel.Answers.Clear();
+
+            for (int i = 0; i < maxAnswers; i++)
+            {
+                questionViewModel.Answers.Add(new Data_Base.Models.A.Answers
+                    {
+                        Answers_Name = type == 3 ? (i == 0 ? "Đúng" : "Sai") : "",
+                        Right_Answer = 0
+                    });
+            }
+
+            if (type == 3)
+            {
+                questionViewModel.Answers[0].Right_Answer = 1;
+            }
+        }
+    }
+
+    private void ToggleAnswer(Data_Base.Models.A.Answers selectedAnswer, object value)
+    {
+        selectedAnswer.Right_Answer = (bool)value ? 1 : 0;
+    }
+
+    private void SetCorrectAnswer(Data_Base.Models.A.Answers selectedAnswer)
+    {
+        foreach (var answer in questionViewModel.Answers)
+        {
+            answer.Right_Answer = 0;
+        }
+        selectedAnswer.Right_Answer = 1;
+    }
+
+    private void AddAnswer()
+    {
+        if (questionViewModel.Question.Type == 2)
+        {
+            questionViewModel.Answers.Add(new Data_Base.Models.A.Answers { Answers_Name = "", Right_Answer = 0 });
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var result = await ExamService.AddQuestionWithAnswersAsync(questionViewModel);
+        if (result != null)
+        {
+            message = "Thêm câu hỏi thành công!";
+        }
+        else
+        {
+            message = "Thêm câu hỏi thất bại!";
+        }
+    }
+}

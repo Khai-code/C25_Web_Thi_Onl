@@ -17,44 +17,40 @@ namespace Blazor_Server.Services
             _httpClient = httpClient;
         }
 
-        public async Task<string> Login(string username, string password)
+        public async Task<LoginResult> Login(string username, string password)
         {
             var loginRequest = new { User_Name = username, User_Pass = password };
 
             var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Auth/login", loginRequest);
+            var errorContent = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Lỗi từ server: {errorContent}");
 
             if (response.IsSuccessStatusCode)
             {
-                var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
+                var result = await response.Content.ReadFromJsonAsync<LoginResult>();
 
                 // 🔥 Giải mã token để lấy Role_Id
                 var handler = new JwtSecurityTokenHandler();
                 var jsonToken = handler.ReadToken(result.Token) as JwtSecurityToken;
                 var roleClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Role");
 
-                if (roleClaim != null && int.TryParse(roleClaim.Value, out int roleId))
+                int role = 0; // Mặc định nếu không tìm thấy role
+                if (roleClaim != null && int.TryParse(roleClaim.Value, out int parsedRole))
                 {
-                    // 👉 Điều hướng dựa trên Role_Id
-                    if (roleId == 1)
-                    {
-                        return "student"; // Học sinh
-                    }
-                    else if (roleId == 2)
-                    {
-                        return "teacher"; // Giáo viên
-                    }
+                    role = parsedRole;
                 }
 
-                return "unknown"; // Không có role
+                return new LoginResult { Token = result.Token, Role = role };
             }
 
             return null;
         }
     }
 
-    public class LoginResponse
+    public class LoginResult
     {
         public string Token { get; set; }
+        public int Role { get; set; }
     }
 }
 

@@ -18,10 +18,8 @@ namespace Data_Base.Models.R
         public int Id { get; set; }
         [StringLength(50, ErrorMessage = "Tên quyền không được quá 50 ký tự")]
         public string Role_Name { get; set; }
-        [StringLength(14, ErrorMessage = "Mã code quá 14 ký tự")]
-        public string Role_Code { get; set; }
         public int Status { get; set; }
         [JsonIgnore]
-        public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<User> Users { get; set; }
     }
 }

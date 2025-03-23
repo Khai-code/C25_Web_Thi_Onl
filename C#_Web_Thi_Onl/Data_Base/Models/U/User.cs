@@ -26,6 +26,7 @@ namespace Data_Base.Models.U
         [StringLength(256, ErrorMessage = "Email không được quá 256 ký tự")]
         [EmailAddress(ErrorMessage = "Email ko đúng định dạng")]
         public string Email { get; set; }
+        public string Address { get; set; }
         [StringLength(10, ErrorMessage = "Số điện thoại không được quá 10 ký tự")]
         public string Phone_Number { get; set; }
         [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
