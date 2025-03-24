@@ -41,17 +41,24 @@
         {
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(token.Token) as JwtSecurityToken;
-            var roleIdClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Role");
 
-            if (roleIdClaim != null)
+            if (jsonToken != null)
             {
-                await SessionStorage.SetAsync("userRole", roleIdClaim.Value);
+                foreach (var claim in jsonToken.Claims)
+                {
+                    await SessionStorage.SetAsync(claim.Type, claim.Value);
+                }
+                var roleIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Role");
+                if (roleIdClaim != null)
+                {
+                    await SessionStorage.SetAsync("userRole", roleIdClaim.Value);
+                }
                 Navigation.NavigateTo("/", forceLoad: true); // Reload trang để áp dụng Layout mới
             }
         }
         else
         {
-            await notification.ShowToast("Tên đăng nhập hoặc mật khẩu không đúng !", "error");
+            await notification.ShowToast("Tên đăng nhập hoặc mật khẩu không đúng!", "error");
         }
     }
 }

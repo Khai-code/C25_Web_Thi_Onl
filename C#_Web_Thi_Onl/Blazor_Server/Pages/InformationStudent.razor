@@ -1,0 +1,74 @@
+﻿@page "/InforStudent"
+@using Blazor_Server.Services
+@layout StudentLayout
+@inject Inforservice inforService
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
+<PageTitle>Thông tin học sinh</PageTitle>
+<div class="container " style="margin-top:100px">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card shadow-sm p-3">
+                <div class="d-flex justify-content-center">
+                    <img src="@studentInfo?.Picture" class="rounded-circle border" style="width: 100px; height: 100px; object-fit: cover;">
+                </div>
+                <h5 class="text-center mt-2">@studentInfo?.Full_Name <span class="text-success">✔</span></h5>
+                <p class="text-center text-muted">Học sinh</p>
+                <hr>
+                <p><strong>Email:</strong> @studentInfo?.Email</p>
+                <p><strong>Số điện thoại:</strong> @studentInfo?.NumberPhone</p>
+                <p><strong>Trạng thái học:</strong> @(studentInfo?.Status == 1 ? "Đang học" : "Nghỉ học")</p>
+            </div>
+        </div>
+        <div class="col-md-9">
+            <div class="card shadow-sm p-5">
+                <h4 class="mb-3">Thông tin cá nhân</h4>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label>Họ và tên:</label>
+                        <input type="text" class="form-control" value="@studentInfo?.Full_Name" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Ngày sinh:</label>
+                        <input type="text" class="form-control" value="@studentInfo?.DateofBirt" disabled>
+                    </div> 
+                    <div class="col-md-6">
+                        <label>Địa chỉ:</label>
+                        <input type="text" class="form-control" value="@studentInfo?.Adrees" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Mã học sinh:</label>
+                        <input type="text" class="form-control" value="@studentInfo?.codestudent" disabled>
+                    </div>
+                    <div class="col-md-6">
+                        <label>Trạng thái:</label>
+                        <input type="text" class="form-control" value="@(studentInfo?.Status == 1 ? "Đang học" : "Nghỉ học")" disabled>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private Inforservice.listInforStudent? studentInfo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await SessionStorage.GetAsync<string>("Id");
+
+            if (!int.TryParse(result.Value, out int userId))
+            {
+                Console.WriteLine("Id không hợp lệ.");
+                return;
+            }
+            studentInfo = await inforService.GetInforStudent(userId);
+        }
+        catch
+        {
+
+        }
+    }
+}
