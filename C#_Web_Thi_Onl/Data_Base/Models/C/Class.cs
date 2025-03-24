@@ -33,8 +33,8 @@ namespace Data_Base.Models.C
         public Teacher? Teachers { get; set; }
         public int Teacher_Id { get; set; }
         [JsonIgnore]
-        public ICollection<Student_Class> Student_Classes { get; set; }
+        public ICollection<Student_Class> Student_Classes { get; set; } = new List<Student_Class>();
         [JsonIgnore]
-        public ICollection<Teacher_Class> Teacher_Classes { get; set; }
+        public ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
     }
 }

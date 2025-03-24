@@ -40,8 +40,8 @@ namespace Data_Base.Models.P
         public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
         [JsonIgnore]
-        public ICollection<Question> Questions { get; set; }
+        public ICollection<Question> Questions { get; set; } = new List<Question>();
         [JsonIgnore]
-        public ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; }
+        public ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
     }
 }
