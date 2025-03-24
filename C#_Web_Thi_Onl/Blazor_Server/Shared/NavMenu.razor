@@ -1,4 +1,7 @@
-﻿<nav class="navbar navbar-expand-md navbar-light bg-transparent fixed-top">
+﻿@inject NavigationManager navigation
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
+@inject IJSRuntime jSRuntime
+<nav id="navbar" class="navbar navbar-expand-md navbar-light bg-transparent  fixed-top">
     <div class="container-fluid">
         <a class="navbar-brand d-none d-md-flex align-items-center" href="/" style="padding-left:30px">
             <img src="image/LogoHome.png" alt="Logo" class="me-2 logo" width="60" height="60" />
@@ -8,7 +11,8 @@
                      font-weight: 600;
                      letter-spacing: 1px;
                      transition: color 0.3s ease-in-out;
-               color: #007bff;">Smart School
+               color: #007bff;">
+                Smart School
             </span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
@@ -43,10 +47,17 @@
             <span class="nav-text me-3 d-none d-md-inline">Xin chào, @username</span>
             <div class="dropdown">
                 <span class="dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="image/LogoHome.png" class="avatar me-2" alt="Avatar">
+                    @if (!string.IsNullOrEmpty(avatar))
+                    {
+                        <img src="@avatar" class="avatar me-2">
+                    }
+                    else
+                    {
+                        <div class="avatar-placeholder me-2">@GetInitial(username)</div>
+                    }
                 </span>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="/profile">Hồ sơ</a></li>
+                    <li><a class="dropdown-item" href="/InforStudent">Hồ sơ</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item text-danger" @onclick="Logout">Đăng xuất</button></li>
                 </ul>
@@ -54,19 +65,49 @@
         </div>
     </div>
 </nav>
+
 @code {
-    private bool isLoggedIn = false;
-    private string username = "Người dùng";
-
-    protected override void OnInitialized()
+    private string username;
+    private string avatar;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-       
-        isLoggedIn = true;
+        if (firstRender)
+        {
+            var result = await SessionStorage.GetAsync<string>("Full_Name");
+            var picture = await SessionStorage.GetAsync<string>("Picture");
+
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
+            {
+                username = result.Value;
+            }
+
+            if (picture.Success && !string.IsNullOrEmpty(picture.Value))
+            {
+                avatar = picture.Value;
+            }
+            StateHasChanged();
+            navigation.LocationChanged += async (sender, args) =>
+            {
+                await jSRuntime.InvokeVoidAsync("updateNavbar");
+            };
+
+            await jSRuntime.InvokeVoidAsync("updateNavbar");
+
+        }
     }
-
-    private void Logout()
+    private async Task Logout()
     {
-        isLoggedIn = false;
-        username = "";
+        await SessionStorage.DeleteAsync("userRole");
+        await SessionStorage.DeleteAsync("Full_Name");
+        await SessionStorage.DeleteAsync("Picture");
+        navigation.NavigateTo("/", forceLoad: true, replace: true);
+    }
+    private string GetInitial(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return name.Substring(0, 1).ToUpper();
+        }
+        return "?";
     }
 }

@@ -18,6 +18,7 @@ builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddScoped<AuthSerrvice>();
 builder.Services.AddScoped<ExamService>();
 builder.Services.AddScoped<Notification>();
+builder.Services.AddScoped<Inforservice>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
