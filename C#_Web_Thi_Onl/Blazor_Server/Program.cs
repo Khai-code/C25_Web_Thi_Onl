@@ -19,6 +19,7 @@ builder.Services.AddScoped<AuthSerrvice>();
 builder.Services.AddScoped<ExamService>();
 builder.Services.AddScoped<Notification>();
 builder.Services.AddScoped<Inforservice>();
+builder.Services.AddScoped<ExammanagementService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

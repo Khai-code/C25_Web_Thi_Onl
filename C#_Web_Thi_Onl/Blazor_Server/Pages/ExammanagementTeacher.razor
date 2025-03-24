@@ -1,0 +1,97 @@
+﻿@page "/exammanagement"
+@using Blazor_Server.Services
+@using Data_Base.Models.R
+@layout TeacherLayout
+@inject ExammanagementService exammanagement
+<div class="p-3 border rounded shadow-sm bg-white">
+    <ul class="nav nav-tabs" id="roomTabs" role="tablist">
+        @for (int i = 0; i < rooms.Count; i++)
+        {
+            <li class="nav-item" role="presentation">
+                <button class="nav-link @(i == 0 ? "active" : "")" id="@($"tab-{rooms[i].ID}")"
+                        data-bs-toggle="tab" data-bs-target="@($"#tab-pane-{rooms[i].ID}")"
+                        type="button" role="tab">
+                    @rooms[i].Room_Name
+                </button>
+            </li>
+        }
+        <li class="nav-item ms-auto">
+            <button class="nav-link text-success fw-bold" data-bs-toggle="modal" data-bs-target="#addRoomModal">
+                ➕ Thêm mới
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content border border-top-0 rounded-bottom bg-light vh-100">
+        @for (int i = 0; i < rooms.Count; i++)
+        {
+            <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="@($"tab-pane-{rooms[i].ID}")" role="tabpanel">
+                <table class="table table-borderless">
+                    <thead>
+                        <tr class="p-2 text-center align-content-center">
+                            <th scope="col">STT</th>
+                            <th scope="col">Tên bài thi</th>
+                            <th scope="col">Tên giáo viên</th>
+                            <th scope="col">Số lượng học sinh</th>
+                            <th scope="col">Thời gian</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col">Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-center align-content-center">
+                        <tr>
+                            <th scope="row">1</th>
+                            <td>Mark</td>
+                            <td>Otto</td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                       
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+
+<!-- Modal Thêm Mới -->
+<div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRoomModalLabel">Thêm phòng mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control" placeholder="Nhập tên phòng..." @bind="newRoomName" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" @onclick="AddNewRoom">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<Room> rooms = new();
+    private string newRoomName = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        rooms = await exammanagement.GetallRoom() ?? new List<Room>();
+    }
+
+    private async Task AddNewRoom()
+    {
+        if (!string.IsNullOrWhiteSpace(newRoomName))
+        {
+            var newRoom = new Room { ID = rooms.Count + 1, Room_Name = newRoomName };
+            rooms.Add(newRoom);
+            newRoomName = string.Empty;
+        }
+    }
+}
