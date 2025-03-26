@@ -1,11 +1,15 @@
 ﻿window.addEventListener("scroll", function () {
     let navbar = document.querySelector(".navbar");
+    if (!navbar) return; // Nếu không tìm thấy navbar, dừng luôn
+
     if (window.scrollY > 50) {
         navbar.classList.add("scrolled");
     } else {
         navbar.classList.remove("scrolled");
     }
 });
+
+
 window.updateNavbar = function () {
     let navbar = document.getElementById("navbar");
 

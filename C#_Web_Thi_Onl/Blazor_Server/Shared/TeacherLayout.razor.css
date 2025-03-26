@@ -121,3 +121,19 @@ body {
     background: url('/image/Untitled-1.png') no-repeat center center fixed;
     background-size: cover;
 }
+.page-transition {
+    opacity: 0;
+    animation: slideIn 0.8s ease-in-out forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}

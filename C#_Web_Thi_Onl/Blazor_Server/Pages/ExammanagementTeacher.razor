@@ -5,56 +5,82 @@
 @inject ExammanagementService exammanagement
 <div class="p-3 border rounded shadow-sm bg-white">
     <ul class="nav nav-tabs" id="roomTabs" role="tablist">
-        @for (int i = 0; i < rooms.Count; i++)
+        @foreach (var item in rooms)
         {
             <li class="nav-item" role="presentation">
-                <button class="nav-link @(i == 0 ? "active" : "")" id="@($"tab-{rooms[i].ID}")"
-                        data-bs-toggle="tab" data-bs-target="@($"#tab-pane-{rooms[i].ID}")"
-                        type="button" role="tab">
-                    @rooms[i].Room_Name
+                <button class="nav-link @(item.ID == selectedRoomId ? "active" : "")"
+                        id="@($"tab-{item.ID}")"
+                        data-bs-toggle="tab"
+                        data-bs-target="@($"#tab-pane-{item.ID}")"
+                        type="button" role="tab"
+                        @onclick="()=>getallexam(item.ID)">
+                    @item.Room_Name
                 </button>
             </li>
         }
         <li class="nav-item ms-auto">
-            <button class="nav-link text-success fw-bold" data-bs-toggle="modal" data-bs-target="#addRoomModal">
-                ➕ Thêm mới
-            </button>
+            <div class="input-group">
+                <span class="input-group-text bg-transparent rounded-0 border-0 border-bottom">
+                    <i class="bi bi-search"></i>
+                </span>
+                <input @bind="searchText" @bind:event="oninput" class="form-control rounded-0 border-0 border-bottom shadow-none" type="search" placeholder="Tìm kiếm..." aria-label="Search">
+            </div>
+
+
         </li>
     </ul>
-
-    <div class="tab-content border border-top-0 rounded-bottom bg-light vh-100">
+    <div class="tab-content border border-top-0 rounded-bottom bg-light ">
         @for (int i = 0; i < rooms.Count; i++)
         {
             <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="@($"tab-pane-{rooms[i].ID}")" role="tabpanel">
-                <table class="table table-borderless">
-                    <thead>
-                        <tr class="p-2 text-center align-content-center">
-                            <th scope="col">STT</th>
-                            <th scope="col">Tên bài thi</th>
-                            <th scope="col">Tên giáo viên</th>
-                            <th scope="col">Số lượng học sinh</th>
-                            <th scope="col">Thời gian</th>
-                            <th scope="col">Trạng thái</th>
-                            <th scope="col">Hành động</th>
-                        </tr>
-                    </thead>
-                    <tbody class="text-center align-content-center">
-                        <tr>
-                            <th scope="row">1</th>
-                            <td>Mark</td>
-                            <td>Otto</td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
-                       
-                    </tbody>
-                </table>
+                <div class="table">
+                    <table class="table table-borderless shadow-sm">
+                        <thead class="table-secondary border-top text-center " style="font-family:sans-serif;height:50px">
+                            <tr class="">
+                                <td scope="col">STT</td>
+                                <td scope="col">Tên bài thi</td>
+                                <td scope="col">Tên giáo viên</td>
+                                <td scope="col">Lớp</td>
+                                <td scope="col">Thời gian</td>
+                                <td scope="col">Trạng thái</td>
+                                <td scope="col">Hành động</td>
+                            </tr>
+                        </thead>
+                        <tbody class="text-center">
+                            @if (filteredExamList.Any())
+                            {
+                                @foreach (var (exam, index) in filteredExamList.Select((exam, i) => (exam, i + 1)))
+                                {
+                                    <tr>
+                                        <td>@index</td>
+                                        <td>@exam.Name</td>
+                                        <td>GV1: @exam.NameTeacher1 <br />GV2: @exam.NameTeacher2</td>
+                                        <td>@exam.nameclass</td>
+                                        <td>@exam.StartTime - @exam.EndTime</td>
+                                        <td>@(exam.Status == 1 ? "Đang thi" : "Chưa thi")</td>
+                                        <td>
+                                            <NavLink href="@($"/DetailExamanager/{exam.Id}")" class="btn btn-info">
+                                                Chi tiết
+                                            </NavLink>
+
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="7" class="text-danger text-center">Không có bài thi nào.</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         }
     </div>
 </div>
+
 
 
 <!-- Modal Thêm Mới -->
@@ -79,12 +105,30 @@
 @code {
     private List<Room> rooms = new();
     private string newRoomName = string.Empty;
-
+    private int selectedRoomId;
+    private List<ExammanagementService.ListExam> examList =new();
+    private string searchText = "";
+    private IEnumerable<ExammanagementService.ListExam> filteredExamList => string.IsNullOrWhiteSpace(searchText)
+       ? examList
+       : examList.Where(x => x.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                             x.NameTeacher1.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                             x.NameTeacher2.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                             (x.Status == 1 ? "Đang thi" : "Chưa thi").Contains(searchText, StringComparison.OrdinalIgnoreCase));
     protected override async Task OnInitializedAsync()
     {
         rooms = await exammanagement.GetallRoom() ?? new List<Room>();
-    }
+        if (rooms.Any())
+        {
+            selectedRoomId = rooms.First().ID;
+            await getallexam(selectedRoomId);
+        }
 
+    }
+    private async Task getallexam(int id)
+    {
+        examList = await exammanagement.Listexam(id);
+    }
+    
     private async Task AddNewRoom()
     {
         if (!string.IsNullOrWhiteSpace(newRoomName))
