@@ -12,40 +12,36 @@ namespace Blazor_Server.Services
             _httpClient = httpClient;
         }
 
-        public async Task<Question> AddQuestionWithAnswersAsync(QuestionViewModel model)
+        public async Task<QuestionViewModel> AddQuestionWithAnswersAsync(QuestionViewModel model)
         {
-            var maxAnswers = GetMaxAnswersForType(model.Question.Type);
-            if (model.Answers.Count > maxAnswers)
-            {
-                throw new ArgumentException($"Số lượng đáp án không hợp lệ cho loại câu hỏi này. Tối đa là {maxAnswers} đáp án.");
-            }
-
+            // 1️⃣ Gửi yêu cầu thêm câu hỏi
             var response = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/Post", model.Question);
 
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var addedQuestion = await response.Content.ReadFromJsonAsync<Question>();
+            if (addedQuestion == null) return null;
+
+            // 2️⃣ Gán Question_Id cho tất cả các đáp án
+            foreach (var answer in model.Answers)
             {
-                var createdQuestion = await response.Content.ReadFromJsonAsync<Question>();
-
-                // Sau khi tạo câu hỏi, tạo các đáp án
-                foreach (var answer in model.Answers)
-                {
-                    answer.Question_Id = createdQuestion.Id;
-                    await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/Post", answer);
-                }
-
-                return createdQuestion;
+                answer.Question_Id = addedQuestion.Id;
             }
 
-            return null;
+            // 3️⃣ Gửi danh sách đáp án lên API /api/Answer/Post
+            var answerResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answer/Post", model.Answers);
+
+            if (!answerResponse.IsSuccessStatusCode)
+                return null;
+
+            return new QuestionViewModel
+            {
+                Question = addedQuestion,
+                Answers = model.Answers
+            };
         }
 
-        private int GetMaxAnswersForType(int type)
-        {
-            if (type == 1) return 10; // Vòng 1: Chọn nhiều đáp án
-            if (type == 2) return 4;  // Vòng 2: Chọn 4 đáp án
-            if (type == 3) return 2;  // Vòng 3: Chỉ có True/False
-            return 0;
-        }
 
         public class QuestionViewModel
         {
