@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager navigation
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
+@inject IJSRuntime jSRuntime
 <div class="container-fluid d-flex flex-column p-0">
     <nav class="top-navbar d-flex align-items-center justify-content-between fixed-top p-2">
         <div class="d-flex align-items-center" style="padding-left:10px">
@@ -14,22 +17,29 @@
             <span class="nav-text me-3 d-none d-md-inline">Xin chào, @username</span>
             <div class="dropdown">
                 <span class="dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img src="image/LogoHome.png" class="avatar me-2" alt="Avatar">
+                    @if (!string.IsNullOrEmpty(avatar))
+                    {
+                        <img src="@avatar" class="avatar me-2">
+                    }
+                    else
+                    {
+                        <div class="avatar-placeholder me-2">@GetInitial(username)</div>
+                    }
                 </span>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="/profile">Hồ sơ</a></li>
+                    <li><a class="dropdown-item" href="/InforStudent">Hồ sơ</a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><button class="dropdown-item text-danger" @onclick="Logout">Đăng xuất</button></li>
                 </ul>
             </div>
         </div>
     </nav>
-    
+
     <div class="main-layout d-flex">
         <aside class="sidebar fixed-sidebar p-3 @(isSidebarVisible ? "expanded" : "collapsed")">
             <nav class="nav flex-column">
                 <a class="nav-link" href="/"><i class="bi bi-house-fill"></i> <span class="sidebar-text">Trang chủ</span></a>
-                <a class="nav-link" href="#"><i class="bi bi-person-badge-fill"></i> <span class="sidebar-text">Danh sách giáo viên</span></a>
+                <a class="nav-link" href="/teachers"><i class="bi bi-person-badge-fill"></i> <span class="sidebar-text">Danh sách giáo viên</span></a>
                 <a class="nav-link" href="#"><i class="bi bi-people-fill"></i> <span class="sidebar-text">Quản lý lớp học</span></a>
                 <a class="nav-link" href="#"><i class="bi bi-journal-bookmark-fill"></i> <span class="sidebar-text">Ngân hàng câu hỏi</span></a>
                 <a class="nav-link" href="#"><i class="bi bi-file-earmark-text-fill"></i> <span class="sidebar-text">Quản lý bài thi</span></a>
@@ -45,18 +55,54 @@
 </div>
 
 @code {
-    private bool isLoggedIn = true;
-    private string username = "Người dùng";
+    private string username;
+    private string avatar;
     private bool isSidebarVisible = true;
 
     private void ToggleSidebar()
     {
         isSidebarVisible = !isSidebarVisible;
     }
-
-    private void Logout()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        isLoggedIn = false;
-        username = "";
+        if (firstRender)
+        {
+            var result = await SessionStorage.GetAsync<string>("Full_Name");
+            var picture = await SessionStorage.GetAsync<string>("Picture");
+
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
+            {
+                username = result.Value;
+            }
+
+            if (picture.Success && !string.IsNullOrEmpty(picture.Value))
+            {
+                avatar = picture.Value;
+            }
+            StateHasChanged();
+            navigation.LocationChanged += async (sender, args) =>
+            {
+                await jSRuntime.InvokeVoidAsync("updateNavbar");
+            };
+
+            await jSRuntime.InvokeVoidAsync("updateNavbar");
+
+        }
     }
+    private async Task Logout()
+    {
+        await SessionStorage.DeleteAsync("userRole");
+        await SessionStorage.DeleteAsync("Full_Name");
+        await SessionStorage.DeleteAsync("Picture");
+        navigation.NavigateTo("/", forceLoad: true, replace: true);
+    }
+    private string GetInitial(string name)
+    {
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            return name.Substring(0, 2).ToUpper();
+        }
+        return "?";
+    }
+   
 }
