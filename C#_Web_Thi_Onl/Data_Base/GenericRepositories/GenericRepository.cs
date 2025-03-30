@@ -76,7 +76,7 @@ namespace Data_Base.GenericRepositories
         }
 
         // 🏫 Lấy mã Teacher lớn nhất từ DB
-        public async Task<string> GetLastTeacherCodeAsync(int yearOfBirth)
+        public async Task<string> GetLastTeacherCodeAsync(long yearOfBirth)
         {
             string prefix = $"TEA{yearOfBirth % 100:D2}";
 
@@ -113,6 +113,32 @@ namespace Data_Base.GenericRepositories
                 .OrderByDescending(s => s.Subject_Code)
                 .Select(s => s.Subject_Code)
                 .FirstOrDefaultAsync();
+        }
+
+        public async Task<int> GetLastTestNumberAsync(string year, string testType)
+        {
+            var lastTest = await _context.Tests
+                .Where(t => t.Test_Code.StartsWith($"T{testType}{year}"))
+                .OrderByDescending(t => t.Test_Code)
+                .FirstOrDefaultAsync();
+
+            if (lastTest == null) return 0;
+
+            string lastNumberStr = lastTest.Test_Code.Substring(6, 5); // Lấy 3 số cuối
+            return int.TryParse(lastNumberStr, out int lastNumber) ? lastNumber : 0;
+        }
+
+        public async Task<int> GetLastRoomNumberAsync()
+        {
+            var lastRoom = await _context.Rooms
+                .Where(r => r.Room_Code.StartsWith("R"))
+                .OrderByDescending(r => r.Room_Code)
+                .FirstOrDefaultAsync();
+
+            if (lastRoom == null) return 0;
+
+            string lastNumberStr = lastRoom.Room_Code.Substring(1, 3); // Lấy 3 số cuối
+            return int.TryParse(lastNumberStr, out int lastNumber) ? lastNumber : 0;
         }
     }
 }

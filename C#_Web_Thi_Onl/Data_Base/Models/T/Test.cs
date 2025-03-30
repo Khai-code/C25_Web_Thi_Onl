@@ -16,7 +16,7 @@ namespace Data_Base.Models.T
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(8, ErrorMessage = "Mã đề không quá 8 ký tự")]
+        [StringLength(14, ErrorMessage = "Mã đề không quá 14 ký tự")]
         public string Test_Code { get; set; }
         public int Status { get; set; }
         [ForeignKey("Package_Id")]

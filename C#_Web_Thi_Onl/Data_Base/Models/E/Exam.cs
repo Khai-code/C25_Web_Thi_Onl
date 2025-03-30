@@ -17,8 +17,6 @@ namespace Data_Base.Models.E
         public int Id { get; set; }
         [StringLength(50, ErrorMessage = "Tên bài thi không quá 50 ký tự")]
         public string Exam_Name { get; set; }
-        [StringLength(14, ErrorMessage = "Mã bài thi không quá 14 ký tự")]
-        public string Exam_Code { get; set; }
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
         public Subject? Subjects { get; set; }
