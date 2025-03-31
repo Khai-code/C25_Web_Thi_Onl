@@ -124,7 +124,7 @@ namespace ASP.NET.Controllers.G
             {
                 var startDateProperty = entity.GetType().GetProperty("Start_Time");
                 var endDateProperty = entity.GetType().GetProperty("End_Time");
-                var lastNumberProperty = entity.GetType().GetProperty("Last_Number");
+                var lastNumberProperty = entity.GetType().GetProperty("Summary_Name");
 
                 if (startDateProperty == null || endDateProperty == null || lastNumberProperty == null)
                 {
