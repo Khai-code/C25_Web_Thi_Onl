@@ -20,6 +20,6 @@ namespace Data_Base.Models.R
         public string Role_Name { get; set; }
         public int Status { get; set; }
         [JsonIgnore]
-        public ICollection<User> Users { get; set; }
+        public ICollection<User> Users { get; set; } = new List<User>();
     }
 }
