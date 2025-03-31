@@ -68,7 +68,7 @@ namespace ASP.NET.Controllers.G
                 var user = await _repository.GetByIdAsync<User>(userId);
                 if (user == null) return BadRequest("User not found!");
 
-                long yearOfBirth = Convert.ToDateTime(user.Data_Of_Birth).Year;
+                long yearOfBirth = user.Data_Of_Birth / (long)Math.Pow(10, user.Data_Of_Birth.ToString().Length - 4);
                 var lastCode = await _repository.GetLastTeacherCodeAsync(yearOfBirth);
                 entity.GetType().GetProperty("Teacher_Code")?.SetValue(entity, GenerateTeacherCode(yearOfBirth, lastCode));
             }
@@ -122,9 +122,9 @@ namespace ASP.NET.Controllers.G
             }
             else if (entityName == "Summary")
             {
-                var startDateProperty = entity.GetType().GetProperty("Start_Date");
-                var endDateProperty = entity.GetType().GetProperty("End_Date");
-                var lastNumberProperty = entity.GetType().GetProperty("Last_Number");
+                var startDateProperty = entity.GetType().GetProperty("Start_Time");
+                var endDateProperty = entity.GetType().GetProperty("End_Time");
+                var lastNumberProperty = entity.GetType().GetProperty("Summary_Name");
 
                 if (startDateProperty == null || endDateProperty == null || lastNumberProperty == null)
                 {
