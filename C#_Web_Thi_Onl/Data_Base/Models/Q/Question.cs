@@ -20,8 +20,6 @@ namespace Data_Base.Models.Q
         public int Id { get; set; }
         [StringLength(4000, ErrorMessage = "Nội dung câu hỏi không quá 4000 ký tự")]
         public string Question_Name { get; set; }
-        [StringLength(14, ErrorMessage = "Mã câu hỏi không quá 14 ký tự")]
-        public string Question_Code { get; set; }
         public int Type { get; set; }
         public int Level { get; set; }
         [ForeignKey("Package_Id")]
