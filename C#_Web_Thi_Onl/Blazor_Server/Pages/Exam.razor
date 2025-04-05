@@ -9,77 +9,69 @@
 @layout TeacherLayout
 @inject ProtectedSessionStorage SessionStorage
 
-@inject HttpClient Http
+<div class="container mt-4">
+    <div class="row">
+        <!-- Cột trái: Form thêm câu hỏi -->
+        <div class="col-md-6">
+            <h2 class="mb-3">Thêm Câu Hỏi</h2>
+            <form>
+                <div class="mb-3">
+                    <label for="question" class="form-label">Tên câu hỏi</label>
+                    <textarea class="form-control" id="question" rows="3" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="questionType" class="form-label">Loại câu hỏi</label>
+                    <select class="form-select" id="questionType" required onchange="showAnswerFields()">
+                        <option value="">-- Chọn loại câu hỏi --</option>
+                        <option value="1">Một đáp án</option>
+                        <option value="2">Nhiều đáp án</option>
+                        <option value="3">Đúng/Sai</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="difficulty" class="form-label">Mức độ</label>
+                    <select class="form-select" id="difficulty" required>
+                        <option value="">-- Chọn mức độ --</option>
+                        <option value="easy">Dễ</option>
+                        <option value="medium">Trung Bình</option>
+                        <option value="hard">Khó</option>
+                    </select>
+                </div>
+                <div id="answerFields" class="mb-3" style="display: none;">
+                    <label class="form-label">Nhập đáp án</label>
+                    <div id="answersContainer"></div>
+                    <button type="button" class="btn btn-secondary mt-2" id="addAnswerBtn" style="display: none;" onclick="addAnswer()">Thêm đáp án</button>
+                </div>
+                <button type="submit" class="btn btn-primary">Thêm Câu Hỏi</button>
+            </form>
+        </div>
 
-<h3>Thêm Câu Hỏi</h3>
-
-@if (!string.IsNullOrEmpty(Message))
-{
-    <p class="text-success">@Message</p>
-}
-
-<div class="mb-3">
-    <label class="form-label">Câu hỏi:</label>
-    <input type="text" class="form-control" @bind="questionText" />
-</div>
-
-@for (int i = 0; i < answers.Count; i++)
-{
-    <div class="mb-2">
-@*         <input type="radio" name="correctAnswer" @bind="@selectedAnswerIndex" value="@i" /> *@
-        <input type="text" class="form-control d-inline-block w-75" @bind="answers[i]" placeholder="Nhập đáp án" />
+        <!-- Cột phải: Danh mục và câu hỏi -->
+        <div class="col-md-4 offset-md-2">
+            <h4>Danh mục câu hỏi</h4>
+            <ul class="list-group" id="categoryList">
+                <li class="list-group-item">
+                    <strong>Toán</strong>
+                    <ul class="list-unstyled ms-3">
+                        <li>- Phép cộng đơn giản</li>
+                        <li>- Phép nhân hai số</li>
+                    </ul>
+                </li>
+                <li class="list-group-item">
+                    <strong>Văn</strong>
+                    <ul class="list-unstyled ms-3">
+                        <li>- Tóm tắt truyện Kiều</li>
+                        <li>- Phân tích nhân vật Thúy Kiều</li>
+                    </ul>
+                </li>
+                <li class="list-group-item">
+                    <strong>Lịch Sử</strong>
+                    <ul class="list-unstyled ms-3">
+                        <li>- Nguyên nhân chiến tranh thế giới thứ 2</li>
+                        <li>- Cách mạng tháng 8</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
     </div>
-}
-
-<button class="btn btn-primary" @onclick="SubmitQuestion">Gửi Câu Hỏi</button>
-
-@code {
-    private string questionText = "";
-    private List<string> answers = new() { "", "", "", "" };
-    private int selectedAnswerIndex = 0;
-    private string Message = "";
-
-    private async Task SubmitQuestion()
-    {
-        var model = new QuestionViewModel
-        {
-            Question = new Question { Content = questionText },
-            Answers = answers.Select((ans, index) => new Answer
-            {
-                Content = ans,
-                IsCorrect = index == selectedAnswerIndex
-            }).ToList()
-        };
-
-        var response = await Http.PostAsJsonAsync("https://localhost:7187/api/Question/Post", model);
-        
-        if (response.IsSuccessStatusCode)
-        {
-            Message = "Câu hỏi đã được thêm thành công!";
-            questionText = "";
-            answers = new() { "", "", "", "" };
-            selectedAnswerIndex = 0;
-        }
-        else
-        {
-            Message = "Lỗi khi thêm câu hỏi!";
-        }
-    }
-
-    public class Question
-    {
-        public string Content { get; set; }
-    }
-
-    public class Answer
-    {
-        public string Content { get; set; }
-        public bool IsCorrect { get; set; }
-    }
-
-    public class QuestionViewModel
-    {
-        public Question Question { get; set; }
-        public List<Answer> Answers { get; set; }
-    }
-}
+</div>
