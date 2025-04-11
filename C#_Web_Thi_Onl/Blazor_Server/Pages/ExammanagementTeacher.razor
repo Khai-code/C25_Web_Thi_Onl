@@ -1,141 +1,186 @@
 ﻿@page "/exammanagement"
 @using Blazor_Server.Services
-@using Data_Base.Models.R
+@using Data_Base.GenericRepositories
+@using Data_Base.Models.E
+@using static Blazor_Server.Services.ExammanagementService
 @layout TeacherLayout
+@inject Notification notification
 @inject ExammanagementService exammanagement
-<div class="p-3 border rounded shadow-sm bg-white">
-    <ul class="nav nav-tabs" id="roomTabs" role="tablist">
-        @foreach (var item in rooms)
-        {
-            <li class="nav-item" role="presentation">
-                <button class="nav-link @(item.ID == selectedRoomId ? "active" : "")"
-                        id="@($"tab-{item.ID}")"
-                        data-bs-toggle="tab"
-                        data-bs-target="@($"#tab-pane-{item.ID}")"
-                        type="button" role="tab"
-                        @onclick="()=>getallexam(item.ID)">
-                    @item.Room_Name
-                </button>
-            </li>
-        }
-        <li class="nav-item ms-auto">
-            <div class="input-group">
-                <span class="input-group-text bg-transparent rounded-0 border-0 border-bottom">
-                    <i class="bi bi-search"></i>
-                </span>
-                <input @bind="searchText" @bind:event="oninput" class="form-control rounded-0 border-0 border-bottom shadow-none" type="search" placeholder="Tìm kiếm..." aria-label="Search">
-            </div>
+<div class="split-container">
+    <div class="left-panel">
+        <h6 class="text-center text-primary fw-bold">📋 Danh sách bài thi</h6>
+        <div class="list-group">
+            @foreach (var exam in exams)
+            {
+                <a class="list-group-item d-flex justify-content-between align-items-center
+                     @(SelectedExam == exam.Id ? "active text-white bg-primary" : "")"
+                @onclick="() => SelectExam(exam.Id)">
 
+                    <div>
+                        <span class="fw-bold">📚 @exam.NameExam</span>
+                    </div>
 
-        </li>
-    </ul>
-    <div class="tab-content border border-top-0 rounded-bottom bg-light ">
-        @for (int i = 0; i < rooms.Count; i++)
-        {
-            <div class="tab-pane fade @(i == 0 ? "show active" : "")" id="@($"tab-pane-{rooms[i].ID}")" role="tabpanel">
-                <div class="table">
-                    <table class="table table-borderless shadow-sm">
-                        <thead class="table-secondary border-top text-center " style="font-family:sans-serif;height:50px">
-                            <tr class="">
-                                <td scope="col">STT</td>
-                                <td scope="col">Tên bài thi</td>
-                                <td scope="col">Tên giáo viên</td>
-                                <td scope="col">Lớp</td>
-                                <td scope="col">Thời gian</td>
-                                <td scope="col">Trạng thái</td>
-                                <td scope="col">Hành động</td>
-                            </tr>
-                        </thead>
-                        <tbody class="text-center">
-                            @if (filteredExamList.Any())
-                            {
-                                @foreach (var (exam, index) in filteredExamList.Select((exam, i) => (exam, i + 1)))
-                                {
-                                    <tr>
-                                        <td>@index</td>
-                                        <td>@exam.Name</td>
-                                        <td>GV1: @exam.NameTeacher1 <br />GV2: @exam.NameTeacher2</td>
-                                        <td>@exam.nameclass</td>
-                                        <td>@exam.StartTime - @exam.EndTime</td>
-                                        <td>@(exam.Status == 1 ? "Đang thi" : "Chưa thi")</td>
-                                        <td>
-                                            <NavLink href="@($"/DetailExamanager/{exam.Id}")" class="btn btn-info">
-                                                Chi tiết
-                                            </NavLink>
+                    <span class="badge bg-info text-dark p-2 rounded-pill">
+                        @exam.Totalpackage gói đề
+                    </span>
 
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                            else
-                            {
-                                <tr>
-                                    <td colspan="7" class="text-danger text-center">Không có bài thi nào.</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        }
+                </a>
+            }
+        </div>
     </div>
-</div>
+    <div class="right-panel">
+
+        <div class="top-panel">
+            <h6 class="title text-success">📌 Danh sách gói đề</h6>
+            @if (SelectedExam != null)
+            {
+                <div class="list-group">
+                    @foreach (var package in Listpackages)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-center
+                         @(SelectedPackage == package.Id ? "active bg-primary text-white" : "")" @onclick="() => SelectPackage(package.Id)">
+
+                            <div>
+                                <span class="fw-bold">📘 @package.NamePackage</span>
+
+                                <!-- Kiểm tra nếu đang chỉnh sửa -->
+                                @if (EditingPackageId == package.Idexam)
+                                {
+                                    <div class="d-flex align-items-center gap-3">
+                                        <label class="fw-bold mb-0">🕒 Bắt đầu:</label>
+                                        <input type="datetime-local" class="form-control form-control-sm w-auto" @bind="package.StartTime" />
+
+                                        <label class="fw-bold mb-0">⏳ Kết thúc:</label>
+                                        <input type="datetime-local" class="form-control form-control-sm w-auto" @bind="package.EndTime" />
+                                    </div>
+                                }
+
+                                else
+                                {
+                                    <div class="small @(SelectedPackage == package.Id ? "text-light" : "text-muted")">
+                                        🕒 @package.StartTime.ToString("dd/MM/yyyy HH:mm") - @package.EndTime.ToString("dd/MM/yyyy HH:mm")
+                                        📍 Phòng: @package.RoomName
+                                    </div>
+                                }
+                            </div>
+
+                            <div>
+                                @if (EditingPackageId == package.Idexam)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => SaveChanges(package)">
+                                        <i class="bi bi-save"></i> Lưu
+                                    </button>
+                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">
+                                        ❌ Hủy
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-warning btn-sm" @onclick="() => EditPackage(package.Idexam)">
+                                        <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                    </button>
+                                }
+                            </div>
+
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="bottom-panel">
+            <h6 class="title text-warning">🎓 Danh sách học sinh</h6>
+            @if (SelectedPackage != null)
+            {
+                <ul class="list-group">
+                    @foreach (var student in listStudents)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3 rounded shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar bg-primary  rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-circle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 fw-bold">@student.NameStudent</h6>
+                                    <small class="text-muted">@student.status</small>
+                                </div>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm d-flex align-items-center">
+                                <i class="fas fa-times me-1"></i> Hủy thi
+                            </button>
+                        </li>
 
 
-
-<!-- Modal Thêm Mới -->
-<div class="modal fade" id="addRoomModal" tabindex="-1" aria-labelledby="addRoomModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="addRoomModalLabel">Thêm phòng mới</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="text" class="form-control" placeholder="Nhập tên phòng..." @bind="newRoomName" />
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" class="btn btn-primary" @onclick="AddNewRoom">Lưu</button>
-            </div>
+                    }
+                </ul>
+            }
         </div>
     </div>
 </div>
 
 @code {
-    private List<Room> rooms = new();
-    private string newRoomName = string.Empty;
-    private int selectedRoomId;
-    private List<ExammanagementService.ListExam> examList =new();
-    private string searchText = "";
-    private IEnumerable<ExammanagementService.ListExam> filteredExamList => string.IsNullOrWhiteSpace(searchText)
-       ? examList
-       : examList.Where(x => x.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                             x.NameTeacher1.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                             x.NameTeacher2.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                             (x.Status == 1 ? "Đang thi" : "Chưa thi").Contains(searchText, StringComparison.OrdinalIgnoreCase));
+    private List<listexam> exams = new List<listexam>();
+    private List<listpackage> Listpackages = new List<listpackage>();
+    private List<listStudent> listStudents = new List<listStudent>();
     protected override async Task OnInitializedAsync()
     {
-        rooms = await exammanagement.GetallRoom() ?? new List<Room>();
-        if (rooms.Any())
-        {
-            selectedRoomId = rooms.First().ID;
-            await getallexam(selectedRoomId);
-        }
+        try{
+            exams = await exammanagement.GetallExam();
+        }catch{}
 
     }
-    private async Task getallexam(int id)
+    private int SelectedExam;
+    private int SelectedPackage;
+    private int? EditingPackageId = null;
+    private async Task SelectExam(int id)
     {
-        examList = await exammanagement.Listexam(id);
+        SelectedExam = id;
+        Listpackages = await exammanagement.GetallPackage(id);
     }
-    
-    private async Task AddNewRoom()
+
+    private async Task SelectPackage(int id)
     {
-        if (!string.IsNullOrWhiteSpace(newRoomName))
+        SelectedPackage = id;
+        listStudents = await exammanagement.GetAllStudent(id);
+    }
+    private void EditPackage(int id)
+    {
+        EditingPackageId = id;
+    }
+
+    private async Task SaveChanges(listpackage package)
+    {
+        DateTime now = DateTime.Now;
+        if (package.StartTime < now)
         {
-            var newRoom = new Room { ID = rooms.Count + 1, Room_Name = newRoomName };
-            rooms.Add(newRoom);
-            newRoomName = string.Empty;
+            await notification.ShowSweetAlert("Thời gian bắt đầu không được nhỏ hơn thời gian hiện tại!", "error");
+            return;
         }
+        if (package.EndTime <= package.StartTime)
+        {
+            await notification.ShowSweetAlert("Thời gian kết thúc phải lớn hơn thời gian bắt đầu!", "error");
+            return;
+        }
+        var examRoom = new Exam_Room
+            {
+                Start_Time = ConvertLong.ConvertDateTimeToLong(package.StartTime),
+                End_Time = ConvertLong.ConvertDateTimeToLong(package.EndTime)
+            };
+        bool isUpdated = await exammanagement.UpdateExamRoomTime(package.Idexam, examRoom);
+
+        if (isUpdated)
+        {
+            await notification.ShowSweetAlert("Cập nhật thành công!", "success");
+            EditingPackageId = null;
+        }
+        else
+        {
+            await notification.ShowSweetAlert("Cập nhật thất bại!", "error");
+        }
+    }
+
+    private void CancelEdit()
+    {
+        EditingPackageId = null;
     }
 }
