@@ -1,5 +1,7 @@
 ﻿@page "/add-question-answer"
 @using Blazor_Server.Services
+@using Data_Base.Models.A
+@using Data_Base.Models.Q
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.IdentityModel.Tokens.Jwt
 @using static Blazor_Server.Services.ExamService
@@ -8,70 +10,198 @@
 @inject Notification notification
 @layout TeacherLayout
 @inject ProtectedSessionStorage SessionStorage
+@inject IJSRuntime JSRuntime
 
-<div class="container mt-4">
+<div class="container mt-5">
     <div class="row">
-        <!-- Cột trái: Form thêm câu hỏi -->
+        <!-- Form thêm câu hỏi -->
         <div class="col-md-6">
-            <h2 class="mb-3">Thêm Câu Hỏi</h2>
-            <form>
-                <div class="mb-3">
-                    <label for="question" class="form-label">Tên câu hỏi</label>
-                    <textarea class="form-control" id="question" rows="3" required></textarea>
-                </div>
-                <div class="mb-3">
-                    <label for="questionType" class="form-label">Loại câu hỏi</label>
-                    <select class="form-select" id="questionType" required onchange="showAnswerFields()">
-                        <option value="">-- Chọn loại câu hỏi --</option>
-                        <option value="1">Một đáp án</option>
-                        <option value="2">Nhiều đáp án</option>
-                        <option value="3">Đúng/Sai</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label for="difficulty" class="form-label">Mức độ</label>
-                    <select class="form-select" id="difficulty" required>
-                        <option value="">-- Chọn mức độ --</option>
-                        <option value="easy">Dễ</option>
-                        <option value="medium">Trung Bình</option>
-                        <option value="hard">Khó</option>
-                    </select>
-                </div>
-                <div id="answerFields" class="mb-3" style="display: none;">
-                    <label class="form-label">Nhập đáp án</label>
-                    <div id="answersContainer"></div>
-                    <button type="button" class="btn btn-secondary mt-2" id="addAnswerBtn" style="display: none;" onclick="addAnswer()">Thêm đáp án</button>
-                </div>
-                <button type="submit" class="btn btn-primary">Thêm Câu Hỏi</button>
-            </form>
+            <div class="card p-4">
+                <h2 class="mb-3">Thêm Câu Hỏi</h2>
+                <form>
+                    <div class="mb-3">
+                        <label for="question" class="form-label">Tên câu hỏi</label>
+                        <textarea class="form-control" @bind="questionViewModel.Question.Question_Name" id="question" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="questionType" class="form-label">Loại câu hỏi</label>
+                        <select class="form-select" id="questionType" @onchange="OnQuestionTypeChanged">
+                            <option value="">-- Chọn loại câu hỏi --</option>
+                            <option value="1">Một đáp án</option>
+                            <option value="2">Nhiều đáp án</option>
+                            <option value="3">Đúng/Sai</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="difficulty" class="form-label">Mức độ</label>
+                        <select class="form-select" id="difficulty" @bind="questionViewModel.Question.Level" required>
+                            <option value="">-- Chọn mức độ --</option>
+                            <option value="1">Dễ</option>
+                            <option value="2">Trung Bình</option>
+                            <option value="3">Khó</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="examPackage" class="form-label">Chọn gói đề</label>
+                        <select class="form-select" id="examPackage" @bind="questionViewModel.Question.Package_Id" selectedPackageId>
+                            <option value="">-- Chọn gói đề --</option>
+                            @foreach (var package in packages)
+                            {
+                                <option value="@package.Package_Id">@package.Package_Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div id="answerFields" class="mb-3" style="display: none;">
+                        <label class="form-label">Nhập đáp án</label>
+                        <div id="answersContainer"></div>
+                        <button type="button" class="btn btn-secondary mt-2" id="addAnswerBtn" style="display: none;" onclick="addAnswer()">Thêm đáp án</button>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100" @onchange="CretaQuestionAnswers">Thêm Câu Hỏi</button>
+                </form>
+            </div>
         </div>
 
-        <!-- Cột phải: Danh mục và câu hỏi -->
-        <div class="col-md-4 offset-md-2">
-            <h4>Danh mục câu hỏi</h4>
-            <ul class="list-group" id="categoryList">
-                <li class="list-group-item">
-                    <strong>Toán</strong>
-                    <ul class="list-unstyled ms-3">
-                        <li>- Phép cộng đơn giản</li>
-                        <li>- Phép nhân hai số</li>
-                    </ul>
-                </li>
-                <li class="list-group-item">
-                    <strong>Văn</strong>
-                    <ul class="list-unstyled ms-3">
-                        <li>- Tóm tắt truyện Kiều</li>
-                        <li>- Phân tích nhân vật Thúy Kiều</li>
-                    </ul>
-                </li>
-                <li class="list-group-item">
-                    <strong>Lịch Sử</strong>
-                    <ul class="list-unstyled ms-3">
-                        <li>- Nguyên nhân chiến tranh thế giới thứ 2</li>
-                        <li>- Cách mạng tháng 8</li>
-                    </ul>
-                </li>
-            </ul>
+        <!-- Danh mục câu hỏi -->
+        <div class="col-md-5 offset-md-1">
+            <div class="card p-4">
+                <h4>Danh mục câu hỏi</h4>
+                <ul class="list-group" id="categoryList">
+                    @if (packageQuestionSDO == null || packageQuestionSDO.Count == 0)
+                    {
+                        <li class="list-group-item">Không có dữ liệu</li>
+                    }
+                    else
+                    {
+                        @foreach (var group in packageQuestionSDO.GroupBy(q => q.Package_Name))
+                        {
+                            <li class="list-group-item">
+                                <strong>@group.Key</strong>
+                                <ul class="list-unstyled ms-3">
+                                    @foreach (var item in group)
+                                    {
+                                        <li>- @item.Question_Name</li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
         </div>
     </div>
 </div>
+
+@code{
+
+    List<PackageQuestionSDO> packageQuestionSDO = new List<PackageQuestionSDO>();
+    QuestionViewModel questionViewModel = new QuestionViewModel
+    {
+            Question = new Question(),
+            Answers = new List<Answers>()
+    };
+
+    private List<PackageViewModel> packages = new List<PackageViewModel>();
+    private int selectedPackageId;
+
+    private string questionName;
+    private string questionType;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetAllPackage();
+        await PackageQuestion();
+    }
+
+    private async Task OnQuestionTypeChanged(ChangeEventArgs e)
+    {
+        questionViewModel.Question.Type = Convert.ToInt32(e.Value);
+        await JSRuntime.InvokeVoidAsync("showAnswerFields", questionViewModel.Question.Type);
+    }
+
+    private async Task GetAllPackage()
+    {
+        try
+        {
+            packages = await ExamSer.GetPackage();
+        }
+        catch (Exception ex)
+        {
+            packages = new List<PackageViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task PackageQuestion()
+    {
+        try
+        {
+            packageQuestionSDO = await ExamSer.PackageQuestion();
+        }
+        catch (Exception ex)
+        {
+            packageQuestionSDO = new List<PackageQuestionSDO>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    private async Task CretaQuestionAnswers()
+    {
+        try
+        {
+            if (questionType == "1")
+            {
+                questionViewModel.Question.Type = 1;
+            }
+            else if (questionType == "2")
+            {
+                questionViewModel.Question.Type = 2;
+            }
+            else if (questionType == "3")
+            {
+                questionViewModel.Question.Type = 3;
+            }
+            else
+            {
+                Console.WriteLine($"Lỗi: Chưa chọn loại câu hỏi");
+            }
+            var questionViewModel1 = await ExamSer.AddQuestionWithAnswersAsync(questionViewModel);
+
+        }
+        catch (Exception ex)
+        {
+            questionViewModel = new QuestionViewModel();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+
+    }
+}
+
+<style>
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .card {
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+    .btn-primary {
+        background-color: #007bff;
+        border-color: #007bff;
+        border-radius: 8px;
+    }
+
+    .btn-secondary {
+        border-radius: 8px;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+    }
+</style>
