@@ -16,11 +16,11 @@
     } else if (questionType === "3") {
         answersContainer.innerHTML = `
                 <div class="form-check">
-                    <input class="form-check-input" type="radio" name="trueFalse" value="true" required>
+                    <input class="form-check-input" type="radio" name="trueFalse" @bind="questionViewModel.Answers.Answers_Name" value="true" required>
                     <label class="form-check-label">Đúng</label>
                 </div>
                 <div class="form-check">
-                    <input class="form-check-input" type="radio" name="trueFalse" value="false" required>
+                    <input class="form-check-input" type="radio" name="trueFalse" @bind="questionViewModel.Answers.Answers_Name" value="false" required>
                     <label class="form-check-label">Sai</label>
                 </div>
             `;
@@ -36,14 +36,7 @@ function addAnswerField(index, type) {
     div.classList.add("form-check", "mt-2");
     div.innerHTML = `
             <input class="form-check-input" type="${type === '1' ? 'radio' : 'checkbox'}" name="answerOption">
-            <input type="text" class="form-control d-inline w-75" placeholder="Nhập đáp án ${index}" required>
+            <input type="text" class="form-control d-inline w-75" @bind="questionViewModel.Answers.Answers_Name" placeholder="Nhập đáp án ${index}" required>
         `;
     answersContainer.appendChild(div);
-}
-
-function addAnswer() {
-    const questionType = document.getElementById("questionType").value;
-    const answersContainer = document.getElementById("answersContainer");
-    const currentAnswers = answersContainer.getElementsByClassName("form-check").length;
-    addAnswerField(currentAnswers + 1, questionType);
 }

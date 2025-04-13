@@ -1,0 +1,35 @@
+﻿body {
+    background-color: #f4f6f9;
+    font-family: 'Poppins', sans-serif;
+    height: 100vh;
+}
+
+.split-container {
+    display: flex;
+    height: 100vh;
+    gap: 20px;
+}
+
+.left-panel {
+    width: 30%;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+}
+
+.right-panel {
+    width: 70%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.top-panel, .bottom-panel {
+    flex: 1;
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 10px;
+    overflow-y: auto;
+}

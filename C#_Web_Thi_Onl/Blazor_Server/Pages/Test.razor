@@ -1,0 +1,124 @@
+﻿@page "/Test"
+@using Blazor_Server.Services
+@using Data_Base.Models.A
+@using Data_Base.Models.Q
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.Package_Test_ERP
+@inject NavigationManager Navigation
+@inject Package_Test_ERP PTERP
+@inject Notification notification
+@layout TeacherLayout
+@inject ProtectedSessionStorage SessionStorage
+@inject IJSRuntime JSRuntime
+
+<h3>Test</h3>
+
+<div class="quiz-container">
+    <h2>📝 Bài thi trắc nghiệm</h2>
+    <div id="question-container">
+        <!-- Câu hỏi sẽ được hiển thị ở đây -->
+    </div>
+
+    <div class="navigation">
+        <button id="prev-btn">⬅ Lùi</button>
+        <button id="next-btn">Tiếp ➡</button>
+    </div>
+
+    <button id="finish-btn">✅ Kết thúc bài thi</button>
+    <div id="result"></div>
+</div>
+
+@code {
+
+}
+
+<style>
+    body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: #f0f2f5;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        justify-content: center;
+    }
+
+    .quiz-container {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 600px;
+        width: 100%;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    .question-text {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .options label {
+        display: block;
+        background: #f9f9f9;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 1px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .options input[type="radio"] {
+        margin-right: 10px;
+    }
+
+    .options label:hover {
+        background-color: #e0eaff;
+    }
+
+    .navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    #prev-btn, #next-btn {
+        background-color: #007bff;
+        color: white;
+    }
+
+        #prev-btn:disabled, #next-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+    #finish-btn {
+        margin-top: 25px;
+        display: none;
+        background-color: #28a745;
+        color: white;
+        width: 100%;
+    }
+
+    #result {
+        font-size: 22px;
+        color: #28a745;
+        text-align: center;
+        padding-top: 50px;
+    }
+</style>

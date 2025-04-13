@@ -1,0 +1,222 @@
+﻿@page "/add-Package"
+@using Blazor_Server.Services
+@using Data_Base.GenericRepositories
+@using Data_Base.Models.A
+@using Data_Base.Models.E
+@using Data_Base.Models.Q
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.Package_Test_ERP
+@inject NavigationManager Navigation
+@inject Package_Test_ERP PTERP
+@inject Notification notification
+@layout TeacherLayout
+@inject ProtectedSessionStorage SessionStorage
+@inject IJSRuntime JSRuntime
+
+<div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-4xl mx-auto">
+    <h2 class="text-xl md:text-2xl font-bold mb-5 text-center text-green-600">Thêm Gói Đề Thi</h2>
+
+    <form class="space-y-4">
+        <div>
+            <label for="packageName" class="block font-medium mb-1">Tên Package</label>
+            <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" required>
+        </div>
+
+        <div>
+            <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
+            <input type="datetime-local" id="createTime" name="createTime" readonly class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" @bind="Craete_Time">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="startTime" class="block font-medium mb-1">Bắt đầu</label>
+                <input type="datetime-local" id="startTime" name="startTime" required class="w-full border rounded-lg px-3 py-2" @bind="Start_Time">
+            </div>
+            <div>
+                <label for="endTime" class="block font-medium mb-1">Kết thúc</label>
+                <input type="datetime-local" id="endTime" name="endTime" required class="w-full border rounded-lg px-3 py-2" @bind="End_Time">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="subject" class="block font-medium mb-1">Môn học</label>
+                <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Subject_Id">
+                    <option value="">-- Chọn gói môn --</option>
+                    @foreach (var subj in subjectViewModel)
+                    {
+                        <option value="@subj.Subject_Id">@subj.Subject_Name</option>
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label for="class" class="block font-medium mb-1">Lớp</label>
+                <select id="class" name="class" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Class_Id">
+                    <option value="">-- Chọn gói lớp --</option>
+                    @foreach (var classes in classViewModels)
+                    {
+                        <option value="@classes.Class_Id">@classes.Class_Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="examType" class="block font-medium mb-1">Loại bài thi</label>
+                <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Point_Type_Id">
+                    <option value="">-- Chọn gói loại --</option>
+                    @foreach (var point in pointTypeViewModels)
+                    {
+                        <option value="@point.PointType_Id">@point.PointType_Name</option>
+                    }
+                </select>
+            </div>
+
+            <div>
+                <label for="room" class="block font-medium mb-1">Phòng thi</label>
+                <select id="room" name="room" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Room_Id">
+                    <option value="">-- Chọn gói phòng --</option>
+                    @foreach (var room in roomViewModels)
+                    {
+                        <option value="@room.Room_Id">@room.Room_Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div>
+            <label for="exam" class="block font-medium mb-1">Đề thi</label>
+            <select id="exam" name="exam" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Exam_Id">
+                <option value="">-- Chọn gói Exam --</option>
+                @foreach (var exam in examsViewModels)
+                {
+                    <option value="@exam.Exams_Id">@exam.Exams_Name</option>
+                }
+            </select>
+        </div>
+
+        <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold" @onchange="Creta_P_ER_ERP">
+            Thêm Package
+        </button>
+    </form>
+</div>
+@code {
+    PackageTestADO packageTestADO = new PackageTestADO
+    {
+        Exam_Room = new Exam_Room(),
+        Exam_Room_Package = new Exam_Room_Package(),
+        Package = new Data_Base.Models.P.Package()
+    };
+    List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
+    List<ClassViewModel> classViewModels = new List<ClassViewModel>();
+    List<PointTypeViewModel> pointTypeViewModels = new List<PointTypeViewModel>();
+    List<ExamsViewModel> examsViewModels = new List<ExamsViewModel>();
+    List<RoomViewModel> roomViewModels = new List<RoomViewModel>();
+
+    public DateTime Craete_Time;
+    public DateTime Start_Time;
+    public DateTime End_Time;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Subject();
+        await Classes();
+        await PointType();
+        await Exam();
+        await Room();
+    }
+
+    public async Task Subject()
+    {
+        try
+        {
+            subjectViewModel = await PTERP.GetSubject();
+        }
+        catch (Exception ex)
+        {
+            subjectViewModel = new List<SubjectViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task Classes()
+    {
+        try
+        {
+            classViewModels = await PTERP.GetClasses();
+        }
+        catch (Exception ex)
+        {
+            classViewModels = new List<ClassViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task PointType()
+    {
+        try
+        {
+            pointTypeViewModels = await PTERP.GetPointType();
+        }
+        catch (Exception ex)
+        {
+            pointTypeViewModels = new List<PointTypeViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task Exam()
+    {
+        try
+        {
+            examsViewModels = await PTERP.GetExam();
+        }
+        catch (Exception ex)
+        {
+            examsViewModels = new List<ExamsViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task Room()
+    {
+        try
+        {
+            roomViewModels = await PTERP.GetRoom();
+        }
+        catch (Exception ex)
+        {
+            roomViewModels = new List<RoomViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    private async Task Creta_P_ER_ERP()
+    {
+        try
+        {
+            if (Craete_Time != null)
+            {
+                packageTestADO.Package.Create_Time = ConvertLong.ConvertDateTimeToLong(Craete_Time);
+            }
+            if (Start_Time != null)
+            {
+                packageTestADO.Exam_Room.Start_Time = ConvertLong.ConvertDateTimeToLong(Start_Time);
+            }
+            if (End_Time != null)
+            {
+                packageTestADO.Exam_Room.End_Time = ConvertLong.ConvertDateTimeToLong(End_Time);
+            }
+
+            var packageTestViewModel = await PTERP.AddPackageTestERP(packageTestADO);
+        }
+        catch (Exception ex)
+        {
+            packageTestADO = new PackageTestADO();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+}
