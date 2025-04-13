@@ -1,0 +1,240 @@
+﻿@page "/tongket"
+@using Blazor_Server.Services
+@using Data_Base.Models.C
+@layout TeacherLayout
+@inject IJSRuntime jsRuntime
+@inject Learning_SummaryService summaryService
+@inject NavigationManager nav
+
+<div class="container">
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <h4 class="section-title">Tìm kiếm</h4>
+            <div class="search-container">
+                <input type="text" class="form-control search-input"
+                       @bind="searchKeyword"
+                       @bind:event="oninput"
+                       placeholder="Nhập tên lớp hoặc giáo viên" />
+                <button class="btn btn-primary search-btn mt-2" @onclick="SearchClass">Tìm kiếm</button>
+            </div>
+        </div>
+
+        @if (showMessageBox)
+        {
+            <div class="message-box-overlay">
+                <div class="message-box">
+                    <div class="message-header">
+                        <h2>Thông báo</h2>
+                        <button class="close-btn" @onclick="CloseMessageBox">&times;</button>
+                    </div>
+                    <div class="message-body">
+                        <p>Vui lòng nhập lại dữ liệu cần tìm.</p>
+                    </div>
+                    <div class="message-footer">
+                        <button class="btn btn-warning btn-bold" @onclick="CloseMessageBox">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="col-md-8">
+            <div class="row g-3">
+                @if (classList != null && classList.Count > 0)
+                {
+                    @foreach (var classInfo in classList)
+                    {
+                        <div class="col-md-6">
+                            <div class="card class-card" @onclick="() => LoadAndCalculateLearningSummary(classInfo.Id)">
+                                <div class="card-body">
+                                    <h5 class="card-title">@classInfo.Class_Name</h5>
+                                    <p class="card-text">
+                                        <span><strong>Chủ nhiệm:</strong> @classInfo.TeacherName</span><br />
+                                        <span><strong>Tổng số học sinh:</strong> @classInfo.Max_Student</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="col-12 text-center">
+                        <p class="no-data-text">Không có lớp nào để hiển thị.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-md-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="summaryModalLabel">📊 Tổng kết học tập</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="summary-header mb-4">
+                    <p><strong>Lớp:</strong> <span class="highlight-text">@className</span></p>
+                    <p><strong>Kỳ hiện tại:</strong> <span class="highlight-text">@currentSummaryName</span></p>
+                </div>
+                <table class="table table-striped table-hover table-bordered custom-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">STT</th>
+                            <th>Học sinh</th>
+                            @foreach (var subject in Subjects)
+                            {
+                                <th class="text-center">@subject</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (learningSummaryList != null && learningSummaryList.Any())
+                        {
+                            @foreach (var (studentSummary, index) in learningSummaryList.Select((item, idx) => (item, idx)))
+                            {
+                                <tr>
+                                    <td class="text-center">@((index + 1))</td>
+                                    <td>@(studentSummary.Student_Name ?? "[Không có tên]")</td>
+                                    @foreach (var subject in Subjects)
+                                    {
+                                        <td class="text-center">
+                                            @(studentSummary.SubjectScores != null &&
+                                                studentSummary.SubjectScores.TryGetValue(subject, out var score)
+                                                ? score.ToString("0.00")
+                                                : "-")
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="100%" class="text-center no-data">Không có dữ liệu tổng kết.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+@code {
+    private List<Learning_SummaryView> learningSummaryList = new List<Learning_SummaryView>();
+    private List<string> Subjects = new List<string>();
+    private List<ClassWithTeacherName> classList = new List<ClassWithTeacherName>();
+    private List<ClassWithTeacherName> Allclass = new();
+    private string searchKeyword = "";
+    private bool showMessageBox = false;
+    private string className;
+    private bool IsModalOpen = false;
+    private string currentSummaryName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClass();
+    }
+
+    private async Task LoadClass()
+    {
+        try
+        {
+            Allclass = await summaryService.GetClassesWithTeacherName();
+            classList = Allclass.ToList();
+        }
+        catch (Exception ex)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải danh sách lớp: {ex.Message}");
+        }
+    }
+
+    private async Task CloseMessageBox()
+    {
+        showMessageBox = false;
+        await LoadClass();
+    }
+
+    private void SearchClass()
+    {
+        if (!string.IsNullOrWhiteSpace(searchKeyword))
+        {
+            var keyword = searchKeyword.ToLower();
+            classList = Allclass
+                .Where(c =>
+                    (c.Class_Name != null && c.Class_Name.ToLower().Contains(keyword)) ||
+                    (c.TeacherName != null && c.TeacherName.ToLower().Contains(keyword)))
+                .ToList();
+        }
+        else
+        {
+            classList = Allclass.ToList(); // nếu để trống thì hiển thị lại toàn bộ
+        }
+    }
+
+
+    private async Task LoadAndCalculateLearningSummary(int classId)
+    {
+        try
+        {
+            var classInfo = classList.FirstOrDefault(c => c.Id == classId);
+            if (classInfo == null)
+            {
+                await jsRuntime.InvokeVoidAsync("alert", "Lớp không tồn tại.");
+                return;
+            }
+
+            className = classInfo.Class_Name;
+
+            var currentSummary = await summaryService.GetCurrentSummary();
+            currentSummaryName = currentSummary?.Summary_Name ?? "Không xác định";
+
+            // 🔹 Chỉ tính toán
+            var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
+
+            // 🔹 Lưu xuống DB sau khi tính
+            await summaryService.SaveCalculatedSummariesToDatabase(summaries);
+
+            if (summaries.Any())
+            {
+                learningSummaryList = summaries
+                    .GroupBy(s => s.StudentId)
+                    .Select(g => new Learning_SummaryView
+                        {
+                            StudentId = g.Key,
+                            Student_Name = g.First().Student_Name,
+                            SubjectScores = g.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
+                            Summary_ID = g.First().Summary_ID
+                        })
+                    .OrderBy(x => x.Student_Name)
+                    .ToList();
+
+                Subjects = learningSummaryList
+                    .SelectMany(s => s.SubjectScores.Keys)
+                    .Distinct()
+                    .ToList();
+            }
+            else
+            {
+                learningSummaryList.Clear();
+                Subjects.Clear();
+                await jsRuntime.InvokeVoidAsync("alert", "Lớp này chưa có điểm tổng kết.");
+            }
+
+            await jsRuntime.InvokeVoidAsync("bootstrapModal.show", "#summaryModal");
+        }
+        catch (Exception ex)
+        {
+            await jsRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải tổng kết: {ex.Message}");
+        }
+    }
+
+}
