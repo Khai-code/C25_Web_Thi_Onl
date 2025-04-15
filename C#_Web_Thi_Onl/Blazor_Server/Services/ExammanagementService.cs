@@ -133,7 +133,8 @@ namespace Blazor_Server.Services
         {
             public int Id { get; set; }
             public string NameExam { get; set; }
-            public int Totalpackage { get; set; }
+            public int Totalpackage { get; set; } 
+            //dgsfhgfhegjfg
         }
         public class listpackage 
         {
