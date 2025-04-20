@@ -267,7 +267,7 @@
                                 <div class="col-md-4 mb-3 text-center">
                                     <div class="mb-3">
                                         <img src="@previewImageUrl" class="rounded-circle border"
-                                             style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
+                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
                                     </div>
                                     <div class="mb-3">
                                         <InputFile OnChange="HandleFileSelected" class="form-control" accept="image/*" />
@@ -301,10 +301,10 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
                                             <InputDate @bind-Value="birthDate"
-                                                       class="form-control"
-                                                       format="yyyy-MM-dd"
-                                                       max="@MaxBirthDate.ToString("yyyy-MM-dd")"
-                                                       min="@MinBirthDate.ToString("yyyy-MM-dd")" />
+                                            class="form-control"
+                                            format="yyyy-MM-dd"
+                                            max="@MaxBirthDate.ToString("yyyy-MM-dd")"
+                                            min="@MinBirthDate.ToString("yyyy-MM-dd")" />
                                             <ValidationMessage For="@(() => birthDate)" />
                                             @if (birthDate > MaxBirthDate)
                                             {
@@ -360,7 +360,7 @@
         </div>
     }
 
-       <!-- MODAL THÊM LỚP -->
+    <!-- MODAL THÊM LỚP -->
     @if (showAddClassModal)
     {
         <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
@@ -371,16 +371,16 @@
                         <button type="button" class="btn-close" @onclick="CloseAddClassModal"></button>
                     </div>
                     <div class="modal-body">
-                        <EditForm Model="@newClass" OnValidSubmit="CreateNewClass">
+                        <EditForm Model="@model" OnValidSubmit="CreateNewClass">
                             <DataAnnotationsValidator />
                             <ValidationSummary />
                             <div class="mb-3">
                                 <label class="form-label">Tên lớp</label>
-                                <InputText @bind-Value="newClass.Class_Name" class="form-control" required />
+                                <InputText @bind-Value="model.ClassName" class="form-control" required />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Giáo viên chủ nhiệm</label>
-                                <select class="form-control" @bind="newClass.Teacher_Id" required>
+                                <select class="form-control" @bind="model.TeacherId" required>
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var teacher in teacherDisplayList)
                                     {
@@ -438,6 +438,7 @@
     private string successMessage;
     private List<Summary> summaries = new();
     private int selectedSummaryId = 0;
+    public ClassWithTeacherModel model = new ClassWithTeacherModel();
 
     // Thêm các biến để xử lý quản lý học sinh
     private User currentStudent = new User();
@@ -499,6 +500,7 @@
     {
         try
         {
+            await LoadTeachers();
             await LoadGrades();
             await LoadClasses();
             teachers = await ClassService.GetAllTeachersAsync();
@@ -618,11 +620,18 @@
 
     private void ShowAddClassModal()
     {
-        newClass = new Class
+        if (selectedGrade == null)
+        {
+            errorMessage = "Vui lòng chọn khối trước khi thêm lớp.";
+            return;
+        }
+
+        model = new ClassWithTeacherModel
             {
-                Grade_Id = selectedGrade.ID,
-                Max_Student = 50
+                GradeId = selectedGrade.ID,
+                MaxStudent = 50
             };
+
         showAddClassModal = true;
     }
 
@@ -633,19 +642,27 @@
 
     private async Task CreateNewClass()
     {
-        var result = await ClassService.CreateClassAsync(newClass);
-        if (result)
+        try
         {
-            successMessage = $"Đã tạo lớp {newClass.Class_Name} thành công.";
-            await LoadClasses();
-            FilterClasses();
-        }
-        else
-        {
-            errorMessage = "Không thể tạo lớp. Vui lòng thử lại.";
-        }
+            var success = await ClassService.CreateClassWithTeacherAsync(model);
+            if (success)
+            {
+                successMessage = $"Đã tạo lớp {model.ClassName} thành công.";
+                await LoadClasses();
+                FilterClasses();
+            }
+            else
+            {
+                errorMessage = "Không thể tạo lớp. Vui lòng thử lại.";
+            }
 
-        showAddClassModal = false;
+            showAddClassModal = false;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi tạo lớp: {ex.Message}";
+            showAddClassModal = false;
+        }
     }
 
     private void ConfirmDeleteClass()

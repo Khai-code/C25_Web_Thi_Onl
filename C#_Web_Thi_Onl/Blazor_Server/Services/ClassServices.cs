@@ -6,6 +6,7 @@ using Data_Base.Models.T;
 using Data_Base.Models.U;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Globalization;
+using System.Net.Http;
 using System.Text;
 
 namespace Blazor_Server.Services
@@ -33,16 +34,46 @@ namespace Blazor_Server.Services
                 return new List<Class>();
             }
         }
-        public async Task<bool> CreateClassAsync(Class newClass)
+        public async Task<bool> CreateClassWithTeacherAsync(ClassWithTeacherModel model)
         {
             try
             {
-                var response = await _client.PostAsJsonAsync("api/Class/Post", newClass);
+                var newClass = new Class
+                {
+                    Class_Name = model.ClassName,
+                    Class_Code = string.Empty,
+                    Max_Student = model.MaxStudent,
+                    Grade_Id = model.GradeId,
+                    Teacher_Id = model.TeacherId
+                };
 
+                var response = await _client.PostAsJsonAsync("api/Class/Post", newClass);
                 if (!response.IsSuccessStatusCode)
                 {
-                    var error = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"[ERROR] CreateClassAsync failed: {response.StatusCode} - {error}");
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ERROR] Tạo Class thất bại: {err}");
+                    return false;
+                }
+
+                var createdClass = await response.Content.ReadFromJsonAsync<Class>();
+                if (createdClass == null)
+                {
+                    Console.WriteLine("[ERROR] Không đọc được Class trả về.");
+                    return false;
+                }
+
+                // 2. Gán giáo viên chủ nhiệm
+                var teacherClass = new Teacher_Class
+                {
+                    Class_Id = createdClass.Id,
+                    Teacher_Id = model.TeacherId
+                };
+
+                var tcResponse = await _client.PostAsJsonAsync("api/Teacher_Class/Post", teacherClass);
+                if (!tcResponse.IsSuccessStatusCode)
+                {
+                    var err2 = await tcResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ERROR] Gán giáo viên thất bại: {err2}");
                     return false;
                 }
 
@@ -50,10 +81,11 @@ namespace Blazor_Server.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[EXCEPTION] CreateClassAsync: {ex.Message}");
+                Console.WriteLine($"[EXCEPTION] CreateClassWithTeacherAsync: {ex.Message}");
                 return false;
             }
         }
+
 
         public async Task<bool> DeleteClassAsync(int classId)
         {
@@ -175,28 +207,7 @@ namespace Blazor_Server.Services
         {
             try
             {
-                if (imageFile != null && imageFile.Size > 0)
-                {
-                    string safeFileName = $"{RemoveDiacritics(user.Full_Name)}"
-                                            .Replace(" ", "_")
-                                            .ToLower();
-                    string fileExtension = Path.GetExtension(imageFile.Name);
-                    string uniqueFileName = $"{safeFileName}{fileExtension}";
-
-                    string uploadsFolder = Path.Combine("wwwroot", "image", "avatars");
-                    Directory.CreateDirectory(uploadsFolder);
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await imageFile.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024).CopyToAsync(fileStream);
-                    }
-
-                    // Gán avatar path cho user trước khi post
-                    user.Avatar = $"/image/avatars/{uniqueFileName}";
-                }
-
-                // 2. Tạo user
+                // 1. Tạo user trước
                 var userResponse = await _client.PostAsJsonAsync("api/User/Post", user);
                 if (!userResponse.IsSuccessStatusCode)
                 {
@@ -212,19 +223,49 @@ namespace Blazor_Server.Services
                     return null;
                 }
 
-                // 3. Nếu là Student → tạo bảng Student
+                // 2. Nếu là Student → tạo bảng Student
                 if (user.Role_Id == 1)
                 {
-                    Student student = new Student();
-                    student.User_Id = createdUser.Id;
+                    var student = new Student
+                    {
+                        User_Id = createdUser.Id,
+                        Student_Code = string.Empty // để backend tự sinh
+                    };
 
                     var studentResponse = await _client.PostAsJsonAsync("api/Student/Post", student);
-
                     if (!studentResponse.IsSuccessStatusCode)
                         return null;
 
                     var createdStudent = await studentResponse.Content.ReadFromJsonAsync<Student>();
-                    return createdStudent?.Id;
+                    if (createdStudent == null)
+                        return null;
+
+                    // 3. Nếu có ảnh thì đặt tên theo Student_Code và lưu ảnh
+                    if (imageFile != null && imageFile.Size > 0)
+                    {
+                        string safeFileName = createdStudent.Student_Code?.ToLower() ?? $"student_{createdStudent.Id}";
+                        string fileExtension = Path.GetExtension(imageFile.Name);
+                        string uniqueFileName = $"{safeFileName}{fileExtension}";
+
+                        string uploadsFolder = Path.Combine("wwwroot", "image", "avatars");
+                        Directory.CreateDirectory(uploadsFolder);
+                        string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(filePath, FileMode.Create))
+                        {
+                            await imageFile.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024).CopyToAsync(fileStream);
+                        }
+
+                        // Cập nhật lại Avatar cho User
+                        createdUser.Avatar = $"/image/avatars/{uniqueFileName}";
+                        var updateAvatar = await _client.PutAsJsonAsync($"api/User/Pus/{createdUser.Id}", createdUser);
+                        if (!updateAvatar.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine("[WARNING] Không cập nhật được avatar.");
+                        }
+                    }
+
+                    return createdStudent.Id;
                 }
 
                 return null;
@@ -235,6 +276,7 @@ namespace Blazor_Server.Services
                 return null;
             }
         }
+
 
         public async Task<bool> AddStudentToClass(int studentId, int classId)
         {
@@ -272,35 +314,23 @@ namespace Blazor_Server.Services
             }
         }
 
-        // Hàm bỏ dấu tiếng Việt
-        private string RemoveDiacritics(string text)
-        {
-            if (string.IsNullOrWhiteSpace(text))
-                return text;
-
-            string normalized = text.Normalize(NormalizationForm.FormD);
-            var sb = new StringBuilder();
-
-            foreach (char c in normalized)
-            {
-                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    sb.Append(c);
-            }
-
-            return sb.ToString().Normalize(NormalizationForm.FormC);
-        }
-
         public async Task<bool> UpdateStudent(int id, User user, IBrowserFile? imageFile)
         {
             try
             {
+                var students = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+                var student = students?.FirstOrDefault(s => s.User_Id == id);
 
-                // Xử lý avatar nếu người dùng chọn ảnh mới
+                if (student == null)
+                {
+                    Console.WriteLine($"[ERROR] Không tìm thấy Student với User_Id = {id}");
+                    return false;
+                }
+
                 if (imageFile != null && imageFile.Size > 0)
                 {
-                    string safeFileName = $"{RemoveDiacritics(user.Full_Name)}"
-                                           .Replace(" ", "_")
-                                           .ToLower();
+                    // Sử dụng Student_Code làm tên file
+                    string safeFileName = student.Student_Code?.ToLower() ?? $"student_{student.Id}";
                     string fileExtension = Path.GetExtension(imageFile.Name);
                     string uniqueFileName = $"{safeFileName}{fileExtension}";
                     string uploadsFolder = Path.Combine("wwwroot", "image", "avatars");
@@ -318,18 +348,16 @@ namespace Blazor_Server.Services
                         }
                     }
 
-                    // Cập nhật đường dẫn avatar
                     user.Avatar = $"/image/avatars/{uniqueFileName}";
                 }
 
-                // Nếu không có avatar, dùng mặc định
-                if (string.IsNullOrWhiteSpace(user.Avatar))
-                {
-                    user.Avatar = "/image/avatars/default-avatar.png";
-                }
-
-                // Cập nhật thông tin người dùng
                 var userResponse = await _client.PutAsJsonAsync($"api/User/Pus/{id}", user);
+                if (!userResponse.IsSuccessStatusCode)
+                {
+                    var err = await userResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ERROR] Cập nhật user thất bại: {err}");
+                    return false;
+                }
 
                 return true;
             }
@@ -339,6 +367,7 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+
 
         public async Task<bool> DeleteStudent(int userId)
         {
@@ -464,4 +493,13 @@ namespace Blazor_Server.Services
             return user.Avatar;
         }
     }
+
+    public class ClassWithTeacherModel
+    {
+        public string ClassName { get; set; }
+        public int MaxStudent { get; set; }
+        public int GradeId { get; set; }
+        public int TeacherId { get; set; }
+    }
+
 }
