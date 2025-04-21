@@ -1,0 +1,184 @@
+﻿@page "/ReviewExam"
+@layout TeacherLayout
+@using System.ComponentModel.DataAnnotations
+@using Blazor_Server.Services
+@using Data_Base.Models.A
+@using static Blazor_Server.Services.ReviewExam
+@inject ReviewExam review
+@inject Notification infor
+<div class="position-relative" style="height: 100vh;">
+    <!-- Form tìm kiếm -->
+    <div class="position-sticky top-0 z-3 pb-3">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white rounded-2">
+                <h4 class="mb-0">📋 Thông tin tìm kiếm</h4>
+            </div>
+            <div class="card-body">
+                <EditForm Model="@formModel" OnValidSubmit="@HandleSubmit">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary class="text-danger mb-3" />
+                    <div class="d-flex flex-wrap align-items-end gap-3">
+                        <div class="flex-fill">
+                            <label class="form-label fw-semibold">🎓 Mã học sinh</label>
+                            <InputText class="form-control shadow-sm" @bind-Value="formModel.StudentCode" placeholder="Nhập mã học sinh" />
+                        </div>
+                        <div class="flex-fill">
+                            <label class="form-label fw-semibold">📝 Mã bài thi</label>
+                            <InputText class="form-control shadow-sm" @bind-Value="formModel.ExamCode" placeholder="Nhập mã bài thi" />
+                        </div>
+                        <div>
+                            <button type="submit" @onclick="HandleSubmit" class="btn btn-success px-4 py-2 rounded-pill shadow">
+                                🔍 Xem chi tiết
+                            </button>
+                        </div>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center align-items-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+
+    @if (showResult && !isLoading)
+    {
+        @foreach (var item in reviews)
+        {
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-info text-white fw-bold rounded-top-2">
+                    👤 Thông tin học sinh
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Cột trái -->
+                        <div class="col-md-6">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">Họ tên:</dt>
+                                <dd class="col-sm-7">@item.Student_Name</dd>
+
+                                <dt class="col-sm-5">Lớp:</dt>
+                                <dd class="col-sm-7">@item.Class_Name</dd>
+
+                                <dt class="col-sm-5">Môn học:</dt>
+                                <dd class="col-sm-7">@item.Subject_Name</dd>
+
+                                <dt class="col-sm-5">Tên Gói đề:</dt>
+                                <dd class="col-sm-7">@item.Package_Name</dd>
+                            </dl>
+                        </div>
+
+                        <!-- Cột phải -->
+                        <div class="col-md-6">
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5">Thời gian:</dt>
+                                <dd class="col-sm-7">@item.Start_Time.ToString("HH:mm dd/MM/yyyy") đến @item.End_Time.ToString("HH:mm dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-5">Bắt đầu làm bài:</dt>
+                                <dd class="col-sm-7">@item.Start_Time_play.ToString("HH:mm dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-5">Kết thúc làm bài:</dt>
+                                <dd class="col-sm-7">@item.End_Time_stop.ToString("HH:mm dd/MM/yyyy")</dd>
+
+                                <dt class="col-sm-5">Điểm:</dt>
+                                <dd class="col-sm-7 fw-bold text-success fs-5">@item.Score</dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h5 class="mb-4 text-primary fw-bold">📄 Chi tiết bài làm:</h5>
+
+            @foreach (var q in item.questions)
+            {
+                var answersOfQuestion = item.answers
+                .Where(a => a.Question_Id == q.Id)
+                .ToList();
+
+                <div class="card mb-4 shadow-sm border-0 rounded-4">
+                    <div class="card-header bg-light fw-bold rounded-top-4 border-bottom-0">
+                        <i class="bi bi-question-circle"></i> @q.Question_Name
+                    </div>
+                    <div class="card-body">
+                        @foreach (var ans in answersOfQuestion)
+                        {
+                            string cssClass = "p-3 rounded-3 mb-2";
+                            bool isCorrect = ans.Right_Answer == 1;
+                            bool isChosen = item.studentAnswers.Any(sa => sa.Answer_Id == q.Id && sa.Answer_Id == ans.Id);
+
+                            if (isCorrect && isChosen)
+                                cssClass += " bg-success text-white fw-bold"; // đúng và được chọn
+                            else if (isCorrect)
+                                cssClass += " bg-white border border-success text-success fw-semibold"; // đúng nhưng không được chọn
+                            else if (isChosen)
+                                cssClass += " bg-danger text-white fw-semibold"; // sai nhưng học sinh chọn
+                            else
+                                cssClass += " bg-light";
+
+                            <div class="@cssClass">
+                                <strong>@GetAnswerLabel(answersOfQuestion, ans):</strong> @ans.Answers_Name
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>
+
+@code {
+    private bool showResult = false;
+    private bool isLoading = false;
+
+    private PhucKhaoFormModel formModel = new();
+    private List<Review> reviews = new();
+
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        try
+        {
+            reviews = await review.SeacherReview(formModel.StudentCode, formModel.ExamCode);
+            if (reviews == null || reviews.Count == 0)
+            {
+               await infor.ShowSweetAlert("Không tìm thấy kết quả cho mã học sinh và mã bài thi này.", "error");
+            }
+            else
+            {
+                showResult = true;
+            }
+        }
+        catch (Exception ex)
+        {
+           await infor.ShowSweetAlert( $"Đã xảy ra lỗi: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false; 
+        }
+    }
+
+    private string GetAnswerLabel(List<Answers> answersOfQuestion, Answers currentAnswer)
+    {
+        int index = answersOfQuestion.IndexOf(currentAnswer);
+        if (index >= 0 && index < 26)
+        {
+            return ((char)('A' + index)).ToString();
+        }
+        return "?";
+    }
+
+    public class PhucKhaoFormModel
+    {
+        [Required(ErrorMessage = "Vui lòng nhập mã học sinh.")]
+        public string StudentCode { get; set; }
+
+        [Required(ErrorMessage = "Vui lòng nhập mã bài thi.")]
+        public string ExamCode { get; set; }
+    }
+}
