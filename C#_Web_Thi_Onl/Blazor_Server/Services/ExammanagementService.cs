@@ -21,7 +21,7 @@ namespace Blazor_Server.Services
             var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
             var Listexamroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
             var Listpackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
-
+     
             var result = from exam in ListExam
                          join room in Listexamroom on exam.Id equals room.Exam_Id into roomGroup
                          from room in roomGroup.DefaultIfEmpty()
@@ -29,7 +29,7 @@ namespace Blazor_Server.Services
                          from roomPk in roomPkGroup.DefaultIfEmpty()
                          join package in Listpackage on roomPk?.Package_Id equals package.Id into packageGroup
                          from package in packageGroup.DefaultIfEmpty()
-                         where room == null || IsWithinCurrentWeek(room.Start_Time, room.End_Time)
+                         where room == null || IsOverlapCurrentWeek(room.Start_Time, room.End_Time)
                          group package by new { exam.Id, exam.Exam_Name } into grouped
                          select new listexam
                          {
@@ -50,7 +50,7 @@ namespace Blazor_Server.Services
                          join exroompk in Listexamroompk on package.Id equals exroompk.Package_Id
                          join examroom in Listexamroom on exroompk.Exam_Room_Id equals examroom.Id
                          join room in Listroom on examroom.Room_Id equals room.ID
-                         where IsWithinCurrentWeek(examroom.Start_Time, examroom.End_Time)&&examroom.Exam_Id==id
+                         where IsOverlapCurrentWeek(examroom.Start_Time, examroom.End_Time)&&examroom.Exam_Id==id
                          group package by new { package.Id, package.Package_Name, ExamRoomId = examroom.Id, examroom.Start_Time, examroom.End_Time, room.Room_Name } into grouped
                          select new listpackage
                          {
@@ -118,16 +118,21 @@ namespace Blazor_Server.Services
             var response = await _httpClient.PutAsJsonAsync($"/api/Exam_Room/Pus/{id}", existingExamRoom);
             return response.IsSuccessStatusCode;
         }
-
-        private bool IsWithinCurrentWeek(long startTime, long endTime)
+       
+        private bool IsOverlapCurrentWeek(long startTime, long endTime)
         {
             DateTime today = DateTime.Today;
-            DateTime startOfWeek = today.AddDays(-(int)today.DayOfWeek + (int)DayOfWeek.Monday);
-            DateTime endOfWeek = startOfWeek.AddDays(7);
+            int diff = today.DayOfWeek == DayOfWeek.Sunday ? -6 : DayOfWeek.Monday - today.DayOfWeek;
+            DateTime startOfWeek = today.AddDays(diff).Date;
+            DateTime endOfWeek = startOfWeek.AddDays(7).AddTicks(-1);
+
             DateTime roomStartTime = ConvertLong.ConvertLongToDateTime(startTime);
             DateTime roomEndTime = ConvertLong.ConvertLongToDateTime(endTime);
-            return roomStartTime >= startOfWeek && roomEndTime <= endOfWeek;
+
+            // Chỉ cần thời gian thi có GIAO với tuần hiện tại là tính
+            return roomStartTime <= endOfWeek && roomEndTime >= startOfWeek;
         }
+
 
         public async Task<Exam> AddExam(Exam exam)
         {
@@ -155,7 +160,6 @@ namespace Blazor_Server.Services
             public int Id { get; set; }
             public string NameExam { get; set; }
             public int Totalpackage { get; set; } 
-            //dgsfhgfhegjfg
         }
         public class listpackage 
         {

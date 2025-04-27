@@ -10,36 +10,36 @@
 @inject LoginPackge loginpackge
 @inject NavigationManager navigation
 @inject Notification notification
-@layout TeacherLayout
+@layout StudentLayout
 @inject ProtectedSessionStorage sessionstorage
 @inject IJSRuntime jsruntime
 
 <div class="login-wrapper d-flex justify-content-center align-items-center min-vh-100 bg-light">
     <div class="login-container bg-white p-4 rounded-3 shadow-lg" style="max-width: 400px; width: 100%">
         <div class="text-center mb-4">
-            <h2 class="fw-bold text-primary">đăng nhập thi</h2>
-            <p class="text-muted">vui lòng nhập mã dự thi gồm 8 chữ số được cung cấp</p>
+            <h2 class="fw-bold text-primary">Đăng nhập thi</h2>
+            <p class="text-muted">Vui lòng nhập mã dự thi gồm 8 chữ số được cung cấp</p>
         </div>
 
-        <editform model="@this" class="needs-validation" novalidate>
+        <EditForm Model="@this" OnValidSubmit="HandleSubmit" class="needs-validation" novalidate>
             <div class="mb-3">
-                <label for="examcode" class="form-label fw-semibold">mã dự thi</label>
-                @* <inputtext @bind-value="packagecode"
+                <label for="examcode" class="form-label fw-semibold">Mã dự thi</label>
+                <InputText @bind-Value="packagecode"
                 id="examcode"
                 class="form-control form-control-lg"
-                placeholder="nhập 8 chữ số"
+                placeholder="Nhập 8 chữ số"
                 required
                 maxlength="8"
                 minlength="8"
                 pattern="\d{8}"
-                title="vui lòng nhập chính xác 8 chữ số" /> *@
-                <div class="invalid-feedback">mã dự thi phải là 8 chữ số</div>
+                title="Vui lòng nhập chính xác 8 chữ số" />
+                <ValidationMessage For="@(() => packagecode)" />
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg w-100 py-2 fw-semibold" @onchange="Chekcode">
-                vào thi
+            <button type="submit" class="btn btn-primary btn-lg w-100 py-2 fw-semibold">
+                Vào thi
             </button>
-        </editform>
+        </EditForm>
     </div>
 </div>
 
@@ -49,7 +49,7 @@
     }
 
     .login-container:hover {
-    transform: translatey(-5px);
+    transform: translateY(-5px);
     }
 
     .form-control:focus {
@@ -58,44 +58,41 @@
     }
 </style>
 
-<script>
-    // thêm javascript để xử lý validation
-    (() => {
-    'use strict'
-
-    const forms = document.queryselectorall('.needs-validation')
-
-    array.from(forms).foreach(form => {
-    form.addeventlistener('submit', event => {
-    if (!form.checkvalidity()) {
-    event.preventdefault()
-    event.stoppropagation()
-    }
-
-    form.classlist.add('was-validated')
-    }, false)
-    })
-    })()
-</script>
-
-@code{
+@code {
     private string studentcode;
-    private int packagecodeint;
-    private string packagecode;
-
-    private void handlesubmit()
+    private string packagecode; // đổi thành string để dễ kiểm tra và bind dữ liệu
+    public Dictionary<int, int> checktime = new Dictionary<int, int>();
+    private async Task HandleSubmit()
     {
-        if (int.TryParse(packagecode, out int parsedcode) && packagecode.Length == 8)
+        if (int.TryParse(packagecode, out int packagecodeint) && packagecode.Length == 8)
         {
-            packagecodeint = parsedcode;
+            try
+            {
+                bool check = await loginpackge.CheckPackage(studentcode, packagecodeint);
+
+                if (check)
+                {
+                    checktime = await loginpackge.GetRemainingExamTime(studentcode, packagecodeint);
+                    await sessionstorage.SetAsync("thoigian", checktime);
+                    navigation.NavigateTo("/Test");
+                }
+                else
+                {
+                    await jsruntime.InvokeVoidAsync("alert", "Mã dự thi không hợp lệ hoặc đã hết hạn.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi: {ex.Message}");
+            }
         }
         else
         {
-            Console.WriteLine("mã dự thi không hợp lệ.");
+            await jsruntime.InvokeVoidAsync("alert", "Mã dự thi không hợp lệ.");
         }
     }
-
-    protected override async Task OnAfterRenderAsync(bool firstrender)
+    
+    protected override async Task OnAfterRenderAsync(bool firstrender)//phần này kiểm tra lại token để lấy được student code nhé vì dữ liệu trả ra đang bị null
     {
         if (firstrender)
         {
@@ -122,30 +119,24 @@
             }
         }
     }
+    // private async Task Chekcode()
+    // {
+    //     try
+    //     {
+    //         bool check = await loginpackge.CheckPackage(studentcode, packagecodeint);
 
-    private async Task Chekcode()
-    {
-        try
-        {
-            bool check = await loginpackge.CheckPackage(studentcode, packagecodeint);
-
-            if (check)
-            {
-                navigation.NavigateTo("/test");
-            }
-            else
-            {
-                await jsruntime.InvokeVoidAsync("alert", "mã dự thi không hợp lệ hoặc đã hết hạn.");
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"lỗi: {ex.Message}");
-        }
-    }
+    //         if (check)
+    //         {
+    //             navigation.NavigateTo("/test");
+    //         }
+    //         else
+    //         {
+    //             await jsruntime.InvokeVoidAsync("alert", "mã dự thi không hợp lệ hoặc đã hết hạn.");
+    //         }
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"lỗi: {ex.Message}");
+    //     }
+    // }
 }
-
-
-
-
-
