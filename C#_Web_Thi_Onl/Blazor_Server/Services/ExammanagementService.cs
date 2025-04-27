@@ -129,6 +129,27 @@ namespace Blazor_Server.Services
             return roomStartTime >= startOfWeek && roomEndTime <= endOfWeek;
         }
 
+        public async Task<Exam> AddExam(Exam exam)
+        {
+            try
+            {
+                var addexam = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam/Post", exam);
+
+                if (!addexam.IsSuccessStatusCode)
+                    return null;
+
+                // Giải mã nội dung từ phản hồi thành đối tượng Exam
+                var examResult = await addexam.Content.ReadFromJsonAsync<Exam>();
+
+                return examResult; // Trả về đối tượng Exam đã giải mã
+            }
+            catch (Exception ex)
+            {
+                // Có thể ghi log exception nếu cần
+                throw new ApplicationException("Có lỗi xảy ra khi thêm kỳ thi.", ex);
+            }
+        }
+
         public class listexam
         {
             public int Id { get; set; }

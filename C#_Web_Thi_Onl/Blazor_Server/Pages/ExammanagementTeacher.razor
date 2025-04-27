@@ -2,10 +2,18 @@
 @using Blazor_Server.Services
 @using Data_Base.GenericRepositories
 @using Data_Base.Models.E
+@using static Blazor_Server.Services.Package_Test_ERP
 @using static Blazor_Server.Services.ExammanagementService
 @layout TeacherLayout
 @inject Notification notification
 @inject ExammanagementService exammanagement
+@inject Package_Test_ERP Pack
+@using Data_Base.Models.E
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <button class="btn btn-success" @onclick="OpenAddExamModal">
+        ➕ Thêm bài thi
+    </button>
+</div>
 <div class="split-container">
     <div class="left-panel">
         <h6 class="text-center text-primary fw-bold">📋 Danh sách bài thi</h6>
@@ -116,22 +124,117 @@
             }
         </div>
     </div>
+
+    @if (IsAddExamModalOpen)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">➕ Thêm bài thi mới</h5>
+                        <button type="button" class="btn-close" @onclick="CloseAddExamModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Tên bài thi</label>
+                            <input type="text" class="form-control" @bind="NewExamName">
+                        </div>
+
+                        <div>
+                            <label for="subject" class="block font-medium mb-1">Môn học</label>
+                            <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="subjectId">
+                                <option value="">-- Chọn gói môn --</option>
+                                @foreach (var subj in subjectViewModel)
+                                {
+                                    <option value="@subj.Subject_Id">@subj.Subject_Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" @onclick="CreateExam">Lưu</button>
+                        <button class="btn btn-secondary" @onclick="CloseAddExamModal">Hủy</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
 
 @code {
     private List<listexam> exams = new List<listexam>();
     private List<listpackage> Listpackages = new List<listpackage>();
     private List<listStudent> listStudents = new List<listStudent>();
+    List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
     protected override async Task OnInitializedAsync()
     {
         try{
             exams = await exammanagement.GetallExam();
+            await Subject();
         }catch{}
 
     }
     private int SelectedExam;
     private int SelectedPackage;
     private int? EditingPackageId = null;
+    private bool IsAddExamModalOpen = false;
+    private string NewExamName;
+    private int subjectId;
+
+    private void OpenAddExamModal()
+    {
+        IsAddExamModalOpen = true;
+    }
+
+    private void CloseAddExamModal()
+    {
+        IsAddExamModalOpen = false;
+        NewExamName = null;
+        subjectId = 0;
+    }
+
+    public async Task<string> CreateExam()
+    {
+        try
+        {
+            Data_Base.Models.E.Exam exam = new Data_Base.Models.E.Exam();
+            if (!string.IsNullOrEmpty(NewExamName))
+            {
+                exam.Exam_Name = NewExamName;
+            }
+            else
+                return "Tên bài thi không đc để trống";
+            if (subjectId != null && subjectId > 0)
+            {
+                exam.Subject_Id = subjectId;
+            }
+            else 
+                return "Bạn chưa chọn môn học";
+
+            await exammanagement.AddExam(exam);
+
+            return "Tạo kỳ thi thành công!";
+        }
+        catch (Exception ex)
+        {
+            throw new ApplicationException("Có lỗi xảy ra khi tạo kỳ thi.", ex);
+        }
+    }
+
+    public async Task Subject()
+    
+    {
+        try
+        {
+            subjectViewModel = await Pack.GetSubject();
+        }
+        catch (Exception ex)
+        {
+            subjectViewModel = new List<SubjectViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
     private async Task SelectExam(int id)
     {
         SelectedExam = id;

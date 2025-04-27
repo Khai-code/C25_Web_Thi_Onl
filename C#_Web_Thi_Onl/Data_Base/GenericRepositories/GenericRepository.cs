@@ -141,5 +141,12 @@ namespace Data_Base.GenericRepositories
             string lastNumberStr = lastRoom.Room_Code.Substring(1, 3); // Lấy 3 số cuối
             return int.TryParse(lastNumberStr, out int lastNumber) ? lastNumber : 0;
         }
+
+        public async Task<int> GetStudentCountByClassIdAsync(int classId)
+        {
+            return await _context.Set<Student_Class>()
+                .Where(sc => sc.Class_Id == classId)
+                .CountAsync();
+        }
     }
 }

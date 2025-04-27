@@ -25,7 +25,9 @@
 
         <div>
             <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
-            <input type="datetime-local" id="createTime" name="createTime" readonly class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" @bind="Craete_Time">
+            <input type="text"
+                   class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600"
+                   value="@CreateTimeFormatted" readonly>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -116,7 +118,9 @@
     List<ExamsViewModel> examsViewModels = new List<ExamsViewModel>();
     List<RoomViewModel> roomViewModels = new List<RoomViewModel>();
 
-    public DateTime Craete_Time;
+    public DateTime Create_Time = DateTime.Now;
+    private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
+
     public DateTime Start_Time;
     public DateTime End_Time;
 
@@ -198,9 +202,9 @@
     {
         try
         {
-            if (Craete_Time != null)
+            if (Create_Time != null)
             {
-                packageTestADO.Package.Create_Time = ConvertLong.ConvertDateTimeToLong(Craete_Time);
+                packageTestADO.Package.Create_Time = ConvertLong.ConvertDateTimeToLong(Create_Time);
             }
             if (Start_Time != null)
             {

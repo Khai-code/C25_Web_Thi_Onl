@@ -24,6 +24,7 @@ namespace Data_Base.Models.C
         public string Class_Name { get; set; }
         [Range(1, 50, ErrorMessage = "Một lớp không quá 50 học sinh")]
         public int Max_Student { get; set; }
+        public int Number {  get; set; }
         [ForeignKey("Grade_Id")]
         [JsonIgnore]
         public Grade? Grades { get; set; }
