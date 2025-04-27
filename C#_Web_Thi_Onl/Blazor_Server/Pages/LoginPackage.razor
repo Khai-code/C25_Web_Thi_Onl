@@ -1,0 +1,151 @@
+﻿@page "/login-package"
+@using Blazor_Server.Services
+@using Data_Base.GenericRepositories
+@using Data_Base.Models.A
+@using Data_Base.Models.E
+@using Data_Base.Models.Q
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.LoginPackge
+@inject LoginPackge loginpackge
+@inject NavigationManager navigation
+@inject Notification notification
+@layout TeacherLayout
+@inject ProtectedSessionStorage sessionstorage
+@inject IJSRuntime jsruntime
+
+<div class="login-wrapper d-flex justify-content-center align-items-center min-vh-100 bg-light">
+    <div class="login-container bg-white p-4 rounded-3 shadow-lg" style="max-width: 400px; width: 100%">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-primary">đăng nhập thi</h2>
+            <p class="text-muted">vui lòng nhập mã dự thi gồm 8 chữ số được cung cấp</p>
+        </div>
+
+        <editform model="@this" class="needs-validation" novalidate>
+            <div class="mb-3">
+                <label for="examcode" class="form-label fw-semibold">mã dự thi</label>
+                @* <inputtext @bind-value="packagecode"
+                id="examcode"
+                class="form-control form-control-lg"
+                placeholder="nhập 8 chữ số"
+                required
+                maxlength="8"
+                minlength="8"
+                pattern="\d{8}"
+                title="vui lòng nhập chính xác 8 chữ số" /> *@
+                <div class="invalid-feedback">mã dự thi phải là 8 chữ số</div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 py-2 fw-semibold" @onchange="Chekcode">
+                vào thi
+            </button>
+        </editform>
+    </div>
+</div>
+
+<style>
+    .login-container {
+    transition: transform 0.3s ease;
+    }
+
+    .login-container:hover {
+    transform: translatey(-5px);
+    }
+
+    .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+</style>
+
+<script>
+    // thêm javascript để xử lý validation
+    (() => {
+    'use strict'
+
+    const forms = document.queryselectorall('.needs-validation')
+
+    array.from(forms).foreach(form => {
+    form.addeventlistener('submit', event => {
+    if (!form.checkvalidity()) {
+    event.preventdefault()
+    event.stoppropagation()
+    }
+
+    form.classlist.add('was-validated')
+    }, false)
+    })
+    })()
+</script>
+
+@code{
+    private string studentcode;
+    private int packagecodeint;
+    private string packagecode;
+
+    private void handlesubmit()
+    {
+        if (int.TryParse(packagecode, out int parsedcode) && packagecode.Length == 8)
+        {
+            packagecodeint = parsedcode;
+        }
+        else
+        {
+            Console.WriteLine("mã dự thi không hợp lệ.");
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstrender)
+    {
+        if (firstrender)
+        {
+            var result = await sessionstorage.GetAsync<string>("authtoken");
+
+            if (result.Success)
+            {
+                var handler = new JwtSecurityTokenHandler();
+                var jsontoken = handler.ReadToken(result.Value) as JwtSecurityToken;
+
+                if (jsontoken != null)
+                {
+                    var studentcodeclaim = jsontoken.Claims.FirstOrDefault(c => c.Type == "student_code");
+                    if (studentcodeclaim != null)
+                    {
+                        studentcode = studentcodeclaim.Value;
+                        Console.WriteLine($"student code: {studentcode}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("không tìm thấy student_code trong token.");
+                    }
+                }
+            }
+        }
+    }
+
+    private async Task Chekcode()
+    {
+        try
+        {
+            bool check = await loginpackge.CheckPackage(studentcode, packagecodeint);
+
+            if (check)
+            {
+                navigation.NavigateTo("/test");
+            }
+            else
+            {
+                await jsruntime.InvokeVoidAsync("alert", "mã dự thi không hợp lệ hoặc đã hết hạn.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"lỗi: {ex.Message}");
+        }
+    }
+}
+
+
+
+
+
