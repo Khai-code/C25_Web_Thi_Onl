@@ -1,8 +1,10 @@
 ﻿using Data_Base.App_DbContext;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
+using Data_Base.Models.C;
 using Data_Base.Models.G;
 using Data_Base.Models.P;
+using Data_Base.Models.S;
 using Data_Base.Models.U;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -131,13 +133,35 @@ namespace ASP.NET.Controllers.G
                     return BadRequest("Missing required properties (Start_Date, End_Date, Last_Number)!");
                 }
 
-                DateTime startDate = (DateTime)startDateProperty.GetValue(entity);
-                DateTime endDate = (DateTime)endDateProperty.GetValue(entity);
-                int lastNumber = (int)lastNumberProperty.GetValue(entity);
+                long startDateLong = (long)startDateProperty.GetValue(entity);
+                long endDateLong = (long)endDateProperty.GetValue(entity);
 
-                string summaryCode = GenerateSummaryCode(startDate, endDate, lastNumber);
+                DateTime startDate = DateTime.ParseExact(startDateLong.ToString(), "yyyyMMddHHmmss", null);
+                DateTime endDate = DateTime.ParseExact(endDateLong.ToString(), "yyyyMMddHHmmss", null);
+
+                string summaryCode = GenerateSummaryCode(startDate, endDate);
                 entity.GetType().GetProperty("Summary_Code")?.SetValue(entity, summaryCode);
             }
+            else if (entityName == "Student_Class")
+            {
+                var classIdProperty = entity.GetType().GetProperty("Class_Id");
+                if (classIdProperty == null) return BadRequest("Missing Class_Id property!");
+
+                int classId = (int)classIdProperty.GetValue(entity);
+
+                // Gọi hàm GetStudentCountByClassIdAsync
+                var studentCount = await _repository.GetStudentCountByClassIdAsync(classId);
+
+                // Lấy thông tin lớp
+                var classEntity = await _repository.GetByIdAsync<Class>(classId);
+                if (classEntity != null)
+                {
+                    classEntity.Number = studentCount;
+                    await _repository.UpdateAsync((T)(object)classEntity);
+                }
+            }
+
+
             var createdEntity = await _repository.CreateAsync(entity);
             return CreatedAtAction(nameof(GetById), new { id = createdEntity }, createdEntity);
         }
@@ -248,12 +272,12 @@ namespace ASP.NET.Controllers.G
             return $"R{newNumber:D3}";
         }
 
-        private string GenerateSummaryCode(DateTime startDate, DateTime endDate, int lastNumber)
+        private string GenerateSummaryCode(DateTime startDate, DateTime endDate)
         {
-            int year = DateTime.Now.Year;
+            string lastTwoDigits = DateTime.Now.ToString("yy");
             string startStr = startDate.ToString("MMdd"); // Chuyển ngày tháng thành MMDD
             string endStr = endDate.ToString("MMdd");     // Chuyển ngày tháng kết thúc thành MMDD
-            return $"S{year}_{startStr}_{endStr}_{lastNumber}";
+            return $"S{lastTwoDigits}_{startStr}_{endStr}";
         }
     }
 }
