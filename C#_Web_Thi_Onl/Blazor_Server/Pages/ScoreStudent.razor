@@ -1,0 +1,203 @@
+﻿@page "/bangdiem"
+@using Blazor_Server.Services
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@inject ScoreServices ScoreService
+@inject ProtectedSessionStorage SessionStorage
+@layout StudentLayout
+
+<div class="bang-diem-container">
+    <h1 class="bang-diem-title">SMART SCHOOL</h1>
+    <h2 class="bang-diem-subtitle">Bảng điểm của học sinh @studentFullName</h2>
+    <p class="bang-diem-summary">Kỳ học hiện tại: <span class="font-bold">@currentSummaryId</span></p>
+</div>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="text-center text-red-500 font-semibold">@errorMessage</div>
+}
+else if (scoresList == null)
+{
+    <div class="text-center text-gray-500">Đang tải dữ liệu bảng điểm...</div>
+}
+else
+{
+    <div class="flex justify-center mt-6">
+        <div class="overflow-x-auto shadow-lg rounded-lg w-full max-w-7xl">
+            <table class="table-bangdiem">
+                <thead>
+                    <tr>
+                        <th>Môn học</th>
+                        <th colspan="3">Điểm miệng</th>
+                        <th colspan="3">Điểm 15 phút</th>
+                        <th colspan="2">Điểm 45 phút</th>
+                        <th>Điểm giữa kỳ</th>
+                        <th>Điểm cuối kỳ</th>
+                        <th>Trung bình</th>
+                        <th>Xếp loại</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var subjectGroup in scoresList.GroupBy(x => x.SubjectName))
+                    {
+                        double totalPoints = 0;
+
+                        <tr>
+                            <td class="font-semibold">@subjectGroup.Key</td>
+
+                            @* Điểm miệng (Attendance) *@
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                var diemMieng = subjectGroup
+                                .Where(x => x.PointType == "Attendance")
+                                .OrderBy(x => x.Point)
+                                .ElementAtOrDefault(i)?.Point ?? 0;
+
+                                totalPoints += diemMieng;
+
+                                <td class="@(diemMieng < 5 ? "score-low" : "score-good")">@diemMieng</td>
+                            }
+
+                            @* Điểm 15 phút (Point_15) *@
+                            @for (int i = 0; i < 3; i++)
+                            {
+                                var diem15 = subjectGroup
+                                .Where(x => x.PointType == "Point_15")
+                                .OrderBy(x => x.Point)
+                                .ElementAtOrDefault(i)?.Point ?? 0;
+
+                                totalPoints += diem15;
+
+                                <td class="@(diem15 < 5 ? "score-low" : "score-good")">@diem15</td>
+                            }
+
+                            @* Điểm 45 phút (Point_45) *@
+                            @for (int i = 0; i < 2; i++)
+                            {
+                                var diem45 = subjectGroup
+                                .Where(x => x.PointType == "Point_45")
+                                .OrderBy(x => x.Point)
+                                .ElementAtOrDefault(i)?.Point ?? 0;
+
+                                totalPoints += diem45;
+
+                                <td class="@(diem45 < 5 ? "score-low" : "score-good")">@diem45</td>
+                            }
+
+                            @* Điểm giữa kỳ (Midterm) *@
+                            @{
+                                var diemGiuaKy = subjectGroup
+                                .FirstOrDefault(x => x.PointType == "Point_Midterm")?.Point ?? 0;
+
+                                totalPoints += diemGiuaKy;
+
+                                <td class="@(diemGiuaKy < 5 ? "score-low" : "score-good")">@diemGiuaKy</td>
+                            }
+
+                            @* Điểm cuối kỳ (Final) *@
+                            @{
+                                var diemCuoiKy = subjectGroup
+                                .FirstOrDefault(x => x.PointType == "Point_Final")?.Point ?? 0;
+
+                                totalPoints += diemCuoiKy;
+
+                                <td class="@(diemCuoiKy < 5 ? "score-low" : "score-good")">@diemCuoiKy</td>
+                            }
+
+                            @* Tổng kết mới (chia cho 10) *@
+                            @{
+                                double diemTongKet = totalPoints / 10;
+                                string xepLoai = "";
+
+                                if (diemTongKet < 5)
+                                    xepLoai = "Yếu";
+                                else if (diemTongKet < 6)
+                                    xepLoai = "Trung bình";
+                                else if (diemTongKet < 8)
+                                    xepLoai = "Khá";
+                                else
+                                    xepLoai = "Giỏi";
+                            }
+
+                            <td class="font-bold text-blue-600">@diemTongKet.ToString("0.00")</td>
+                            <td class="font-bold @(xepLoai == "Giỏi" ? "text-green-600" : (xepLoai == "Khá" ? "text-blue-500" : (xepLoai == "Trung bình" ? "text-yellow-500" : "text-red-500")))">
+                                @xepLoai
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+        </div>
+    </div>
+
+}
+
+
+@code {
+    private List<StudentScoreDetail> scoresList;
+    private string errorMessage;
+    private int currentSummaryId;
+    private string studentCode;
+    private string studentFullName = "";
+    private bool hasLoadedFirstRender = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!hasLoadedFirstRender)
+        {
+            await LoadStudentCodeAndFullName();
+            hasLoadedFirstRender = true;
+        }
+
+        if (!string.IsNullOrEmpty(studentCode))
+        {
+            try
+            {
+                currentSummaryId = await ScoreService.GetCurrentSummaryId();
+                scoresList = await ScoreService.GetStudentScoresAsync(studentCode, currentSummaryId);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Lỗi khi tải bảng điểm: {ex.Message}";
+            }
+        }
+    }
+
+    // 🔥 Hàm lấy Student_Code và FullName từ Token
+    private async Task LoadStudentCodeAndFullName()
+    {
+        var result = await SessionStorage.GetAsync<string>("authToken");
+
+        if (result.Success && !string.IsNullOrEmpty(result.Value))
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(result.Value) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+            if (jsonToken != null)
+            {
+                var userIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Id");
+                var fullNameClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Full_Name");
+
+                if (fullNameClaim != null)
+                {
+                    studentFullName = fullNameClaim.Value;
+                }
+
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    var students = await ScoreService.GetAllStudentsAsync();
+                    var matchedStudent = students.FirstOrDefault(s => s.User_Id == userId);
+                    if (matchedStudent != null)
+                    {
+                        studentCode = matchedStudent.Student_Code;
+                    }
+                    else
+                    {
+                        errorMessage = "Không tìm thấy học sinh tương ứng.";
+                    }
+                }
+            }
+        }
+
+    }
+}

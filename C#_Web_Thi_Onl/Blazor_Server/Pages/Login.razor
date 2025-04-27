@@ -39,6 +39,8 @@
 
         if (!string.IsNullOrEmpty(token.Token))
         {
+            await SessionStorage.SetAsync("authToken", token.Token);
+
             var handler = new JwtSecurityTokenHandler();
             var jsonToken = handler.ReadToken(token.Token) as JwtSecurityToken;
 
@@ -47,6 +49,7 @@
                 foreach (var claim in jsonToken.Claims)
                 {
                     await SessionStorage.SetAsync(claim.Type, claim.Value);
+                    Console.WriteLine($"Claim type: {claim.Type}, value: {claim.Value}");
                 }
                 var roleIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Role");
                 if (roleIdClaim != null)

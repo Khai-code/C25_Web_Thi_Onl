@@ -1,0 +1,60 @@
+﻿/* custom.css */
+.bang-diem-container {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.bang-diem-title {
+    font-size: 28px;
+    font-weight: bold;
+    color: #1d4ed8; /* Xanh đẹp */
+}
+
+.bang-diem-subtitle {
+    font-size: 22px;
+    font-weight: 600;
+    color: #374151; /* Xám đậm */
+    margin-top: 10px;
+}
+
+.bang-diem-summary {
+    color: #6b7280; /* Xám nhạt */
+    margin-top: 5px;
+}
+
+.table-bangdiem {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+    background-color: #fff;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .table-bangdiem thead {
+        background-color: #60a5fa; /* xanh sáng */
+        color: white;
+        font-size: 16px;
+        text-transform: uppercase;
+    }
+
+    .table-bangdiem th,
+    .table-bangdiem td {
+        padding: 10px 14px;
+        border: 1px solid #d1d5db;
+        text-align: center;
+    }
+
+    .table-bangdiem tbody tr:hover {
+        background-color: #e0f2fe; /* hover xanh nhạt */
+    }
+
+.score-low {
+    color: #ef4444; /* đỏ cho điểm thấp */
+    font-weight: bold;
+}
+
+.score-good {
+    color: #10b981; /* xanh cho điểm tốt */
+}
