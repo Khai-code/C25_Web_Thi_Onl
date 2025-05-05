@@ -3,11 +3,13 @@ using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
+using Data_Base.Models.L;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using System.Data;
 
 
 namespace Blazor_Server.Services
@@ -20,8 +22,14 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<List<Summary>> GetAllSumary()
+        {
+            var data = await _httpClient.GetFromJsonAsync<List<Summary>>("/api/Summary/Get");
+            return data;
+        }
         public async Task<List<Review>> SeacherReview(string number, string codetest)
         {
+            var getalllerningsumary = await _httpClient.GetFromJsonAsync<List<Learning_Summary>>("/api/Learning_Summary/Get");
             var getallstudent = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
             var getallUser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get");
             var getallstudent_class = await _httpClient.GetFromJsonAsync<List<Student_Class>>("/api/Student_Class/Get");
@@ -39,7 +47,9 @@ namespace Blazor_Server.Services
             var getallAnwer = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
             var getallhis = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>("/api/Exam_Room_Student_Answer_HisTory/Get");
 
-            var result = (from student in getallstudent
+            var result = (from 
+                          Learning in getalllerningsumary join
+                          student in getallstudent on Learning.Student_Id equals student.Id
                           join user in getallUser on student.User_Id equals user.Id
                           join student_class in getallstudent_class on student.Id equals student_class.Student_Id
                           join classs in getallclass on student_class.Class_Id equals classs.Id
@@ -81,6 +91,27 @@ namespace Blazor_Server.Services
                           }).ToList();
 
             return result;
+        }
+
+        public async Task UpdateReview(int id, int rightAnswer)
+        {
+            var data = await _httpClient.GetFromJsonAsync<Answers>($"/api/Answers/GetBy/{id}");
+            var answer = new Answers
+            {
+                Id = data.Id,
+                Answers_Name=data.Answers_Name,
+                Question_Id=data.Question_Id,
+                Right_Answer = rightAnswer
+            };
+            var response = await _httpClient.PutAsJsonAsync($"/api/Answers/Pus/{id}", answer);
+            if (response.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Cập nhật thành công cho đáp án ID: {answer.Id}");
+            }
+            else
+            {
+                Console.WriteLine($"Cập nhật thất bại cho đáp án ID: {answer.Id}");
+            }
         }
 
 

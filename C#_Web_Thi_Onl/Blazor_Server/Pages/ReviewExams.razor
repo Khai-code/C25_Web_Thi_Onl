@@ -3,9 +3,11 @@
 @using System.ComponentModel.DataAnnotations
 @using Blazor_Server.Services
 @using Data_Base.Models.A
+@using Data_Base.Models.S
 @using static Blazor_Server.Services.ReviewExam
 @inject ReviewExam review
 @inject Notification infor
+
 <div class="position-relative" style="height: 100vh;">
     <!-- Form tìm kiếm -->
     <div class="position-sticky top-0 z-3 pb-3">
@@ -27,7 +29,7 @@
                             <InputText class="form-control shadow-sm" @bind-Value="formModel.ExamCode" placeholder="Nhập mã bài thi" />
                         </div>
                         <div>
-                            <button type="submit" @onclick="HandleSubmit" class="btn btn-success px-4 py-2 rounded-pill shadow">
+                            <button type="submit" class="btn btn-success px-4 py-2 rounded-pill shadow">
                                 🔍 Xem chi tiết
                             </button>
                         </div>
@@ -36,6 +38,7 @@
             </div>
         </div>
     </div>
+
     @if (isLoading)
     {
         <div class="d-flex justify-content-center align-items-center">
@@ -47,6 +50,14 @@
 
     @if (showResult && !isLoading)
     {
+        <div class="mb-4 text-end">
+            <button class="btn btn-warning me-2" @onclick="EnableEdit">✏️ Chỉnh sửa</button>
+            @if (isEditing)
+            {
+                <button class="btn btn-primary" @onclick="SaveChanges">💾 Lưu chỉnh sửa</button>
+            }
+        </div>
+
         @foreach (var item in reviews)
         {
             <div class="card border-0 shadow-sm mb-4">
@@ -55,7 +66,6 @@
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <!-- Cột trái -->
                         <div class="col-md-6">
                             <dl class="row mb-0">
                                 <dt class="col-sm-5">Họ tên:</dt>
@@ -71,8 +81,6 @@
                                 <dd class="col-sm-7">@item.Package_Name</dd>
                             </dl>
                         </div>
-
-                        <!-- Cột phải -->
                         <div class="col-md-6">
                             <dl class="row mb-0">
                                 <dt class="col-sm-5">Thời gian:</dt>
@@ -96,9 +104,7 @@
 
             @foreach (var q in item.questions)
             {
-                var answersOfQuestion = item.answers
-                .Where(a => a.Question_Id == q.Id)
-                .ToList();
+                var answersOfQuestion = item.answers.Where(a => a.Question_Id == q.Id).ToList();
 
                 <div class="card mb-4 shadow-sm border-0 rounded-4">
                     <div class="card-header bg-light fw-bold rounded-top-4 border-bottom-0">
@@ -109,19 +115,44 @@
                         {
                             string cssClass = "p-3 rounded-3 mb-2";
                             bool isCorrect = ans.Right_Answer == 1;
-                            bool isChosen = item.studentAnswers.Any(sa => sa.Answer_Id == q.Id && sa.Answer_Id == ans.Id);
+                            bool isChosen = item.studentAnswers.Any(sa => sa.Answer_Id == ans.Id);
 
                             if (isCorrect && isChosen)
-                                cssClass += " bg-success text-white fw-bold"; // đúng và được chọn
+                                cssClass += " bg-success text-white fw-bold";
                             else if (isCorrect)
-                                cssClass += " bg-white border border-success text-success fw-semibold"; // đúng nhưng không được chọn
+                                cssClass += " bg-white border border-success text-success fw-semibold";
                             else if (isChosen)
-                                cssClass += " bg-danger text-white fw-semibold"; // sai nhưng học sinh chọn
+                                cssClass += " bg-danger text-white fw-semibold";
                             else
                                 cssClass += " bg-light";
 
                             <div class="@cssClass">
                                 <strong>@GetAnswerLabel(answersOfQuestion, ans):</strong> @ans.Answers_Name
+                                @if (isEditing)
+                                {
+                                    if (q.Type == 1) // Chọn 1 đáp án (Radio)
+                                    {
+                                        <div>
+                                            <input type="radio"
+                                            name="question_@q.Id"
+                                            value="@ans.Id"
+                                           
+                                            @onchange="@((ChangeEventArgs e) => SelectAnswer(ans.Id,true))" />
+                                            <label>@ans.Answers_Name</label>
+                                        </div>
+                                    }
+                                    else if (q.Type == 2) // Nhiều đáp án (Checkbox)
+                                    {
+                                        <div>
+                                            <input type="checkbox"
+                                            name="question_@q.Id"
+                                            value="@ans.Id"
+                                           
+                                            @onchange="@((ChangeEventArgs e) => SelectAnswer(ans.Id,(bool)e.Value))" />
+                                            <label>@ans.Answers_Name</label>
+                                        </div>
+                                    }
+                                }
                             </div>
                         }
                     </div>
@@ -134,9 +165,14 @@
 @code {
     private bool showResult = false;
     private bool isLoading = false;
-
+    private bool isEditing = false;
     private PhucKhaoFormModel formModel = new();
     private List<Review> reviews = new();
+    private List<Summary> summaries = new List<Summary>();
+    protected override async Task OnInitializedAsync()
+    {
+        summaries = await review.GetAllSumary();
+    }
 
     private async Task HandleSubmit()
     {
@@ -146,7 +182,8 @@
             reviews = await review.SeacherReview(formModel.StudentCode, formModel.ExamCode);
             if (reviews == null || reviews.Count == 0)
             {
-               await infor.ShowSweetAlert("Không tìm thấy kết quả cho mã học sinh và mã bài thi này.", "error");
+                await infor.ShowSweetAlert("Không tìm thấy kết quả cho mã học sinh và mã bài thi này.", "error");
+                showResult = false;
             }
             else
             {
@@ -155,29 +192,87 @@
         }
         catch (Exception ex)
         {
-           await infor.ShowSweetAlert( $"Đã xảy ra lỗi: {ex.Message}");
+            await infor.ShowSweetAlert($"Đã xảy ra lỗi: {ex.Message}");
         }
         finally
         {
-            isLoading = false; 
+            isLoading = false;
         }
     }
+
+    private void EnableEdit()
+    {
+        isEditing = true;
+    }
+    private int correct;
+    private int idanwer;
+    private async Task SaveChanges()
+    {
+        try
+        {
+            int i = 0;
+            while (i < reviews.Count)
+            {
+                var item = reviews[i];
+                int j = 0;
+                while (j < item.answers.Count)
+                {
+                    var sa = item.answers[j];
+                    int status = (sa.Id == idanwer) ? 1 : 0;
+                    await review.UpdateReview(sa.Id, status);
+                    j++;
+                }
+                i++;
+            }
+
+            await infor.ShowSweetAlert("Đã lưu thay đổi thành công!", "success");
+            isEditing = false;
+            await HandleSubmit();
+        }
+        catch (Exception ex)
+        {
+            await infor.ShowSweetAlert($"Lỗi khi lưu: {ex.Message}", "error");
+        }
+    }
+
+
+    private async Task SelectAnswer(int id, bool isChecked)
+    {
+        int i = 0;
+        while (i < reviews.Count)
+        {
+            var item = reviews[i];
+            int j = 0;
+            while (j < item.answers.Count)
+            {
+                var sa = item.answers[j];
+                if (sa.Id == id)
+                {
+                    int status = isChecked ? 1 : 0;
+                    await review.UpdateReview(sa.Id, status);
+                    if (isChecked)
+                    {
+                        idanwer = id;
+                    }
+                }
+                j++;
+            }
+            i++;
+        }
+    }
+
+   
 
     private string GetAnswerLabel(List<Answers> answersOfQuestion, Answers currentAnswer)
     {
         int index = answersOfQuestion.IndexOf(currentAnswer);
-        if (index >= 0 && index < 26)
-        {
-            return ((char)('A' + index)).ToString();
-        }
-        return "?";
+        return index >= 0 ? ((char)('A' + index)).ToString() : "?";
     }
 
     public class PhucKhaoFormModel
     {
         [Required(ErrorMessage = "Vui lòng nhập mã học sinh.")]
         public string StudentCode { get; set; }
-
         [Required(ErrorMessage = "Vui lòng nhập mã bài thi.")]
         public string ExamCode { get; set; }
     }

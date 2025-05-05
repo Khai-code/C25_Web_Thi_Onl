@@ -8,7 +8,7 @@
 @inject NavigationManager Navigation
 @inject Package_Test_ERP PTERP
 @inject Notification notification
-@layout TeacherLayout
+@layout StudentLayout
 @inject ProtectedSessionStorage SessionStorage
 @inject IJSRuntime JSRuntime
 
@@ -16,6 +16,10 @@
 
 <div class="quiz-container">
     <h2>📝 Bài thi trắc nghiệm</h2>
+    <div id="countdown-timer" style="font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 20px;">
+        @GetFormattedTime()
+    </div>
+
     <div id="question-container">
         <!-- Câu hỏi sẽ được hiển thị ở đây -->
     </div>
@@ -28,97 +32,82 @@
     <button id="finish-btn">✅ Kết thúc bài thi</button>
     <div id="result"></div>
 </div>
-
+<ChildComponent OnStopTest="StopTest" />
 @code {
+    private int minutes;
+    private int seconds;
+    private bool isTimeUp;
+    private Timer countdownTimer;
 
-}
+    protected override async Task OnInitializedAsync()
+    {
+        var checktimeResult = await SessionStorage.GetAsync<Dictionary<int, int>>("thoigian");
 
-<style>
-    body {
-        font-family: "Segoe UI", sans-serif;
-        background-color: #f0f2f5;
-        margin: 0;
-        padding: 20px;
-        display: flex;
-        justify-content: center;
+        if (checktimeResult.Success)
+        {
+            var checktime = checktimeResult.Value;
+            foreach (var item in checktime)
+            {
+                Console.WriteLine($"Key: {item.Key}, Value: {item.Value}");
+                minutes = item.Key; 
+                seconds = item.Value; 
+            }
+            StartCountdown();
+        }
     }
 
-    .quiz-container {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        max-width: 600px;
-        width: 100%;
+    private void StartCountdown()
+    {
+        countdownTimer = new Timer(UpdateCountdown, null, 0, 1000); 
     }
 
-    h2 {
-        text-align: center;
-        margin-bottom: 30px;
-        color: #333;
-    }
-
-    .question-text {
-        font-size: 18px;
-        margin-bottom: 20px;
-    }
-
-    .options label {
-        display: block;
-        background: #f9f9f9;
-        padding: 10px 15px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-        cursor: pointer;
-        border: 1px solid transparent;
-        transition: all 0.3s ease;
-    }
-
-    .options input[type="radio"] {
-        margin-right: 10px;
-    }
-
-    .options label:hover {
-        background-color: #e0eaff;
-    }
-
-    .navigation {
-        display: flex;
-        justify-content: space-between;
-        margin-top: 20px;
-    }
-
-    button {
-        padding: 10px 20px;
-        font-size: 16px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        transition: background 0.3s ease;
-    }
-
-    #prev-btn, #next-btn {
-        background-color: #007bff;
-        color: white;
-    }
-
-        #prev-btn:disabled, #next-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
+    private void UpdateCountdown(object? state)
+    {
+        if (seconds == 0 && minutes == 0)
+        {
+            isTimeUp = true;
+            countdownTimer?.Dispose(); 
+            InvokeAsync(StateHasChanged); 
+            return;
         }
 
-    #finish-btn {
-        margin-top: 25px;
-        display: none;
-        background-color: #28a745;
-        color: white;
-        width: 100%;
+        if (seconds == 0)
+        {
+            if (minutes > 0)
+            {
+                minutes--;
+                seconds = 59;
+            }
+        }
+        else
+        {
+            seconds--;
+        }
+
+        InvokeAsync(StateHasChanged); 
     }
 
-    #result {
-        font-size: 22px;
-        color: #28a745;
-        text-align: center;
-        padding-top: 50px;
+    private string GetFormattedTime() => $"{minutes:D2}:{seconds:D2}";
+    private void ResetCountdown()
+    {
+        var checktimeResult = SessionStorage.GetAsync<Dictionary<int, int>>("thoigian").Result;
+
+        if (checktimeResult.Success)
+        {
+            var checktime = checktimeResult.Value;
+            minutes = checktime.ContainsKey(0) ? checktime[0] : 0;
+            seconds = checktime.ContainsKey(1) ? checktime[1] : 0;
+        }
+
+        isTimeUp = false; // Reset trạng thái hết thời gian
+        countdownTimer?.Dispose(); // Dừng đồng hồ hiện tại
+        StartCountdown(); // Bắt đầu lại đồng hồ đếm ngược
     }
-</style>
+    public void StopTest()
+    {
+        isTimeUp = true; // Đánh dấu hết thời 
+        ResetCountdown();
+        countdownTimer?.Dispose(); // Dừng đồng hồ
+        InvokeAsync(StateHasChanged); // Cập nhật UI
+    }
+}
