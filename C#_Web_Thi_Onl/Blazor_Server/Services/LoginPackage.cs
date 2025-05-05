@@ -1,4 +1,5 @@
-﻿using Data_Base.GenericRepositories;
+﻿using Blazor_Server.Pages;
+using Data_Base.GenericRepositories;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
@@ -50,7 +51,7 @@ namespace Blazor_Server.Services
 
             int ClassId = StudentClass.Class_Id;
 
-            var Packages = await _httpClient.GetFromJsonAsync<List<Package>>("https://localhost:7187/api/Package/Get");
+            var Packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
             if (Packages == null || Packages.Count == 0)
             {
                 Console.WriteLine("Không tìm thấy gói1.");
@@ -107,12 +108,55 @@ namespace Blazor_Server.Services
             }
             return true;
         }
+
+        public async Task<bool> PostERStudent(int packagecode, string Studentcode)
+        {
+            try
+            {
+                var Packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
+                if (Packages == null || Packages.Count == 0)
+                {
+                    Console.WriteLine("Không tìm thấy gói đề.");
+                    return false;
+                }
+
+                var PackageId = Packages.FirstOrDefault(o => o.Package_Code == packagecode).Id;
+
+                var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
+
+                var ExamRoomPackageId = lstExamRoomPackage.FirstOrDefault(o => o.Package_Id == PackageId).Id;
+
+                var Students = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.S.Student>>("https://localhost:7187/api/Student/Get");
+
+                var studetId = Students.FirstOrDefault(o => o.Student_Code == Studentcode).Id;
+                
+                DateTime dateTime = DateTime.Now;
+                long dataLong = ConvertLong.ConvertDateTimeToLong(dateTime);
+
+                Exam_Room_Student ERStudent = new Exam_Room_Student();
+
+                ERStudent.Exam_Room_Package_Id = ExamRoomPackageId;
+                ERStudent.Student_Id = studetId;
+                ERStudent.Check_Time = dataLong;
+
+                var Exam_Room_Student = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/Post", ERStudent);
+                if (!Exam_Room_Student.IsSuccessStatusCode)
+                    return false;
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
         public async Task<Dictionary<int, int>> GetRemainingExamTime(string studentCode, int packageCode)
         {
             var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new List<Student>();
             var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get") ?? new List<Exam_Room_Student>();
             var examRoomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
-            var packages = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+            var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
             var pointTypes = await _httpClient.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new List<Point_Type>();
             var examRooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
             var result = from student in students
