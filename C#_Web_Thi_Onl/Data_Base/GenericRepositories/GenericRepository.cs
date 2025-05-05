@@ -148,5 +148,11 @@ namespace Data_Base.GenericRepositories
                 .Where(sc => sc.Class_Id == classId)
                 .CountAsync();
         }
+
+        public async Task<bool> UpdateClassAsync(Class classEntity)
+        {
+            _context.Set<Class>().Update(classEntity);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

@@ -44,7 +44,9 @@ namespace Blazor_Server.Services
                     Class_Code = string.Empty,
                     Max_Student = model.MaxStudent,
                     Grade_Id = model.GradeId,
-                    Teacher_Id = model.TeacherId
+                    Teacher_Id = model.TeacherId,
+                    Number = 0
+                    
                 };
 
                 var response = await _client.PostAsJsonAsync("api/Class/Post", newClass);
@@ -500,6 +502,7 @@ namespace Blazor_Server.Services
         public int MaxStudent { get; set; }
         public int GradeId { get; set; }
         public int TeacherId { get; set; }
+        public int Number { get; set; }
     }
 
 }

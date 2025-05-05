@@ -54,7 +54,7 @@
                                     @foreach (var grade in grades)
                                     {
                                         <option value="@grade.ID" selected="@(selectedGrade?.ID == grade.ID)">
-                                            @grade.Grade_Name
+                                           Khối: @grade.Grade_Name
                                         </option>
                                     }
                                 }
@@ -629,7 +629,8 @@
         model = new ClassWithTeacherModel
             {
                 GradeId = selectedGrade.ID,
-                MaxStudent = 50
+                MaxStudent = 50,
+                Number = 0
             };
 
         showAddClassModal = true;

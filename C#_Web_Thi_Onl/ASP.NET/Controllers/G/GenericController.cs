@@ -157,7 +157,7 @@ namespace ASP.NET.Controllers.G
                 if (classEntity != null)
                 {
                     classEntity.Number = studentCount;
-                    await _repository.UpdateAsync((T)(object)classEntity);
+                    await _repository.UpdateClassAsync(classEntity);
                 }
             }
 
