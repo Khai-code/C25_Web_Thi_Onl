@@ -62,6 +62,8 @@
     private string studentcode;
     private string packagecode; // đổi thành string để dễ kiểm tra và bind dữ liệu
     public Dictionary<int, int> checktime = new Dictionary<int, int>();
+    Data_Base.Models.E.Exam_Room_Student ERStudent = new Exam_Room_Student();
+    
     private async Task HandleSubmit()
     {
         if (int.TryParse(packagecode, out int packagecodeint) && packagecode.Length == 8)
@@ -72,6 +74,7 @@
 
                 if (check)
                 {
+                    await loginpackge.PostERStudent(packagecodeint, studentcode);
                     checktime = await loginpackge.GetRemainingExamTime(studentcode, packagecodeint);
                     await sessionstorage.SetAsync("thoigian", checktime);
                     navigation.NavigateTo("/Test");

@@ -50,8 +50,7 @@ namespace Blazor_Server.Services
             };
         }
 
-        public async Task<List<SubjectViewModel>> GetSubject()
-        
+        public async Task<List<SubjectViewModel>> GetSubject()     
         {
             var lstsubjects = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
 
