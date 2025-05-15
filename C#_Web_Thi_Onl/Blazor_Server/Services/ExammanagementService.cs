@@ -5,6 +5,8 @@ using Data_Base.Models.P;
 using Data_Base.Models.R;
 using Data_Base.Models.S;
 using Data_Base.Models.U;
+using System.Net.WebSockets;
+using System.Text.RegularExpressions;
 namespace Blazor_Server.Services
 {
     public class ExammanagementService
@@ -17,93 +19,135 @@ namespace Blazor_Server.Services
 
         public async Task<List<listexam>> GetallExam()
         {
+            var result = new List<listexam>();
             var ListExam = await _httpClient.GetFromJsonAsync<List<Exam>>("/api/Exam/Get") ?? new List<Exam>();
-            var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
-            var Listexamroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
-            var Listpackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
-     
-            var result = from exam in ListExam
-                         join room in Listexamroom on exam.Id equals room.Exam_Id into roomGroup
-                         from room in roomGroup.DefaultIfEmpty()
-                         join roomPk in Listexamroompk on room?.Id equals roomPk.Exam_Room_Id into roomPkGroup
-                         from roomPk in roomPkGroup.DefaultIfEmpty()
-                         join package in Listpackage on roomPk?.Package_Id equals package.Id into packageGroup
-                         from package in packageGroup.DefaultIfEmpty()
-                         where room == null || IsOverlapCurrentWeek(room.Start_Time, room.End_Time)
-                         group package by new { exam.Id, exam.Exam_Name } into grouped
-                         select new listexam
-                         {
-                             Id = grouped.Key.Id,
-                             NameExam = grouped.Key.Exam_Name,
-                             Totalpackage = grouped.Count(p => p != null) 
-                         };
-
-            return result.ToList();
+            foreach(var exam in ListExam)
+            {
+                var examroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
+                var valiTime = examroom.Where(x=>x.Exam_Id==exam.Id && IsOverlapCurrentWeek(x.Start_Time,x.End_Time)).ToList();
+                if (!valiTime.Any()) continue;
+                int total = 0;
+                foreach(var room in valiTime)
+                {
+                    var roomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
+                    var rpk = roomPackages.Where(x => x.Exam_Room_Id == room.Id);
+                    foreach(var pakage in rpk)
+                    {
+                        var package = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+                        var list = package.Where(x => x.Id == pakage.Package_Id);
+                        if (list != null) total++;
+                    }
+                }
+                result.Add(new listexam
+                {
+                    Id = exam.Id,
+                    NameExam = exam.Exam_Name,
+                    Totalpackage = total
+                });
+            }
+            return result;
         }
         public async Task<List<listpackage>> GetallPackage(int id)
         {
-            var Listpackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get");
-            var Listexamroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get");
-            var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get");
-            var Listroom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get");
-            var result = from package in Listpackage
-                         join exroompk in Listexamroompk on package.Id equals exroompk.Package_Id
-                         join examroom in Listexamroom on exroompk.Exam_Room_Id equals examroom.Id
-                         join room in Listroom on examroom.Room_Id equals room.ID
-                         where IsOverlapCurrentWeek(examroom.Start_Time, examroom.End_Time)&&examroom.Exam_Id==id
-                         group package by new { package.Id, package.Package_Name, ExamRoomId = examroom.Id, examroom.Start_Time, examroom.End_Time, room.Room_Name } into grouped
-                         select new listpackage
-                         {
-                             Id = grouped.Key.Id,
-                             Idexam = grouped.Key.ExamRoomId,
-                             NamePackage = grouped.Key.Package_Name,
-                             StartTime = ConvertLong.ConvertLongToDateTime(grouped.Key.Start_Time),
-                             EndTime = ConvertLong.ConvertLongToDateTime(grouped.Key.End_Time),
-                             RoomName = grouped.Key.Room_Name,
-                         };
-            return result.ToList();
+            var listPackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+
+            var tasks = listPackage.Select(async package =>
+            {
+                var listExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
+                var exrPackage = listExamRoomPackage.FirstOrDefault(x => x.Package_Id == package.Id);
+                if (exrPackage == null) return null;
+                var listExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")?? new List<Exam_Room>();
+                var examRoom = listExamRoom.FirstOrDefault(x =>x.Id == exrPackage.Exam_Room_Id &&x.Exam_Id == id &&IsOverlapCurrentWeek(x.Start_Time, x.End_Time));
+                if (examRoom == null) return null;
+                var listRoom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get")?? new List<Room>();
+                var room = listRoom.FirstOrDefault(x => x.ID == examRoom.Room_Id);
+                if (room == null) return null;
+                return new listpackage
+                {
+                    Id = package.Id,
+                    Idexam = examRoom.Id,
+                    NamePackage = package.Package_Name,
+                    StartTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time),
+                    EndTime = ConvertLong.ConvertLongToDateTime(examRoom.End_Time),
+                    RoomName = room.Room_Name
+                };
+            });
+
+            var results = await Task.WhenAll(tasks);
+            return results.ToList();
         }
+
         public async Task<List<listStudent>> GetAllStudent(int Id)
         {
-            var Listpackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get");
-            var Lisclass = await _httpClient.GetFromJsonAsync<List<Class>>("/api/Class/Get");
-            var Liststdclass = await _httpClient.GetFromJsonAsync<List<Student_Class>>("/api/Student_Class/Get");
-            var Liststudent = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
-            var Listuser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get");
-            var Listexroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get");
-            var Listexroomstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var Listexhistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
-            var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get");
+            var Listpackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+            var package = Listpackage.FirstOrDefault(x => x.Id == Id);
+            if (package == null) return new List<listStudent>();
+            var Lisclass = await _httpClient.GetFromJsonAsync<List<Class>>("/api/Class/Get") ?? new List<Class>();
+            var classpackage = Lisclass.FirstOrDefault(x => x.Id == package.Class_Id);
+            if (classpackage == null) return new List<listStudent>();
+            var Liststdclass = await _httpClient.GetFromJsonAsync<List<Student_Class>>("/api/Student_Class/Get") ?? new List<Student_Class>();
+            var studentClasses = Liststdclass.Where(x => x.Class_Id == classpackage.Id).ToList();
+            if (!studentClasses.Any()) return new List<listStudent>();
+            var Liststudent = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new List<Student>();
+            var Listuser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
+            var Listexroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
+            var expk = Listexroompk.FirstOrDefault(x => x.Package_Id == package.Id);
+            if (expk == null) return new List<listStudent>();
+            var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
+            var exroom = Listexamroom.FirstOrDefault(x => x.Id == expk.Exam_Room_Id);
+            if (exroom == null) return new List<listStudent>();
+            var Listexroomstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get") ?? new List<Exam_Room_Student>();
+            var Listexhistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get") ?? new List<Exam_HisTory>();
+            var result = new List<listStudent>();
+            foreach (var studentClass in studentClasses)
+            {
+                var student = Liststudent.FirstOrDefault(s => s.Id == studentClass.Student_Id);
+                if (student == null) continue;
 
-            var result = (from package in Listpackage
-                          join classs in Lisclass on package.Class_Id equals classs.Id
-                          join stdclass in Liststdclass on classs.Id equals stdclass.Class_Id
-                          join student in Liststudent on stdclass.Student_Id equals student.Id
-                          join user in Listuser on student.User_Id equals user.Id
-                          join exroompk in Listexroompk on package.Id equals exroompk.Package_Id
-                          join examroom in Listexamroom on exroompk.Exam_Room_Id equals examroom.Id
-                          join exroomstd in Listexroomstudent on exroompk.Id equals exroomstd.Exam_Room_Package_Id into studentExamGroup
-                          from studentExam in studentExamGroup.DefaultIfEmpty()
-                          join exhistories in Listexhistories on studentExam?.Id equals exhistories.Exam_Room_Student_Id into historyGroup
-                          from history in historyGroup.DefaultIfEmpty()
-                          where package.Id == Id
-                          select new listStudent
-                          {
-                              Id = student.Id,
-                              NameStudent = user.Full_Name,
-                              status = !Listexroomstudent.Any(x => x.Student_Id == stdclass.Student_Id) ? "Chưa thi"
-                          : ConvertLong.ConvertLongToDateTime(examroom.Start_Time) > DateTime.Now ? "Chưa thi"
-                          : (ConvertLong.ConvertLongToDateTime(studentExam.Check_Time) >= ConvertLong.ConvertLongToDateTime(examroom.Start_Time) &&
-                             ConvertLong.ConvertLongToDateTime(studentExam.Check_Time) < ConvertLong.ConvertLongToDateTime(examroom.End_Time))
-                          ? "Đang thi"
-                          : (Listexhistories.Any(x => x.Exam_Room_Student_Id == studentExam?.Id &&
-                                                      ConvertLong.ConvertLongToDateTime(x.Create_Time) >= ConvertLong.ConvertLongToDateTime(examroom.Start_Time) &&
-                                                      ConvertLong.ConvertLongToDateTime(x.Create_Time) <= ConvertLong.ConvertLongToDateTime(examroom.End_Time))
-                             ? "Đã hoàn thành bài thi"
-                             : "Đã thi")
-                          }).DistinctBy(s => s.Id).ToList();
-            return result;
+                var user = Listuser.FirstOrDefault(u => u.Id == student.User_Id);
+                if (user == null) continue;
+
+                var exstd = Listexroomstudent.FirstOrDefault(x => x.Exam_Room_Package_Id == expk.Id && x.Student_Id == studentClass.Student_Id);
+
+                string status = "Chưa thi";
+
+                if (exstd != null)
+                {
+                    var startTime = ConvertLong.ConvertLongToDateTime(exroom.Start_Time);
+                    var endTime = ConvertLong.ConvertLongToDateTime(exroom.End_Time);
+
+                    if (startTime > DateTime.Now)
+                    {
+                        status = "Chưa thi";
+                    }
+                    else if (ConvertLong.ConvertLongToDateTime(exstd.Check_Time) >= startTime &&
+                             ConvertLong.ConvertLongToDateTime(exstd.Check_Time) < endTime)
+                    {
+                        status = "Đang thi";
+                    }
+                    else if (Listexhistories.Any(h => h.Exam_Room_Student_Id == exstd.Id &&
+                                                      ConvertLong.ConvertLongToDateTime(h.Create_Time) >= startTime &&
+                                                      ConvertLong.ConvertLongToDateTime(h.Create_Time) <= endTime))
+                    {
+                        status = "Đã hoàn thành bài thi";
+                    }
+                    else
+                    {
+                        status = "Đã thi";
+                    }
+                }
+
+                result.Add(new listStudent
+                {
+                    Id = student.Id,
+                    NameStudent = user.Full_Name,
+                    status = status
+                });
+            }
+
+            return result.ToList();
         }
+
         public async Task<bool> UpdateExamRoomTime(int id, Exam_Room exam_Room)
         {
             var existingExamRoom = await _httpClient.GetFromJsonAsync<Exam_Room>($"/api/Exam_Room/GetBy/{id}");
@@ -128,9 +172,14 @@ namespace Blazor_Server.Services
 
             DateTime roomStartTime = ConvertLong.ConvertLongToDateTime(startTime);
             DateTime roomEndTime = ConvertLong.ConvertLongToDateTime(endTime);
+            if (roomStartTime < startOfWeek || roomStartTime > endOfWeek)
+            {
+                return false;
+            }
 
             // Chỉ cần thời gian thi có GIAO với tuần hiện tại là tính
             return roomStartTime <= endOfWeek && roomEndTime >= startOfWeek;
+           
         }
 
 
