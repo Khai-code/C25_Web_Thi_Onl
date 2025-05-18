@@ -21,7 +21,12 @@ namespace Blazor_Server.Services
         {
             var model_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/Post", model.Package);
             if (!model_Package.IsSuccessStatusCode)
+            {
+                var errorContent = await model_Package.Content.ReadAsStringAsync();
+                Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                Console.WriteLine(errorContent);
                 return null;
+            }
 
             var addedPackage = await model_Package.Content.ReadFromJsonAsync<Package>();
             if (addedPackage == null) return null;
@@ -36,17 +41,28 @@ namespace Blazor_Server.Services
             model.Exam_Room_Package.Exam_Room_Id = addedExam_Room.Id;
             model.Exam_Room_Package.Package_Id = addedPackage.Id;
 
+            model.Exam_Room_Teacher.Exam_Room_Id = addedExam_Room.Id;
+
             var model_Exam_Room_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/Post", model.Exam_Room_Package);
 
             if (!model_Exam_Room_Package.IsSuccessStatusCode)
                 return null;
 
+            var model_Exam_Room_Teacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/Post", model.Exam_Room_Teacher);
+            if (!model_Exam_Room_Teacher.IsSuccessStatusCode)
+            {
+                var errorContent = await model_Exam_Room_Teacher.Content.ReadAsStringAsync();
+                Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                Console.WriteLine(errorContent);
+                return null;
+            }
 
             return new PackageTestADO
             {
                 Package = addedPackage,
                 Exam_Room = addedExam_Room,
-                Exam_Room_Package = model.Exam_Room_Package
+                Exam_Room_Package = model.Exam_Room_Package,
+                Exam_Room_Teacher = model.Exam_Room_Teacher,
             };
         }
 
@@ -126,6 +142,7 @@ namespace Blazor_Server.Services
             public Package Package { get; set; }
             public Exam_Room Exam_Room { get; set; }
             public Exam_Room_Package Exam_Room_Package { get; set; }
+            public Exam_Room_Teacher Exam_Room_Teacher { get; set; }
         }
 
         public class SubjectViewModel

@@ -18,7 +18,6 @@ namespace Data_Base.Models.R
         public int ID { get; set; }
         [StringLength(20, ErrorMessage = "Tên phòng không quá 20 ký tự")]
         public string Room_Name { get; set; }
-        [StringLength(14, ErrorMessage = "Mã phòng không quá 14 ký tự")]
         public string Room_Code { get; set; }
         [JsonIgnore]
         public ICollection<Exam_Room> Exam_Room { get; set; } = new List<Exam_Room>();

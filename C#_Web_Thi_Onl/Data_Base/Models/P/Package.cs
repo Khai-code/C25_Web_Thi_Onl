@@ -19,7 +19,6 @@ namespace Data_Base.Models.P
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [Range(1, 8, ErrorMessage = "Mã gói đề không quá 8 ký tự")]
         public int Package_Code { get; set; }
         [StringLength(50, ErrorMessage = "Tên gói đề không quá 50 ký tự")]
         public string Package_Name { get; set; }

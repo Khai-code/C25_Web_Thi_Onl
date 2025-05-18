@@ -18,7 +18,6 @@ namespace Data_Base.Models.C
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(12, ErrorMessage = "Mã lớp không hợp lệ")]
         public string Class_Code { get; set; }
         [StringLength(10, ErrorMessage = "Tên lớp không quá 10 ký tự")]
         public string Class_Name { get; set; }
