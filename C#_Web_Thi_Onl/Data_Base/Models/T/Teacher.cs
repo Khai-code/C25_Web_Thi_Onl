@@ -17,7 +17,6 @@ namespace Data_Base.Models.T
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(14, ErrorMessage = "Mã giáo viên không hợp lệ")]
         public string Teacher_Code { get; set; }
         [ForeignKey("User_Id")]
         [JsonIgnore]

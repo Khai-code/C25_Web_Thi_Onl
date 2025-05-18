@@ -19,7 +19,6 @@ namespace Data_Base.Models.G
         public int ID { get; set; }
         [StringLength(10, ErrorMessage = "Tên khối không quá 10 ký tự")]
         public string Grade_Name { get; set; }
-        [StringLength(10, ErrorMessage = "Mã lớp không quá 10 ký tự")]
         public string Grade_Code { get; set; }
         [JsonIgnore]
         public ICollection<Subject_Grade> Subject_Grades { get; set; } = new List<Subject_Grade>();

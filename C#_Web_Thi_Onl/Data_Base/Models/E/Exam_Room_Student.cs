@@ -1,4 +1,5 @@
 ﻿using Data_Base.Models.S;
+using Data_Base.Models.T;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -27,6 +28,10 @@ namespace Data_Base.Models.E
         [JsonIgnore]
         public Student? Students { get; set; }
         public int Student_Id { get; set; }
+        [ForeignKey("Test_Id")]
+        [JsonIgnore]
+        public Test? Tests { get; set; }
+        public int Test_Id { get; set; }
         [JsonIgnore]
         public ICollection<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; } = new List<Exam_Room_Student_Answer_HisTory>();
         [JsonIgnore]

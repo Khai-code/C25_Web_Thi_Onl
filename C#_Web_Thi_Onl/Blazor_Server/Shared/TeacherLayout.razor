@@ -2,6 +2,14 @@
 @inject NavigationManager navigation
 @inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
 @inject IJSRuntime jSRuntime
+<BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.BottomRight"
+                Timeout="10"
+                IconType="Blazored.Toast.Configuration.IconType.FontAwesome"
+                SuccessClass="success-toast-override"
+                SuccessIcon="fa fa-thumbs-up"
+                ErrorIcon="fa fa-bug"
+                WarningIcon="fa fa-warning"
+                InfoIcon="fa fa-info-circle" />
 <div class="container-fluid d-flex flex-column p-0">
     <nav class="top-navbar d-flex align-items-center justify-content-between fixed-top p-2">
         <div class="d-flex align-items-center" style="padding-left:10px">
