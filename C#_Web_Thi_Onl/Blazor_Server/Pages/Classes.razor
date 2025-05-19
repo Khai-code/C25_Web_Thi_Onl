@@ -1,19 +1,19 @@
-﻿@page "/classs"
-@using Blazor_Server.Services
-@using Data_Base.Models.C
-@using Data_Base.Models.G
-@using Data_Base.Models.S
-@using Data_Base.Models.T
-@using Data_Base.Models.U
-@using System.Net.Http.Json
-@using Microsoft.AspNetCore.Components.Forms
-@inject ClassServices ClassService
-@inject IJSRuntime JSRuntime
-@inject HttpClient _client
-@inject NavigationManager nav
-@layout TeacherLayout 
-
-<h3>Quản lý Lớp học</h3>
+﻿    @page "/classs"
+    @using Blazor_Server.Services
+    @using Data_Base.Models.C
+    @using Data_Base.Models.G
+    @using Data_Base.Models.S
+    @using Data_Base.Models.T
+    @using Data_Base.Models.U
+    @using System.Net.Http.Json
+    @using Microsoft.AspNetCore.Components.Forms
+    @inject ClassServices ClassService
+    @inject IJSRuntime JSRuntime
+    @inject HttpClient _client
+    @inject NavigationManager nav
+    @inject Learning_SummaryService summaryService
+    @inject IJSRuntime jsRuntime
+    @layout TeacherLayout
 
 @if (errorMessage != null)
 {
@@ -31,93 +31,115 @@
 
 <div class="container-fluid">
     <!-- Phần chọn khối và lớp -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5>Chọn khối và lớp</h5>
-                    @if (selectedGrade != null)
+    <div class="row mb-4 align-items-end">
+        <div class="d-flex justify-content-between align-items-end flex-wrap mb-3 gap-2">
+            <div>
+                @if (selectedGrade != null)
+                {
+                    <button class="btn btn-success btn-sm" @onclick="ShowAddClassModal">
+                        <i class="bi bi-plus-circle"></i> Thêm lớp cho khối @selectedGrade.Grade_Name
+                    </button>
+                }
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <input type="text" class="form-control form-control-sm" placeholder="Tìm tên lớp hoặc giáo viên"
+                       style="min-width: 220px;" @bind="searchTerm" @bind:event="oninput" />
+                <button class="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-1"
+                        style="min-width: 120px;" @onclick="SearchClass">
+                    <i class="bi bi-search"></i> <span>Tìm kiếm</span>
+                </button>
+
+            </div>
+        </div>
+
+        <div class="col-md-8 d-flex align-items-center gap-2">
+            <div>
+                <label>Chọn khối:</label>
+                <select class="form-control" @onchange="OnGradeChange">
+                    <option value="">-- Chọn khối --</option>
+                    @if (grades != null)
                     {
-                        <button class="btn btn-success btn-sm" @onclick="ShowAddClassModal">
-                            <i class="bi bi-plus-circle"></i> Thêm lớp cho khối @selectedGrade.Grade_Name
-                        </button>
+                        @foreach (var grade in grades)
+                        {
+                            <option value="@grade.ID" selected="@(selectedGrade?.ID == grade.ID)">
+                                Khối: @grade.Grade_Name
+                            </option>
+                        }
                     }
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <label>Chọn khối:</label>
-                            <select class="form-control" @onchange="OnGradeChange">
-                                <option value="">-- Chọn khối --</option>
-                                @if (grades != null)
-                                {
-                                    @foreach (var grade in grades)
-                                    {
-                                        <option value="@grade.ID" selected="@(selectedGrade?.ID == grade.ID)">
-                                           Khối: @grade.Grade_Name
-                                        </option>
-                                    }
-                                }
-                            </select>
+                </select>
+            </div>
+
+            <div>
+                <label>Chọn lớp:</label>
+                <select class="form-control" @onchange="OnClassChange">
+                    <option value="">-- Chọn lớp --</option>
+                    @if (filteredClasses != null)
+                    {
+                        @foreach (var classItem in filteredClasses)
+                        {
+                            <option value="@classItem.Id" selected="@(selectedClass?.Id == classItem.Id)">
+                                @classItem.Class_Name
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+
+
+        </div>
+    </div>
+
+
+    @if (selectedClass != null)
+    {
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Thông tin lớp học</h5>
+                        <div class="text-muted mb-2">
+                            <div>Lớp: <strong>@selectedClass.Class_Name</strong></div>
+                            <div>Giáo viên chủ nhiệm: <strong>@classTeacherName</strong></div>
+                            <div>Số học sinh: <strong>@(selectedClass?.Number ?? 0)</strong></div>
                         </div>
-                        <div class="col-md-6">
-                            <label>Chọn lớp:</label>
-                            <select class="form-control" @onchange="OnClassChange">
-                                <option value="">-- Chọn lớp --</option>
-                                @if (filteredClasses != null)
-                                {
-                                    @foreach (var classItem in filteredClasses)
-                                    {
-                                        <option value="@classItem.Id" selected="@(selectedClass?.Id == classItem.Id)">
-                                            @classItem.Class_Name
-                                        </option>
-                                    }
-                                }
-                            </select>
-                            @if (selectedClass != null)
-                            {
-                                <button class="btn btn-danger btn-sm mt-2" @onclick="ConfirmDeleteClass">
-                                    <i class="bi bi-trash"></i> Xoá lớp @selectedClass.Class_Name
-                                </button>
-                            }
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-primary btn-sm" @onclick="AddNewStudent">
+                                <i class="bi bi-plus-circle"></i> Thêm học sinh
+                            </button>
+                            <button class="btn btn-danger btn-sm" @onclick="ConfirmDeleteClass">
+                                <i class="bi bi-trash"></i> Xoá lớp
+                            </button>
+                            <button class="btn btn-info btn-sm" @onclick="OpenSummaryModal">
+                                <i class="bi bi-journal-text"></i> Xem bảng điểm tổng kết
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    @if (selectedClass != null)
-    {
         <div class="row">
-            <!-- Danh sách học sinh -->
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5>Danh sách học sinh lớp @selectedClass.Class_Name</h5>
-                        <button class="btn btn-primary btn-sm" @onclick="AddNewStudent">
-                            <i class="bi bi-plus-circle"></i> Thêm học sinh
-                        </button>
+            <div class="@(selectedStudent != null ? "col-md-2" : "col-md-12")">
+                <div class="card student-list-panel @(selectedStudent != null ? "minimized" : "")">
+                    <div class="card-header @(selectedStudent != null ? "d-none" : "")">
+                        <h5>Danh sách học sinh</h5>
                     </div>
-                    <div class="card-body">
-                        @if (isLoading)
-                        {
-                            <div class="text-center">
-                                <div class="spinner-border" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="list-group">
-                                @if (classStudents != null && classStudents.Any())
-                                {
-                                    @foreach (var student in classStudents)
-                                    {
-                                        <div class="list-group-item @(selectedStudent?.Id == student.Id ? "active" : "")" @onclick="() => SelectStudent(student)" style="cursor:pointer;">
-                                            <img src="@GetStudentAvatarPath(student)" class="avatar-img" alt="@student.Full_Name" />
 
+                    <div class="card-body">
+                        <div class="list-group">
+                            @if (classStudents != null && classStudents.Any())
+                            {
+                                @foreach (var student in classStudents)
+                                {
+                                    <div class="list-group-item @(selectedStudent?.Id == student.Id ? "active" : "")" style="cursor: pointer;">
+                                        <!-- Avatar luôn hiện -->
+                                        <div class="student-avatar text-center">
+                                            <img src="@GetStudentAvatarPath(student)" class="avatar-img" alt="@student.Full_Name" />
+                                        </div>
+
+                                        <!-- Phần thông tin chỉ hiện khi chưa chọn học sinh -->
+                                        @if (selectedStudent == null)
+                                        {
                                             <div class="student-info">
                                                 <h6>@student.Full_Name</h6>
                                                 <div class="text-muted">
@@ -141,96 +163,88 @@
                                                 </div>
                                             </div>
 
-                                            <div class="action-buttons">
+                                            <div class="action-buttons mt-1">
                                                 <button class="btn btn-outline-info btn-sm" title="Sửa" @onclick:stopPropagation="true" @onclick="() => EditStudent(student)">
                                                     <i class="bi bi-pencil-square"></i>
                                                 </button>
                                                 <button class="btn btn-outline-danger btn-sm" title="Xoá" @onclick:stopPropagation="true" @onclick="() => ConfirmDeleteStudent(student)">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
+                                                <button class="btn btn-outline-primary btn-sm" title="Xem bảng điểm" @onclick:stopPropagation="true" @onclick="() => ShowStudentSummary(student)">
+                                                    <i class="bi bi-clipboard-data"></i>
+                                                </button>
                                             </div>
-                                        </div>
-                                    }
-                                }
-                                else
-                                {
-                                    <div class="alert alert-info">
-                                        Không có học sinh nào trong lớp này
+                                        }
                                     </div>
                                 }
-                            </div>
-                        }
+
+                            }
+                            else
+                            {
+                                <div class="alert alert-info">Không có học sinh nào trong lớp này</div>
+                            }
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Bảng điểm của học sinh -->
-            <div class="col-md-6">
-                @if (selectedStudent != null)
+            <div class="col-md-10">
+                <!-- Bảng điểm -->
+                @if (selectedStudent != null && learningSummaryList.Any())
                 {
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Bảng điểm của @selectedStudent.Full_Name</h5>
-                        </div>
-                        <div class="mb-3">
-                            <label>Chọn kỳ học:</label>
-                            <select class="form-control" @onchange="OnSummaryChange">
-                                @foreach (var summary in summaries)
+                    <div class="col-md-8">
+                        <div class="card score-summary-card fade-in">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">📊 Tổng kết của học sinh: @selectedStudent.Full_Name</h5>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="CloseStudentSummary">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                @if (!string.IsNullOrEmpty(currentSummaryName))
                                 {
-                                    <option value="@summary.Id" selected="@(summary.Id == selectedSummaryId)">
-                                        @summary.Summary_Name
-                                    </option>
+                                    <p class="text-muted mt-2">
+                                        <i class="bi bi-calendar-event"></i> Kỳ hiện tại: <strong>@currentSummaryName</strong>
+                                    </p>
                                 }
-                            </select>
-                        </div>
+                                @if (isAnnualSummary)
+                                {
+                                    <button class="btn btn-outline-secondary mt-3" @onclick="OpenStudentDetailScoreModal">
+                                        <i class="bi bi-list-ul"></i> Xem chi tiết điểm
+                                    </button>
+                                }
 
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-hover">
+                                <table class="table table-bordered table-hover table-striped score-table">
                                     <thead>
                                         <tr>
-                                            <th>Môn học</th>
-                                            <th>Loại điểm</th>
-                                            <th>Điểm</th>
+                                            <th class="text-center">Môn học</th>
+                                            <th class="text-center">Điểm tổng kết</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @if (studentScores != null && studentScores.Any())
-                                        {
-                                            @foreach (var score in studentScores)
-                                            {
-                                                <tr>
-                                                    <td>@(subjectDict.ContainsKey(score.Subject_Id) ? subjectDict[score.Subject_Id] : $"Môn {score.Subject_Id}")</td>
-                                                    <td>@(pointTypeDict.ContainsKey(score.Point_Type_Id) ? pointTypeDict[score.Point_Type_Id] : $"Loại {score.Point_Type_Id}")</td>
-                                                    <td>@score.Point</td>
-
-                                                </tr>
-                                            }
-                                        }
-                                        else
+                                        @foreach (var subject in summarySubjects)
                                         {
                                             <tr>
-                                                <td colspan="3" class="text-center">Không có điểm số nào</td>
+                                                <td class="text-center">@subject</td>
+                                                <td class="text-center">
+                                                    @learningSummaryList.First().SubjectScores.GetValueOrDefault(subject).ToString("0.00")
+                                                </td>
                                             </tr>
                                         }
+                                        <tr class="table-info">
+                                            <td class="text-center"><strong>Tổng kết kỳ</strong></td>
+                                            <td class="text-center"><strong>@learningSummaryList.First().Term_Summary.ToString("0.00")</strong></td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     </div>
                 }
-                else
-                {
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <div class="alert alert-info">
-                                Vui lòng chọn học sinh để xem bảng điểm
-                            </div>
-                        </div>
-                    </div>
-                }
+
             </div>
         </div>
+
+
     }
     else
     {
@@ -246,6 +260,27 @@
             </div>
         </div>
     }
+
+    @if (showStudentScoreMessageBox)
+    {
+        <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Thông báo</h5>
+                        <button type="button" class="btn-close" @onclick="CloseScoreMessageBox"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Học sinh <strong>@selectedStudent?.Full_Name</strong> hiện chưa có bảng điểm tổng kết cho kỳ này.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" @onclick="CloseScoreMessageBox">Đóng</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
 
     <!-- Modal thêm/sửa học sinh -->
     @if (showStudentModal)
@@ -267,7 +302,7 @@
                                 <div class="col-md-4 mb-3 text-center">
                                     <div class="mb-3">
                                         <img src="@previewImageUrl" class="rounded-circle border"
-                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
+                                             style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
                                     </div>
                                     <div class="mb-3">
                                         <InputFile OnChange="HandleFileSelected" class="form-control" accept="image/*" />
@@ -301,10 +336,10 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
                                             <InputDate @bind-Value="birthDate"
-                                            class="form-control"
-                                            format="yyyy-MM-dd"
-                                            max="@MaxBirthDate.ToString("yyyy-MM-dd")"
-                                            min="@MinBirthDate.ToString("yyyy-MM-dd")" />
+                                                       class="form-control"
+                                                       format="yyyy-MM-dd"
+                                                       max="@MaxBirthDate.ToString("yyyy-MM-dd")"
+                                                       min="@MinBirthDate.ToString("yyyy-MM-dd")" />
                                             <ValidationMessage For="@(() => birthDate)" />
                                             @if (birthDate > MaxBirthDate)
                                             {
@@ -423,6 +458,149 @@
         </div>
     }
 </div>
+<div class="modal fade" id="summaryModal" tabindex="-1" aria-labelledby="summaryModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-md-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="summaryModalLabel">📊 Tổng kết học tập</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="summary-header mb-4">
+                    <p><strong>Lớp:</strong> <span class="highlight-text">@classNameForSummary</span></p>
+                    <p><strong>Kỳ hiện tại:</strong> <span class="highlight-text">@currentSummaryName</span></p>
+                </div>
+                <table class="table table-striped table-hover table-bordered custom-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">STT</th>
+                            <th>Học sinh</th>
+                            @foreach (var subject in summarySubjects)
+                            {
+                                <th class="text-center">@subject</th>
+                            }
+                            <th class="text-center">Tổng Kết Kỳ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (learningSummaryList != null && learningSummaryList.Any())
+                        {
+                            @foreach (var (studentSummary, index) in learningSummaryList.Select((item, idx) => (item, idx)))
+                            {
+                                <tr>
+                                    <td class="text-center">@((index + 1))</td>
+                                    <td>@(studentSummary.Student_Name ?? "[Không rõ]")</td>
+                                    @foreach (var subject in summarySubjects)
+                                    {
+                                        <td class="text-center">
+                                            @(studentSummary.SubjectScores != null &&
+                                                studentSummary.SubjectScores.TryGetValue(subject, out var score)
+                                                ? score.ToString("0.00")
+                                                : "-")
+                                        </td>
+                                    }
+                                    <td class="text-center">@studentSummary.Term_Summary.ToString("0.00")</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="100%" class="text-center no-data">Không có dữ liệu tổng kết.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (showStudentDetailModal)
+{
+    <div class="modal fade show" style="display:block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Chi tiết điểm của học sinh: @selectedStudent?.Full_Name</h5>
+                    <button type="button" class="btn-close" @onclick="CloseStudentDetailScoreModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex gap-3">
+                        @foreach (var term in new[] { "Kỳ 1", "Kỳ 2" })
+                        {
+                            <div class="w-50">
+                                <h6 class="text-primary mb-2">@term</h6>
+                                <div class="overflow-auto shadow rounded border">
+                                    <table class="table-bangdiem w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>Môn học</th>
+                                                <th colspan="3">Miệng</th>
+                                                <th colspan="3">15 phút</th>
+                                                <th colspan="2">45 phút</th>
+                                                <th>Giữa kỳ</th>
+                                                <th>Cuối kỳ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var group in splitTermScores.GetValueOrDefault(term, new()).GroupBy(x => x.SubjectName))
+                                            {
+                                                <tr>
+                                                    <td class="fw-semibold">@group.Key</td>
+
+                                                    @* Miệng *@
+                                                    @for (int i = 0; i < 3; i++)
+                                                    {
+                                                        var p = group.Where(x => x.PointTypeName == "Attendance").ElementAtOrDefault(i)?.Point ?? 0;
+                                                        <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
+                                                    }
+
+                                                    @* 15 phút *@
+                                                    @for (int i = 0; i < 3; i++)
+                                                    {
+                                                        var p = group.Where(x => x.PointTypeName == "Point_15").ElementAtOrDefault(i)?.Point ?? 0;
+                                                        <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
+                                                    }
+
+                                                    @* 45 phút *@
+                                                    @for (int i = 0; i < 2; i++)
+                                                    {
+                                                        var p = group.Where(x => x.PointTypeName == "Point_45").ElementAtOrDefault(i)?.Point ?? 0;
+                                                        <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
+                                                    }
+
+                                                    @* Giữa kỳ *@
+                                                    @{
+                                                        var mid = group.FirstOrDefault(x => x.PointTypeName == "Point_Midterm")?.Point ?? 0;
+                                                    }
+                                                    <td class="@(mid < 5 ? "score-low" : "score-good")">@mid</td>
+
+                                                    @* Cuối kỳ *@
+                                                    @{
+                                                        var final = group.FirstOrDefault(x => x.PointTypeName == "Point_Final")?.Point ?? 0;
+                                                    }
+                                                    <td class="@(final < 5 ? "score-low" : "score-good")">@final</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseStudentDetailScoreModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code {
     private List<Class> classes;
@@ -459,6 +637,18 @@
     private DateTime? birthDate = null;
     private Dictionary<int, string> subjectDict = new();
     private Dictionary<int, string> pointTypeDict = new();
+    private string searchTerm = "";
+    private string classTeacherName = "Chưa xác định";
+    private List<Teacher_Class> teacherClasses = new List<Teacher_Class>();
+    private List<Learning_SummaryView> learningSummaryList = new();
+    private List<string> summarySubjects = new();
+    private string currentSummaryName = "";
+    private string classNameForSummary = "";
+    private bool showStudentScoreMessageBox = false;
+    private Dictionary<string, List<DetailedStudentScore>> splitTermScores = new();
+    private bool showStudentDetailModal = false;
+    private bool isAnnualSummary = false;
+
 
 
     private DateTime? ConvertLongToDateTime(long? dateLong)
@@ -474,7 +664,7 @@
             int month = int.Parse(dateStr.Substring(4, 2));
             int day = int.Parse(dateStr.Substring(6, 2));
 
-            return new DateTime(year, month, day);  
+            return new DateTime(year, month, day);
         }
         catch
         {
@@ -504,6 +694,7 @@
             await LoadGrades();
             await LoadClasses();
             teachers = await ClassService.GetAllTeachersAsync();
+            teacherClasses = await ClassService.GetAllTeacherClass();
             summaries = await ClassService.GetAllSummaries();
             if (summaries.Any())
             {
@@ -579,19 +770,22 @@
         }
     }
 
-    private void OnClassChange(ChangeEventArgs e)
+    private async void OnClassChange(ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int classId))
         {
             selectedClass = classes?.FirstOrDefault(c => c.Id == classId);
             selectedStudent = null;
             studentScores = null;
+
             if (selectedClass != null)
             {
-                _ = LoadClassStudents();
+                await LoadClassStudents();
+                await LoadClassTeacherName();
             }
         }
     }
+
 
     private async Task OnSummaryChange(ChangeEventArgs e)
     {
@@ -640,6 +834,102 @@
     {
         showAddClassModal = false;
     }
+
+    private async Task LoadClassTeacherName()
+    {
+        if (teacherClasses == null || selectedClass == null)
+        {
+            classTeacherName = "Chưa xác định";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var teacherClass = teacherClasses.FirstOrDefault(tc => tc.Class_Id == selectedClass.Id);
+        if (teacherClass == null)
+        {
+            classTeacherName = "Chưa xác định";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var teacher = teachers?.FirstOrDefault(t => t.Id == teacherClass.Teacher_Id);
+        var user = users?.FirstOrDefault(u => u.Id == teacher?.User_Id);
+        classTeacherName = user?.Full_Name ?? "Chưa xác định";
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+
+
+    private async Task SearchClass()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            FilterClasses();
+
+            // Nếu có lớp trong filteredClasses, chọn lớp đầu tiên để load danh sách học sinh
+            if (filteredClasses.Any())
+            {
+                selectedClass = filteredClasses.First();
+                await LoadClassStudents();
+                LoadClassTeacherName();
+            }
+            else
+            {
+                selectedClass = null;
+                classStudents = null;
+                classTeacherName = "";
+            }
+        }
+        else
+        {
+            if (selectedGrade == null)
+            {
+                filteredClasses = new List<Class>();
+                selectedClass = null;
+                classStudents = null;
+                classTeacherName = "";
+                return;
+            }
+
+            var classesInGrade = classes.Where(c => c.Grade_Id == selectedGrade.ID);
+            var keyword = searchTerm.Trim().ToLower();
+
+            var matchedTeachers = users
+                .Where(u => u.Role_Id == 2 && u.Full_Name.ToLower().Contains(keyword))
+                .Select(u => teachers.FirstOrDefault(t => t.User_Id == u.Id))
+                .Where(t => t != null)
+                .ToList();
+
+            var matchedTeacherIds = matchedTeachers.Select(t => t.Id).ToList();
+
+            var classIdsByTeacher = teacherClasses
+                .Where(tc => matchedTeacherIds.Contains(tc.Teacher_Id))
+                .Select(tc => tc.Class_Id)
+                .Distinct()
+                .ToList();
+
+            filteredClasses = classesInGrade.Where(c =>
+                c.Class_Name.ToLower().Contains(keyword) ||
+                classIdsByTeacher.Contains(c.Id)
+            ).ToList();
+
+            if (filteredClasses.Any())
+            {
+                selectedClass = filteredClasses.First();
+                await LoadClassStudents();
+                LoadClassTeacherName();
+            }
+            else
+            {
+                selectedClass = null;
+                classStudents = null;
+                classTeacherName = "";
+            }
+        }
+    }
+
+
 
     private async Task CreateNewClass()
     {
@@ -756,7 +1046,7 @@
             // Lấy danh sách điểm
             var allScores = await ClassService.GetAllScore();
             studentScores = allScores
-                .Where(s => s.Student_Id == studentEntity.Id) 
+                .Where(s => s.Student_Id == studentEntity.Id)
                 .ToList();
             subjectDict = await ClassService.GetSubjectDictionary();
             pointTypeDict = await ClassService.GetPointTypeDictionary();
@@ -1017,5 +1307,227 @@
             Console.WriteLine($"Error getting scores: {ex.Message}");
             return new List<Score>();
         }
+    }
+    private async Task OpenSummaryModal()
+    {
+        try
+        {
+            if (selectedClass == null)
+            {
+                errorMessage = "Vui lòng chọn lớp.";
+                return;
+            }
+
+            var classId = selectedClass.Id;
+            classNameForSummary = selectedClass.Class_Name;
+
+            var currentSummary = await summaryService.GetCurrentSummary();
+            var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
+            await summaryService.SaveCalculatedSummariesToDatabase(summaries);
+
+            if (currentSummary != null)
+            {
+                // ✅ Có kỳ học hiện tại → lọc theo kỳ đó
+                currentSummaryName = currentSummary.Summary_Name;
+
+                summaries = summaries
+                    .Where(s => s.Summary_ID == currentSummary.Id)
+                    .ToList();
+
+                if (summaries.Any())
+                {
+                    learningSummaryList = summaries
+                        .GroupBy(s => s.StudentId)
+                        .Select(g => new Learning_SummaryView
+                            {
+                                StudentId = g.Key,
+                                Student_Name = g.First().Student_Name,
+                                SubjectScores = g
+                                            .GroupBy(x => x.Subject_Name)
+                                            .ToDictionary(
+                                                s => s.Key,
+                                                s => s.Average(x => x.Point_Summary)
+                                            ),
+                                Summary_ID = g.First().Summary_ID,
+                                Term_Summary = g
+                                            .GroupBy(x => x.Subject_Name)
+                                            .Select(x => x.Average(y => y.Point_Summary))
+                                            .Average()
+                            })
+                        .OrderBy(x => x.Student_Name)
+                        .ToList();
+
+                    summarySubjects = learningSummaryList
+                        .SelectMany(s => s.SubjectScores.Keys)
+                        .Distinct()
+                        .ToList();
+                }
+                else
+                {
+                    learningSummaryList.Clear();
+                    summarySubjects.Clear();
+                    currentSummaryName = currentSummary.Summary_Name + " (Không có dữ liệu)";
+                }
+            }
+            else
+            {
+                var fullYear = await summaryService.GetAnnualAverageScores(classId);
+                currentSummaryName = "Tổng kết cả năm";
+
+                learningSummaryList = fullYear
+                    .GroupBy(s => s.StudentId)
+                    .Select(g => new Learning_SummaryView
+                        {
+                            StudentId = g.Key,
+                            Student_Name = g.First().Student_Name,
+                            SubjectScores = g.ToDictionary(
+                                        s => s.Subject_Name,
+                                        s => s.Point_Summary
+                                    ),
+                            Term_Summary = g.Average(s => s.Point_Summary)
+                        })
+                    .OrderBy(x => x.Student_Name)
+                    .ToList();
+
+                summarySubjects = learningSummaryList
+                    .SelectMany(s => s.SubjectScores.Keys)
+                    .Distinct()
+                    .ToList();
+            }
+
+            await jsRuntime.InvokeVoidAsync("bootstrapModal.show", "#summaryModal");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi hiển thị tổng kết: {ex.Message}";
+        }
+    }
+
+    private async Task ShowStudentSummary(User student)
+    {
+        try
+        {
+            selectedStudent = student;
+
+            var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+            var studentEntity = allStudents?.FirstOrDefault(s => s.User_Id == student.Id);
+
+            if (studentEntity == null)
+            {
+                errorMessage = "Không tìm thấy học sinh.";
+                return;
+            }
+
+            var summary = await summaryService.GetCurrentSummary();
+            var classId = selectedClass?.Id ?? 0;
+
+            if (summary != null)
+            {
+                isAnnualSummary = false;
+                currentSummaryName = summary.Summary_Name;
+                // ✅ Có kỳ hiện tại → hiển thị bảng điểm theo kỳ
+                var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
+
+                var studentSummaries = summaries
+                    .Where(s => s.StudentId == studentEntity.Id && s.Summary_ID == summary.Id)
+                    .ToList();
+
+                if (studentSummaries.Any())
+                {
+                    learningSummaryList = new List<Learning_SummaryView>
+                    {
+                        new Learning_SummaryView
+                        {
+                            StudentId = studentEntity.Id,
+                            Student_Name = student.Full_Name,
+                            SubjectScores = studentSummaries.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
+                            Summary_ID = summary?.Id ?? 0,
+                            Term_Summary = studentSummaries.Average(x => x.Point_Summary)
+                        }
+                    };
+
+                    summarySubjects = learningSummaryList
+                        .SelectMany(s => s.SubjectScores.Keys)
+                        .Distinct()
+                        .ToList();
+                }
+                else
+                {
+                    learningSummaryList.Clear();
+                    summarySubjects.Clear();
+                    showStudentScoreMessageBox = true;
+                }
+            }
+            else
+            {
+                isAnnualSummary = true;
+                currentSummaryName = "Tổng kết cả năm";
+                // ✅ Không có kỳ hiện tại → hiển thị tổng kết cả năm của học sinh đó
+                var all = await summaryService.GetAnnualAverageScores(classId);
+
+                var studentData = all.Where(x => x.StudentId == studentEntity.Id).ToList();
+
+                if (studentData.Any())
+                {
+                    learningSummaryList = new List<Learning_SummaryView>
+                    {
+                        new Learning_SummaryView
+                        {
+                            StudentId = studentEntity.Id,
+                            Student_Name = student.Full_Name,
+                            SubjectScores = studentData.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
+                            Summary_Name = "Tổng kết cả năm",
+                            Term_Summary = studentData.Average(x => x.Point_Summary)
+                        }
+                    };
+
+                    summarySubjects = learningSummaryList
+                        .SelectMany(s => s.SubjectScores.Keys)
+                        .Distinct()
+                        .ToList();
+                }
+                else
+                {
+                    learningSummaryList.Clear();
+                    summarySubjects.Clear();
+                    showStudentScoreMessageBox = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi lấy bảng điểm học sinh: {ex.Message}";
+        }
+    }
+
+    private async Task CloseStudentSummary()
+    {
+        selectedStudent = null;
+        learningSummaryList.Clear();
+        summarySubjects.Clear();
+
+        await LoadClassStudents(); // Reload lại danh sách học sinh
+    }
+    private async Task CloseScoreMessageBox()
+    {
+        showStudentScoreMessageBox = false;
+        selectedStudent = null;
+        learningSummaryList.Clear();
+        summarySubjects.Clear();
+        await LoadClassStudents(); // Reload lại danh sách cho sạch
+    }
+
+    private async Task OpenStudentDetailScoreModal()
+    {
+        if (selectedStudent == null) return;
+
+        splitTermScores = await ClassService.GetStudentDetailedScoresByTermSplit(selectedStudent.Id);
+        showStudentDetailModal = true;
+    }
+
+
+    private void CloseStudentDetailScoreModal()
+    {
+        showStudentDetailModal = false;
     }
 } 

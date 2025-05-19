@@ -53,7 +53,7 @@ namespace Blazor_Server.Services
                     Id = cls.Id,
                     Class_Name = cls.Class_Name,
                     Teacher_Id = cls.Teacher_Id,
-                    Max_Student = cls.Max_Student,
+                    Numbers = cls.Number,
                     TeacherName = user?.Full_Name ?? "[Không rõ]"
                 };
             }).ToList();
@@ -113,10 +113,10 @@ namespace Blazor_Server.Services
                 long currentTimeLong = currentTime.Year * 10000000000 + currentTime.Month * 100000000 + currentTime.Day * 1000000 +
                                       currentTime.Hour * 10000 + currentTime.Minute * 100 + currentTime.Second;
 
-                var response = await _client.GetFromJsonAsync<List<Summary>>("/api/Summary/Get");
-                var existingSummary = response.FirstOrDefault(s => currentTimeLong >= s.Start_Time && currentTimeLong <= s.End_Time);
+                var summaries = await _client.GetFromJsonAsync<List<Summary>>("/api/Summary/Get");
+                var current = summaries.FirstOrDefault(s => currentTimeLong >= s.Start_Time && currentTimeLong <= s.End_Time);
 
-                return existingSummary;
+                return current; // sẽ trả null nếu không nằm trong kỳ nào
             }
             catch (Exception ex)
             {
@@ -136,8 +136,14 @@ namespace Blazor_Server.Services
             var subjects = await GetSubjects();
             var users = await GetUsers();
 
-            var pointTypeMap = pointTypes.ToDictionary(p => p.Point_Type_Name, p => p.Id);
+            var allPointTypes = await GetPoint_Types();
             var currentSummary = await GetCurrentSummary();
+
+            var pointTypess = allPointTypes
+                .Where(p => p.Summary_Id == currentSummary?.Id)
+                .ToList();
+
+            var pointTypeMap = pointTypess.ToDictionary(p => p.Point_Type_Name, p => p.Id);
             var result = new List<Learning_SummaryView>();
 
             foreach (var studentId in studentIds)
@@ -236,6 +242,69 @@ namespace Blazor_Server.Services
                 }
             }
         }
+        public async Task<List<Learning_SummaryView>> GetAnnualAverageScores(int classId)
+        {
+            var studentClasses = await _client.GetFromJsonAsync<List<Student_Class>>("/api/Student_Class/Get");
+            var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get");
+            var users = await _client.GetFromJsonAsync<List<User>>("/api/User/Get");
+            var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
+            var summaries = await _client.GetFromJsonAsync<List<Summary>>("/api/Summary/Get");
+            var allScores = await _client.GetFromJsonAsync<List<Learning_Summary>>("/api/Learning_Summary/Get");
+
+            var summary1 = summaries.FirstOrDefault(s => s.Summary_Name.Contains("1"));
+            var summary2 = summaries.FirstOrDefault(s => s.Summary_Name.Contains("2"));
+            if (summary1 == null || summary2 == null) return new List<Learning_SummaryView>();
+
+            var studentIds = studentClasses
+                .Where(sc => sc.Class_Id == classId)
+                .Select(sc => sc.Student_Id)
+                .ToList();
+
+            var result = new List<Learning_SummaryView>();
+
+            foreach (var studentId in studentIds)
+            {
+                var student = students.FirstOrDefault(s => s.Id == studentId);
+                var user = users.FirstOrDefault(u => u.Id == student?.User_Id);
+                var studentName = user?.Full_Name ?? "[Không rõ]";
+
+                // Lấy điểm của kỳ 1 và kỳ 2
+                var s1 = allScores
+                    .Where(s => s.Student_Id == studentId && s.Summary_ID == summary1.Id)
+                    .ToList();
+
+                var s2 = allScores
+                    .Where(s => s.Student_Id == studentId && s.Summary_ID == summary2.Id)
+                    .ToList();
+
+                // Gom các môn
+                var allSubjects = s1.Select(x => x.Subject_Id)
+                    .Union(s2.Select(x => x.Subject_Id))
+                    .Distinct();
+
+                foreach (var subjectId in allSubjects)
+                {
+                    var subjectName = subjects.FirstOrDefault(s => s.Id == subjectId)?.Subject_Name ?? "???";
+
+                    var score1 = s1.FirstOrDefault(x => x.Subject_Id == subjectId)?.Point_Summary ?? 0;
+                    var score2 = s2.FirstOrDefault(x => x.Subject_Id == subjectId)?.Point_Summary ?? 0;
+
+                    var avg = Math.Round((score1 + score2 * 2) / 3);
+
+                    result.Add(new Learning_SummaryView
+                    {
+                        StudentId = studentId,
+                        Student_Name = studentName,
+                        Subject_Name = subjectName,
+                        Point_Summary = avg
+                    });
+                }
+            }
+
+            return result;
+        }
+
+
     }
 
     public class Learning_SummaryView
@@ -255,6 +324,8 @@ namespace Blazor_Server.Services
         public int SubjectId { get; set; }
         public int ClassId { get; set; }
         public Dictionary<string, double> SubjectScores { get; set; }
+
+        public double Term_Summary { get; set; }
     }
 
     public class ClassWithTeacherName
@@ -263,7 +334,7 @@ namespace Blazor_Server.Services
         public string Class_Name { get; set; }
         public int Teacher_Id { get; set; }
         public string TeacherName { get; set; }
-        public int Max_Student { get; set; }
+        public int Numbers { get; set; }
     }
 
 }

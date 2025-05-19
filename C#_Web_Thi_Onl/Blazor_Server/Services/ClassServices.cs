@@ -34,6 +34,22 @@ namespace Blazor_Server.Services
                 return new List<Class>();
             }
         }
+
+        public async Task<List<Teacher_Class>> GetAllTeacherClass()
+        {
+            try
+            {
+                var response = await _client.GetFromJsonAsync<List<Teacher_Class>>("/api/Teacher_Class/Get");
+                return response ?? new List<Teacher_Class>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetAllTeacherClass: {ex.Message}");
+                return new List<Teacher_Class>();
+            }
+        }
+
+
         public async Task<bool> CreateClassWithTeacherAsync(ClassWithTeacherModel model)
         {
             try
@@ -46,7 +62,7 @@ namespace Blazor_Server.Services
                     Grade_Id = model.GradeId,
                     Teacher_Id = model.TeacherId,
                     Number = 0
-                    
+
                 };
 
                 var response = await _client.PostAsJsonAsync("api/Class/Post", newClass);
@@ -102,7 +118,6 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
-
 
         public async Task<List<Subject>> GetAllSubjects()
         {
@@ -184,7 +199,7 @@ namespace Blazor_Server.Services
                 var students = response?.Where(u => u.Role_Id == 1).ToList() ?? new List<User>();
                 Console.WriteLine($"Filtered {students.Count} students");
                 return students;
-            }   
+            }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetStudentsAsync: {ex.Message}");
@@ -494,6 +509,49 @@ namespace Blazor_Server.Services
 
             return user.Avatar;
         }
+
+        public async Task<Dictionary<string, List<DetailedStudentScore>>> GetStudentDetailedScoresByTermSplit(int userId)
+        {
+            var allScores = await GetAllScore();
+            var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+            var pointTypes = await GetAllPointTypes();
+            var summaries = await GetAllSummaries();
+            var subjects = await GetAllSubjects();
+
+            var student = allStudents.FirstOrDefault(s => s.User_Id == userId);
+            if (student == null) return new();
+
+            var scores = allScores.Where(s => s.Student_Id == student.Id).ToList();
+            var pointTypeDict = pointTypes.ToDictionary(p => p.Id, p => p);
+            var subjectDict = subjects.ToDictionary(s => s.Id, s => s.Subject_Name);
+            var summaryDict = summaries.ToDictionary(s => s.Id, s => s.Summary_Name);
+
+            var result = new Dictionary<string, List<DetailedStudentScore>>
+            {
+                ["Kỳ 1"] = new(),
+                ["Kỳ 2"] = new()
+            };
+
+            foreach (var score in scores)
+            {
+                if (!pointTypeDict.ContainsKey(score.Point_Type_Id)) continue;
+                var pt = pointTypeDict[score.Point_Type_Id];
+                var term = summaryDict.GetValueOrDefault(pt.Summary_Id) ?? "Không xác định";
+                var termName = term.Contains("1") ? "Kỳ 1" : "Kỳ 2";
+
+                result[termName].Add(new DetailedStudentScore
+                {
+                    SubjectName = subjectDict.GetValueOrDefault(score.Subject_Id, "???"),
+                    PointTypeName = pt.Point_Type_Name,
+                    Point = score.Point,
+                    Semester_Name = termName
+                });
+            }
+
+            return result;
+        }
+
+
     }
 
     public class ClassWithTeacherModel
@@ -504,5 +562,14 @@ namespace Blazor_Server.Services
         public int TeacherId { get; set; }
         public int Number { get; set; }
     }
+
+    public class DetailedStudentScore
+    {
+        public string SubjectName { get; set; }
+        public string PointTypeName { get; set; }
+        public double Point { get; set; }
+        public string Semester_Name { get; set; }
+    }
+
 
 }

@@ -114,3 +114,114 @@ input:disabled {
     padding: 0.5rem 1rem;
     font-size: 0.875rem;
 }
+
+.student-list-panel .list-group-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.3s ease;
+}
+
+.student-list-panel.minimized .student-info,
+.student-list-panel.minimized .action-buttons {
+    display: none; /* Ẩn toàn bộ thông tin học sinh trừ avatar */
+}
+
+.student-list-panel.minimized .list-group-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px;
+}
+/*
+    .student-list-panel.minimized img.avatar-img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+    }*/
+.student-list-panel.minimized {
+    max-width: 150px;
+    flex: 0 0 150px;
+}
+
+.card.score-summary-card {
+    border-radius: 1rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    padding: 1rem 1.5rem;
+    background-color: #ffffff;
+    transition: all 0.3s ease-in-out;
+}
+
+    .card.score-summary-card:hover {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    }
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table.score-table th,
+.table.score-table td {
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.table.score-table thead {
+    background-color: #f0f0f0;
+}
+
+.table.score-table tbody tr.table-info {
+    background-color: #e0f7fa;
+    font-weight: bold;
+    font-size: 1rem;
+}
+/* Animation dùng chung */
+@keyframes slideFade {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shrinkPanel {
+    0% {
+        width: 100%;
+        opacity: 1;
+    }
+
+    100% {
+        width: 150px;
+        opacity: 1;
+    }
+}
+
+/* Cho bảng điểm mượt */
+.fade-in {
+    animation: slideFade 0.4s ease-out forwards;
+}
+
+/* Panel thu gọn mượt */
+.student-list-panel.minimized {
+    animation: shrinkPanel 0.4s ease-out forwards;
+    overflow: hidden;
+    transition: all 0.4s ease-in-out;
+}
