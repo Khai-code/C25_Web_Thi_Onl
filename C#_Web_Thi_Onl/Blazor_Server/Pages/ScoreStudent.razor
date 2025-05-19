@@ -8,18 +8,24 @@
 <div class="bang-diem-container">
     <h1 class="bang-diem-title">SMART SCHOOL</h1>
     <h2 class="bang-diem-subtitle">Bảng điểm của học sinh @studentFullName</h2>
-    <p class="bang-diem-summary">Kỳ học hiện tại: <span class="font-bold">@currentSummaryId</span></p>
+    <p class="bang-diem-summary">
+        Kỳ học hiện tại:
+        <span class="font-bold">
+            @(isAnnualSummary ? "Cả năm" : currentSummaryId.ToString())
+        </span>
+    </p>
 </div>
 
 @if (!string.IsNullOrEmpty(errorMessage))
 {
     <div class="text-center text-red-500 font-semibold">@errorMessage</div>
 }
-else if (scoresList == null)
+@if (!isAnnualSummary && scoresList == null)
 {
     <div class="text-center text-gray-500">Đang tải dữ liệu bảng điểm...</div>
 }
-else
+@* Theo kỳ *@
+@if (!isAnnualSummary && scoresList != null)
 {
     <div class="flex justify-center mt-6">
         <div class="overflow-x-auto shadow-lg rounded-lg w-full max-w-7xl">
@@ -48,7 +54,7 @@ else
                             @for (int i = 0; i < 3; i++)
                             {
                                 var diemMieng = subjectGroup
-                                .Where(x => x.PointType == "Attendance")
+                                .Where(x => x.PointType == "Attendance" && x.SummaryId == currentSummaryId)
                                 .OrderBy(x => x.Point)
                                 .ElementAtOrDefault(i)?.Point ?? 0;
 
@@ -61,7 +67,7 @@ else
                             @for (int i = 0; i < 3; i++)
                             {
                                 var diem15 = subjectGroup
-                                .Where(x => x.PointType == "Point_15")
+                                .Where(x => x.PointType == "Point_15" && x.SummaryId == currentSummaryId)
                                 .OrderBy(x => x.Point)
                                 .ElementAtOrDefault(i)?.Point ?? 0;
 
@@ -74,7 +80,7 @@ else
                             @for (int i = 0; i < 2; i++)
                             {
                                 var diem45 = subjectGroup
-                                .Where(x => x.PointType == "Point_45")
+                                .Where(x => x.PointType == "Point_45" && x.SummaryId == currentSummaryId)
                                 .OrderBy(x => x.Point)
                                 .ElementAtOrDefault(i)?.Point ?? 0;
 
@@ -96,7 +102,7 @@ else
                             @* Điểm cuối kỳ (Final) *@
                             @{
                                 var diemCuoiKy = subjectGroup
-                                .FirstOrDefault(x => x.PointType == "Point_Final")?.Point ?? 0;
+                                .FirstOrDefault(x => x.PointType == "Point_Final" && x.SummaryId == currentSummaryId)?.Point ?? 0;
 
                                 totalPoints += diemCuoiKy;
 
@@ -129,7 +135,113 @@ else
             </table>
         </div>
     </div>
+}
+@* Cả năm *@
+@if (isAnnualSummary && annualScoresDict != null)
+{
+    <div class="flex justify-center mt-6">
+        <div class="overflow-x-auto shadow-lg rounded-lg w-full max-w-7xl">
+            <table class="table-bangdiem">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Môn học</th>
+                        <th colspan="3">Điểm miệng</th>
+                        <th colspan="3">Điểm 15 phút</th>
+                        <th colspan="2">Điểm 45 phút</th>
+                        <th>Giữa kỳ</th>
+                        <th>Cuối kỳ</th>
+                        <th>Trung bình</th>
+                        <th rowspan="2" class="text-center align-middle">TỔNG KẾT CẢ NĂM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var subjectName in annualScoresDict.SelectMany(kvp => kvp.Value.Select(s => s.SubjectName)).Distinct())
+                    {
+                        for (int i = 0; i < 2; i++) // i=0: kỳ 1, i=1: kỳ 2
+                        {
+                            var summaryId = annualScoresDict.Keys.OrderBy(x => x).ElementAtOrDefault(i);
+                            if (!annualScoresDict.TryGetValue(summaryId, out var list)) continue;
 
+                            var subjectScores = list.Where(x => x.SubjectName == subjectName).ToList();
+                            double total = 0;
+
+                            <tr>
+                                @if (i == 0)
+                                {
+                                    <td rowspan="2" class="font-semibold">@subjectName</td>
+                                }
+
+                                @* Điểm miệng *@
+                                @for (int j = 0; j < 3; j++)
+                                {
+                                    var diem = subjectScores
+                                    .Where(x => x.PointType == "Attendance")
+                                    .OrderBy(x => x.Point)
+                                    .ElementAtOrDefault(j)?.Point ?? 0;
+                                    total += diem;
+                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem</td>
+                                }
+
+                                @* Điểm 15 phút *@
+                                @for (int j = 0; j < 3; j++)
+                                {
+                                    var diem = subjectScores
+                                    .Where(x => x.PointType == "Point_15")
+                                    .OrderBy(x => x.Point)
+                                    .ElementAtOrDefault(j)?.Point ?? 0;
+                                    total += diem;
+                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem</td>
+                                }
+
+                                @* Điểm 45 phút *@
+                                @for (int j = 0; j < 2; j++)
+                                {
+                                    var diem = subjectScores
+                                    .Where(x => x.PointType == "Point_45")
+                                    .OrderBy(x => x.Point)
+                                    .ElementAtOrDefault(j)?.Point ?? 0;
+                                    total += diem;
+                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem</td>
+                                }
+
+                                @* Giữa kỳ *@
+                                @{
+                                    var diemGiuaKy = subjectScores.FirstOrDefault(x => x.PointType == "Point_Midterm")?.Point ?? 0;
+                                    total += diemGiuaKy;
+                                }
+                                <td class="@(diemGiuaKy < 5 ? "score-low" : "score-good")">@diemGiuaKy</td>
+
+                                @* Cuối kỳ *@
+                                @{
+                                    var diemCuoiKy = subjectScores.FirstOrDefault(x => x.PointType == "Point_Final")?.Point ?? 0;
+                                    total += diemCuoiKy;
+                                }
+                                <td class="@(diemCuoiKy < 5 ? "score-low" : "score-good")">@diemCuoiKy</td>
+
+                                @{
+                                    double tb = total / 10;
+                                    if (i == 0) diemTbKy1 = tb;
+                                    else diemTbKy2 = tb;
+                                }
+
+                                <td class="font-bold text-blue-600">@((total / 10).ToString("0.00"))</td>
+
+                                @if (i == 1)
+                                {
+                                    double tongKet = (diemTbKy1 + diemTbKy2 * 2) / 3;
+                                    <td rowspan="2" class="font-bold text-indigo-600 text-center align-middle bg-blue-50">
+                                        @tongKet.ToString("0.00")
+                                    </td>
+                                }
+
+
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 }
 
 
@@ -140,6 +252,10 @@ else
     private string studentCode;
     private string studentFullName = "";
     private bool hasLoadedFirstRender = false;
+    private Dictionary<int, List<StudentScoreDetail>> annualScoresDict;
+    private bool isAnnualSummary = false;
+    double diemTbKy1 = 0;
+    double diemTbKy2 = 0;
 
     protected override async Task OnInitializedAsync()
     {
@@ -154,7 +270,16 @@ else
             try
             {
                 currentSummaryId = await ScoreService.GetCurrentSummaryId();
-                scoresList = await ScoreService.GetStudentScoresAsync(studentCode, currentSummaryId);
+
+                if (currentSummaryId == 0)
+                {
+                    isAnnualSummary = true;
+                    annualScoresDict = await ScoreService.GetAnnualStudentScoresAsync(studentCode);
+                }
+                else
+                {
+                    scoresList = await ScoreService.GetStudentScoresAsync(studentCode, currentSummaryId);
+                }
             }
             catch (Exception ex)
             {

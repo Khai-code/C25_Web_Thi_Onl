@@ -24,38 +24,96 @@ namespace Blazor_Server.Services
             var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
             var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new();
             var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get") ?? new();
-            var pointTypeSubjects = await _client.GetFromJsonAsync<List<Point_Type_Subject>>("/api/Point_Type_Subject/Get") ?? new();
 
-            // 🔥 Lọc ra các PointType đúng kỳ học hiện tại
+            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+            if (student == null) return new();
+
             var pointTypesForCurrentSummary = pointTypes
                 .Where(pt => pt.Summary_Id == currentSummaryId)
                 .ToList();
 
             var validPointTypeIds = pointTypesForCurrentSummary.Select(pt => pt.Id).ToList();
 
-            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
-            if (student == null)
-            {
-                return new List<StudentScoreDetail>();
-            }
-
-            // 🔥 Lọc Score: Student_Id đúng + PointType đúng kỳ
             var studentScores = scores
                 .Where(s => s.Student_Id == student.Id && validPointTypeIds.Contains(s.Point_Type_Id))
                 .ToList();
 
-            // 🔥 Map dữ liệu điểm
-            var studentScoreDetails = (from score in studentScores
-                                       join subject in subjects on score.Subject_Id equals subject.Id
-                                       join pointType in pointTypesForCurrentSummary on score.Point_Type_Id equals pointType.Id
-                                       select new StudentScoreDetail
-                                       {
-                                           SubjectName = subject.Subject_Name,
-                                           PointType = pointType.Point_Type_Name,
-                                           Point = score.Point
-                                       }).ToList();
+            var studentScoreDetails = new List<StudentScoreDetail>();
+
+            foreach (var score in studentScores)
+            {
+                var subject = subjects.FirstOrDefault(s => s.Id == score.Subject_Id);
+                var pointType = pointTypesForCurrentSummary.FirstOrDefault(p => p.Id == score.Point_Type_Id);
+
+                if (subject != null && pointType != null)
+                {
+                    studentScoreDetails.Add(new StudentScoreDetail
+                    {
+                        SubjectName = subject.Subject_Name,
+                        PointType = pointType.Point_Type_Name,
+                        Point = score.Point,
+                        SummaryId = pointType.Summary_Id,
+                        PointTypeId = pointType.Id
+                    });
+                }
+            }
 
             return studentScoreDetails;
+        }
+
+        public async Task<Dictionary<int, List<StudentScoreDetail>>> GetAnnualStudentScoresAsync(string studentCode)
+        {
+            var scores = await _client.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new();
+            var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
+            var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new();
+            var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get") ?? new();
+
+            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+            if (student == null) return new();
+
+            // Tách theo kỳ
+            var groupedBySummary = pointTypes
+                .Where(pt => pt.Summary_Id > 0)
+                .GroupBy(pt => pt.Summary_Id)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            var result = new Dictionary<int, List<StudentScoreDetail>>();
+
+            foreach (var kvp in groupedBySummary)
+            {
+                var summaryId = kvp.Key;
+                var pointTypesInSummary = kvp.Value;
+                var pointTypeIds = pointTypesInSummary.Select(pt => pt.Id).ToList();
+
+                var studentScores = scores
+                    .Where(s => s.Student_Id == student.Id && pointTypeIds.Contains(s.Point_Type_Id))
+                    .ToList();
+
+                var details = new List<StudentScoreDetail>();
+
+                foreach (var score in studentScores)
+                {
+                    var subject = subjects.FirstOrDefault(s => s.Id == score.Subject_Id);
+                    var pointType = pointTypesInSummary.FirstOrDefault(p => p.Id == score.Point_Type_Id);
+
+                    if (subject != null && pointType != null)
+                    {
+                        details.Add(new StudentScoreDetail
+                        {
+                            SubjectName = subject.Subject_Name,
+                            PointType = pointType.Point_Type_Name,
+                            Point = score.Point,
+                            SummaryId = pointType.Summary_Id,
+                            PointTypeId = pointType.Id
+                        });
+                    }
+                }
+
+                if (details.Any())
+                    result[summaryId] = details;
+            }
+
+            return result;
         }
 
 
@@ -74,7 +132,12 @@ namespace Blazor_Server.Services
             var currentTime = DateTime.Now;
 
             // Tìm kỳ học mà thời gian hiện tại nằm trong phạm vi
-            var currentSummary = summaries.FirstOrDefault(s => currentTime >= ConvertLong.ConvertLongToDateTime(s.Start_Time) && currentTime <= ConvertLong.ConvertLongToDateTime(s.End_Time));
+            var today = DateTime.Now.Date;
+
+            var currentSummary = summaries.FirstOrDefault(s =>
+                today >= ConvertLong.ConvertLongToDateTime(s.Start_Time).Date &&
+                today <= ConvertLong.ConvertLongToDateTime(s.End_Time).Date);
+
             return currentSummary?.Id ?? 0;
         }
     }
@@ -82,8 +145,10 @@ namespace Blazor_Server.Services
     public class StudentScoreDetail
     {
         public string SubjectName { get; set; }
+        public int PointTypeId { get; set; }
         public string PointType { get; set; }
         public double Point { get; set; }
+        public int SummaryId { get; set; }
     }
 
 
