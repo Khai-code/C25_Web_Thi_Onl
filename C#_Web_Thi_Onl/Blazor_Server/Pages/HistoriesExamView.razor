@@ -1,0 +1,315 @@
+﻿@page "/exam-history"
+@using System.Globalization
+@using Blazor_Server.Services
+@using Data_Base.GenericRepositories
+@using Data_Base.Models.C
+@using Data_Base.Models.P
+@using Data_Base.Models.S
+@using static Blazor_Server.Services.HistoriesExam
+@layout TeacherLayout
+@inject HistoriesExam HistoriesExam
+@inject Blazored.Toast.Services.IToastService toastService
+
+<div>
+    <div class="bg-body-secondary p-3 rounded shadow-sm mb-4">
+        <div class="row g-2 align-items-end">
+            <!-- Chọn lớp -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold text-dark">Lớp</label>
+                <select class="form-select form-select-sm" @bind="selectedClassId">
+                    <option value="">-- Chọn lớp --</option>
+                    @foreach (var cls in classList)
+                    {
+                        <option value="@cls.Id">@cls.Class_Name</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Chọn môn -->
+            <div class="col-md-2">
+                <label class="form-label fw-semibold text-dark">Môn học</label>
+                <select class="form-select form-select-sm" @bind="selectedSubjectId">
+                    <option value="">-- Chọn môn --</option>
+                    @foreach (var subject in subjectList)
+                    {
+                        <option value="@subject.Id">@subject.Subject_Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-dark">Từ ngày</label>
+                <input type="datetime-local" class="form-control form-control-sm" @bind="startDate" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-dark">Đến ngày</label>
+                <input type="datetime-local" class="form-control form-control-sm" @bind="endDate" />
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-success btn-sm" @onclick="OnSearch" >
+                    <i class="bi bi-search me-1"></i> Tìm kiếm
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="@((selectedExamId == null ? "col-md-12" : "col-md-4"))">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex align-items-center">
+                    <i class="bi bi-journal-bookmark-fill me-2"></i> Danh sách gói đề
+                </div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var exam in packagess)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center list-hover"
+                        @onclick="() => SelectExam(exam.Id)">
+                            <div>
+                                <i class="bi bi-journal-text me-2 text-primary"></i>@exam.Package_Name
+                            </div>
+                            @*   <span class="badge bg-info text-dark rounded-pill">@exam. gói đề</span> *@
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        @if (selectedExamId.HasValue)
+        {
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-clipboard-data me-2"></i> Danh sách bài thi
+                        </div>
+                        <button class="btn btn-sm btn-outline-light" @onclick="() => selectedExamId = null">
+                            <i class="bi bi-x-circle"></i> Đóng
+                        </button>
+                    </div>
+
+                    <div class="card-body">
+                        <input type="text" class="form-control mb-3" placeholder="🔍 Tìm kiếm bài thi..."
+                        @bind="studentSearch" />
+
+                        @if (listTests.Any(r => r.Id == selectedExamId && MatchesSearch(r.Test_Code)))
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>👩‍🎓 Tên học sinh</th>
+                                            <th>📦 Mã bài thi</th>
+                                            <th>📊 Trạng thái</th>
+                                            @*   <th>🕒 Thời gian</th> *@
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in listTests)
+                                        {
+                                            <tr class="@((selectedStudent == r.Id ? "table-info" : ""))"
+                                            @onclick="() => SelectStudent(r.Id)">
+                                                <td>@r.Name_Student</td>
+                                                <td>@r.Test_Code</td>
+                                                <td class="text-center">
+                                                    @if (r.Status==1)
+                                                    {
+                                                        <span class="badge bg-success">Đã thi</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Chưa thi</span>
+                                                    }
+                                                </td>
+                                            </tr>
+
+                                            @if (selectedStudent == r.Id)
+                                            {
+                                                <tr>
+                                                    <td colspan="4" class="bg-light">
+                                                        <div class="px-3 py-2">
+                                                            <div><strong>Điểm:</strong>@r.score</div>
+                                                            <div><strong>Thời gian bắt đầu:</strong>@r.Check_Time</div>
+                                                            <div><strong>Thời gian kết thúc:</strong>@r.End_Time</div>
+                                                            <div>
+                                                                <button @onclick="()=>ShowQuestions(r.Id)" style="@(r.Status == 0 ? "display:none;" : "")" class="btn btn-sm btn-primary mt-2">
+                                                                    <i class="bi bi-eye"></i> Xem chi tiết
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning text-center">
+                                Không tìm thấy học sinh nào phù hợp.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+@if (showQuestionModal && selectedQuestions != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Danh sách câu hỏi</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @foreach (var item in selectedQuestions)
+                    {
+                        <div class="mb-3 border p-3 rounded shadow-sm">
+                            <p><strong>Câu hỏi:</strong> @item.Questions.Question_Name</p>
+                            <ul class="list-group">
+                                @foreach (var ans in item.Answers)
+                                {
+                                    var isChosen = item.Exam_Room_Student_Answer_HisTories.Any(h => h.Answer_Id == ans.Id);
+                                    bool isCorrect = ans.Right_Answer == 1;
+                                    string cssClass = "list-group-item";
+                                    if (isChosen && isCorrect)
+                                    {
+                                        cssClass += " bg-success rounded  text-white"; 
+                                    }
+                                    else if (isChosen && !isCorrect)
+                                    {
+                                        cssClass += " border rounded border-danger"; 
+                                    }
+                                    else if (!isChosen && isCorrect)
+                                    {
+                                        cssClass += " border rounded border-success"; 
+                                    }
+
+                                    <li class="@cssClass">
+                                        <div class="d-flex justify-content-between">
+                                            <span>@ans.Answers_Name</span>
+                                        </div>
+                                    </li>
+                                }
+
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .list-hover:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+    }
+
+    .table-hover tbody tr:hover {
+    background-color: #f2f9ff;
+    }
+
+    .table-info {
+    background-color: #e3f2fd !important;
+    }
+
+    .badge {
+    font-size: 0.85rem;
+    }
+</style>
+@code 
+{
+    private List<Data_Base.Models.P.Package> packagess = new List<Data_Base.Models.P.Package>();
+    private List<listTest> listTests = new List<listTest>();
+    private List<Class> classList = new List<Class>();
+    public List<Subject> subjectList = new List<Subject>();
+    private int selectedClassId;
+    private int selectedSubjectId;
+    private DateTime startDate;
+    private DateTime endDate=DateTime.Now;
+    protected override async Task OnInitializedAsync()
+    {
+        try{
+            classList = await HistoriesExam.getallclasses();
+            subjectList = await HistoriesExam.getallsubjects();
+        }catch{}
+
+    }
+    private async Task OnSearch()
+    {
+        if (selectedClassId <= 0)
+        {
+            toastService.ShowWarning("vui lòng chọn lớp!");
+            return;
+        }
+
+        if (selectedSubjectId <= 0)
+        {
+            toastService.ShowWarning("vui lòng chọn môn học!");
+            return;
+        }
+
+        if (startDate == default || endDate == default)
+        {
+            toastService.ShowWarning("vui lòng chọn khoảng thời gian hợp lệ!");
+            return;
+        }
+
+        if (startDate > endDate)
+        {
+            toastService.ShowWarning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+            return;
+        }
+
+        packagess = await HistoriesExam.GetAllHistories(selectedClassId, selectedSubjectId, startDate, endDate);
+        selectedExamId = null;
+        if (packagess.Count == 0)
+        {
+            toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
+        }
+    }
+    private async Task gettest(int id){
+        listTests = await HistoriesExam.GetTests(id);
+    }
+    bool showQuestionModal = false;
+    List<listquestion> selectedQuestions;
+
+    async Task ShowQuestions(int testId)
+    {
+        selectedQuestions = await HistoriesExam.GetQuestions(testId);
+        showQuestionModal = true;
+    }
+
+    void CloseModal()
+    {
+        showQuestionModal = false;
+        selectedQuestions = null;
+    }
+
+    int? selectedExamId = null;
+    int? selectedStudent=null;
+    string studentSearch = "";
+
+   private async Task SelectExam(int id)
+    {
+        await gettest(id);
+        selectedExamId = selectedExamId == id ? null : id;
+        selectedStudent = null;
+        studentSearch = "";
+       
+    }
+
+    void SelectStudent(int name)
+    {
+        selectedStudent = selectedStudent == name ? null : name;
+    }
+
+    bool MatchesSearch(string name) =>
+        string.IsNullOrWhiteSpace(studentSearch) || name.Contains(studentSearch, StringComparison.OrdinalIgnoreCase);
+}
