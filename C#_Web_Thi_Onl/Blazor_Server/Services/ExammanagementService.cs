@@ -16,6 +16,61 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<List<listexam>> SeachExam(DateTime start, DateTime end)
+        {
+            var result = new List<listexam>();
+
+            // Lấy tất cả bài thi
+            var listExam = await _httpClient.GetFromJsonAsync<List<Exam>>("/api/Exam/Get") ?? new List<Exam>();
+
+            // Lấy tất cả phòng thi
+            var examRooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
+
+            // Lấy tất cả phòng-package
+            var roomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
+
+            // Lấy tất cả packages
+            var packages = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+
+            foreach (var exam in listExam)
+            {
+                // Lọc các phòng thi thuộc bài thi hiện tại và nằm trong khoảng thời gian yêu cầu
+                var validRooms = examRooms
+                    .Where(x => x.Exam_Id == exam.Id)
+                    .Where(x =>
+                    {
+                        var roomStart = ConvertLong.ConvertLongToDateTime(x.Start_Time);
+                        var roomEnd = ConvertLong.ConvertLongToDateTime(x.End_Time);
+                        return roomStart >= start && roomEnd <= end;
+                    })
+                    .ToList();
+
+                if (!validRooms.Any()) continue;
+
+                int totalPackage = 0;
+
+                foreach (var room in validRooms)
+                {
+                    var rpk = roomPackages.Where(x => x.Exam_Room_Id == room.Id);
+                    foreach (var pkg in rpk)
+                    {
+                        if (packages.Any(x => x.Id == pkg.Package_Id))
+                        {
+                            totalPackage++;
+                        }
+                    }
+                }
+
+                result.Add(new listexam
+                {
+                    Id = exam.Id,
+                    NameExam = exam.Exam_Name,
+                    Totalpackage = totalPackage
+                });
+            }
+
+            return result;
+        }
 
         public async Task<List<listexam>> GetallExam()
         {
