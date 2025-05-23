@@ -58,5 +58,7 @@ namespace Data_Base.App_DbContext
         public DbSet<Package> Packages { get; set; }
         public DbSet<Teacher_Class> Teacher_Classes { get; set; }
         public DbSet<Exam_Room_Teacher> Exam_Room_Teachers { get; set; }
+        public DbSet<Package_Type> Package_Types { get; set; }
+        public DbSet<Question_Type> Question_Types { get; set; }
     }
 }

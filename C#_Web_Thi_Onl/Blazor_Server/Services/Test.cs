@@ -78,7 +78,7 @@ namespace Blazor_Server.Services
                 Questions = Questions.Select(Que => new Question
                 {
                     QuestionId = Que.Id,
-                    Type = Que.Type,
+                    Type = Que.Question_Type_Id,
                     Answers = Answers.Select(Ans => new Answer
                     {
                         AnswerId = Ans.Id,

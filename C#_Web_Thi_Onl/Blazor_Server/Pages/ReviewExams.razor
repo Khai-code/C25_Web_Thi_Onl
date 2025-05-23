@@ -130,7 +130,7 @@
                                 <strong>@GetAnswerLabel(answersOfQuestion, ans):</strong> @ans.Answers_Name
                                 @if (isEditing)
                                 {
-                                    if (q.Type == 1) // Chọn 1 đáp án (Radio)
+                                    if (q.Question_Type_Id == 1) // Chọn 1 đáp án (Radio)
                                     {
                                         <div>
                                             <input type="radio"
@@ -141,7 +141,7 @@
                                             <label>@ans.Answers_Name</label>
                                         </div>
                                     }
-                                    else if (q.Type == 2) // Nhiều đáp án (Checkbox)
+                                    else if (q.Question_Type_Id == 2) // Nhiều đáp án (Checkbox)
                                     {
                                         <div>
                                             <input type="checkbox"
