@@ -20,7 +20,7 @@ namespace Data_Base.Models.S
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(20, ErrorMessage = "Tên mông không quá 20 ký tự")]
+        [StringLength(20, ErrorMessage = "Tên môn không quá 20 ký tự")]
         public string Subject_Name { get; set; }
         public string Subject_Code { get; set; }
         [JsonIgnore]

@@ -114,8 +114,8 @@
 
     private async Task OnQuestionTypeChanged(ChangeEventArgs e)
     {
-        questionViewModel.Question.Type = Convert.ToInt32(e.Value);
-        await JSRuntime.InvokeVoidAsync("showAnswerFields", questionViewModel.Question.Type);
+        questionViewModel.Question.Question_Type_Id = Convert.ToInt32(e.Value);
+        await JSRuntime.InvokeVoidAsync("showAnswerFields", questionViewModel.Question.Question_Type_Id);
     }
 
     private async Task GetAllPackage()
@@ -150,15 +150,15 @@
         {
             if (questionType == "1")
             {
-                questionViewModel.Question.Type = 1;
+                questionViewModel.Question.Question_Type_Id = 1;
             }
             else if (questionType == "2")
             {
-                questionViewModel.Question.Type = 2;
+                questionViewModel.Question.Question_Type_Id = 2;
             }
             else if (questionType == "3")
             {
-                questionViewModel.Question.Type = 3;
+                questionViewModel.Question.Question_Type_Id = 3;
             }
             else
             {

@@ -25,7 +25,7 @@ namespace Data_Base.Models.P
         [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
         [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
         public long Create_Time { get; set; }
-        public int Status { get; set; }
+        public int Status { get; set; } = 0;
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
         public Subject? Subjects { get; set; }
@@ -38,6 +38,10 @@ namespace Data_Base.Models.P
         [JsonIgnore]
         public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
+        [ForeignKey("Package_Type_Id")]
+        [JsonIgnore]
+        public Package_Type? Package_Types { get; set; }
+        public int Package_Type_Id { get; set; }
         [JsonIgnore]
         public ICollection<Question> Questions { get; set; } = new List<Question>();
         [JsonIgnore]
