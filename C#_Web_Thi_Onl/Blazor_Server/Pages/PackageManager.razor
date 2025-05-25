@@ -7,6 +7,7 @@
 @using Data_Base.Models.T
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.ModelViewQuesEssayService
 @using static Blazor_Server.Services.PackageManager
 @using static Blazor_Server.Services.Package_Test_ERP
 @inject NavigationManager Navigation
@@ -114,10 +115,10 @@
                     <td>@baiThi.StartTime</td>
                     <td>@baiThi.EndTime</td>
                     <td>
-                        @* <button class="btn btn-secondary btn-sm me-1" @onclick="() => ThemCauHoi(baiThi.Id)" title="Thêm câu hỏi">
+                        <button class="btn btn-secondary btn-sm me-1" @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId)" title="Thêm câu hỏi">
                             <i class="bi bi-plus-circle"></i> Thêm câu hỏi
                         </button>
-                        <button class="btn btn-danger btn-sm me-1" @onclick="() => XoaBaiThi(baiThi.Id)" title="Xóa">
+                        @* <button class="btn btn-danger btn-sm me-1" @onclick="() => XoaBaiThi(baiThi.Id)" title="Xóa">
                             <i class="bi bi-trash"></i> Xóa
                         </button>
                         <button class="btn btn-warning btn-sm" @onclick="() => SuaBaiThi(baiThi.Id)" title="Sửa">
@@ -141,9 +142,22 @@
                     <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-4xl mx-auto">
                         <h2 class="text-xl md:text-2xl font-bold mb-2 text-center text-green-600">Thêm Gói Đề Thi</h2>
                         <form class="space-y-4">
-                            <div>
-                                <label for="packageName" class="block font-medium mb-1">Tên Package</label>
-                                <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="packageName" class="block font-medium mb-1">Tên Package</label>
+                                    <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
+                                </div>
+
+                                <div>
+                                    <label for="subject" class="block font-medium mb-1">Bài thi</label>
+                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Package_Type_Id">
+                                        <option value="">-- Chọn bài thi --</option>
+                                        @foreach (var pt in packageTypeViewModels)
+                                        {
+                                            <option value="@pt.Package_Type_Id">@pt.Package_Type_Name</option>
+                                        }
+                                    </select>
+                                </div>
                             </div>
 
                             <div>
@@ -250,10 +264,67 @@
     }
 </div>
 
+<!--Model thêm câu hỏi tự luân  -->
+@if (IsAddExamModalQuesEssay)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Thêm Câu Hỏi</h5>
+                </div>
+                <div class="modal-body">
+                    <!-- Nội dung form -->
+                    <form>
+                        <div class="mb-3">
+                            <label for="questionName" class="form-label">Nội dung câu hỏi</label>
+                            <textarea class="form-control" id="questionName" rows="5" placeholder="Nhập nội dung câu hỏi" @bind="question.Question_Name"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Loại câu hỏi</label>
+                            <select class="form-control" @bind="question.Question_Type_Id">
+                                <option value="">-- Chọn Loại câu hỏi --</option>
+                                @foreach (var qt in questionTypeViewModels)
+                                {
+                                    <option value="@qt.Question_Type_Id">@qt.Question_Type_Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Mức độ</label>
+                            <select class="form-control" @bind="question.Level">
+                                <option value="">-- Chọn mức độ câu hỏi --</option>
+                                @foreach (var ql in questionlevelViewModel)
+                                {
+                                    <option value="@ql.Question_Level_Id">@ql.Question_Level_Name</option>
+                                }
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success">
+                        <i class="bi bi-save"></i> Lưu
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CloseModal">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 
 @code {
     private bool IsAddExamModalOpen = false;
+    private bool IsAddExamModalQuesEssay = false;
+    private bool IsAddExamModalQuesMultipleChoice = false;
+    public int packageId { get; set; }
+    public int packageTypeId { get; set; }
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -262,12 +333,16 @@
             Package = new Data_Base.Models.P.Package(),
             Exam_Room_Teacher = new Exam_Room_Teacher()
         };
+    Question question = new Question();
     List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
+    List<PackageTypeViewModel> packageTypeViewModels = new List<PackageTypeViewModel>();
     List<ClassViewModel> classViewModels = new List<ClassViewModel>();
     List<PointTypeViewModel> pointTypeViewModels = new List<PointTypeViewModel>();
     List<ExamsViewModel> examsViewModels = new List<ExamsViewModel>();
     List<RoomViewModel> roomViewModels = new List<RoomViewModel>();
     List<TeacherViewModel> teacherViewModels = new List<TeacherViewModel>();
+    List<QuestionlevelViewModel> questionlevelViewModel = new List<QuestionlevelViewModel>();
+    List<QuestionTypeViewModel> questionTypeViewModels = new List<QuestionTypeViewModel>();
     public DateTime Create_Time = DateTime.Now;
     private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -275,14 +350,9 @@
     public DateTime End_Time = DateTime.Now;
     public string PackageName = null;
 
-    private void CloseModal()
-    {
-        IsAddExamModalOpen = false;
-    }
-
-
     protected override async Task OnInitializedAsync()
     {
+        await PackageType();
         await Subject();
         await Classes();
         await PointType();
@@ -290,11 +360,104 @@
         await Room();
         await PackageInactive();
         await TeacherViewModel();
+        await QuestionTypeViewModels();
+        await QuestionlevelViewModel();
+    }
+
+    private void CloseModal()
+    {
+        IsAddExamModalOpen = false;
+        IsAddExamModalQuesEssay = false;
+        IsAddExamModalQuesMultipleChoice = false;
     }
 
     private void OpenAddExamModal()
     {
         IsAddExamModalOpen = true;
+    }
+
+    private void OpenAddExamModalQuesEssay(int packageId, int packageTypeId)
+    {
+        try
+        {
+            if (packageId != null && packageTypeId != null)
+            {
+                this.packageId = packageId;
+                if (packageTypeId == 1)
+                {
+                    this.packageTypeId = packageTypeId;
+                    this.IsAddExamModalQuesEssay = true;
+                    this.IsAddExamModalQuesMultipleChoice = false;
+                }
+                else if (packageTypeId == 2)
+                {
+                    this.packageTypeId = packageTypeId;
+                    this.IsAddExamModalQuesEssay = false;
+                    this.IsAddExamModalQuesMultipleChoice = true;
+                }
+            }
+            else
+            {
+                if (packageId == null)
+                {
+                    toastService.ShowWarning("Không tìm thấy gói đề");
+                }
+                if (packageTypeId == null)
+                {
+                    toastService.ShowWarning("Không tìm thấyloại bài thi");
+                }
+            }
+            
+        }
+        catch (Exception ex)
+        {
+
+            throw;
+        }
+    }
+
+    public async Task CreateQues()
+    {
+        try
+        {
+            question.Package_Id = this.packageTypeId;
+            var Addquestion = await pm.CreateQuestion(question);
+            if (Addquestion == true)
+            {
+                toastService.ShowSuccess("Thêm dữ liệu thành công!");
+                this.IsAddExamModalQuesEssay = false;
+            }
+            else
+                toastService.ShowError("Thêm thất bại");
+        }
+        catch (Exception ex)
+        {
+        }
+    }
+
+    public async Task QuestionlevelViewModel()
+    {
+        try
+        {
+            questionlevelViewModel = await pm.GetQuestionLevel();
+        }
+        catch (Exception ex)
+        {
+            questionlevelViewModel = new List<QuestionlevelViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+    public async Task QuestionTypeViewModels()
+    {
+        try
+        {
+            questionTypeViewModels = await pm.GetQuestionType();
+        }
+        catch (Exception ex)
+        {
+            questionTypeViewModels = new List<QuestionTypeViewModel>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
     }
 
     public async Task PackageInactive()
@@ -306,6 +469,19 @@
         catch (Exception ex)
         {
             packageInactive = new List<PackageInactive>();
+            Console.WriteLine($"Lỗi: {ex.Message}");
+        }
+    }
+
+    public async Task PackageType()
+    {
+        try
+        {
+            packageTypeViewModels = await PTERP.GetPackageType();
+        }
+        catch (Exception ex)
+        {
+            packageTypeViewModels = new List<PackageTypeViewModel>();
             Console.WriteLine($"Lỗi: {ex.Message}");
         }
     }
@@ -413,8 +589,6 @@
             if (packageTestViewModel != null)
             {
                 toastService.ShowSuccess("Thêm dữ liệu thành công!");
-                PackageName = string.Empty;
-                packageTestADO = new PackageTestADO();
                 IsAddExamModalOpen = false;
             }
             else

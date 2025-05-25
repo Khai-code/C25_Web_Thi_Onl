@@ -29,6 +29,10 @@ namespace Data_Base.Models.Q
         [JsonIgnore]
         public Package? Packages { get; set; }
         public int Package_Id { get; set; }
+        [ForeignKey("Question_Level_Id")]
+        [JsonIgnore]
+        public Question_Level? Question_Levels { get; set; }
+        public int Question_Level_Id { get; set; }
         [JsonIgnore]
         public ICollection<Answers> Answerses { get; set; } = new List<Answers>();
         [JsonIgnore]

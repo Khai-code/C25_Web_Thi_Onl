@@ -66,7 +66,21 @@ namespace Blazor_Server.Services
             };
         }
 
-        public async Task<List<SubjectViewModel>> GetSubject()     
+        public async Task<List<PackageTypeViewModel>> GetPackageType()
+        {
+            var lstPackageType = await _httpClient.GetFromJsonAsync<List<Package_Type>>("https://localhost:7187/api/Package_Type/Get");
+
+            var PackageType = (from pt in lstPackageType
+                            select new PackageTypeViewModel
+                            {
+                                Package_Type_Id = pt.Id,
+                                Package_Type_Name = pt.Package_Type_Name,
+                            }).ToList();
+
+            return PackageType;
+        }
+
+        public async Task<List<SubjectViewModel>> GetSubject() 
         {
             var lstsubjects = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
 
@@ -143,6 +157,13 @@ namespace Blazor_Server.Services
             public Exam_Room Exam_Room { get; set; }
             public Exam_Room_Package Exam_Room_Package { get; set; }
             public Exam_Room_Teacher Exam_Room_Teacher { get; set; }
+
+        }
+
+        public class PackageTypeViewModel
+        {
+            public int Package_Type_Id { get; set; }
+            public string Package_Type_Name { get; set; }
         }
 
         public class SubjectViewModel
