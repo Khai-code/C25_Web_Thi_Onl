@@ -18,9 +18,8 @@ namespace Data_Base.Models.A
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        [StringLength(4000, ErrorMessage = "Nội dung đáp án đề không quá 4000 ký tự")]
         public string Answers_Name { get; set; }
-        public int Right_Answer { get; set; }
+        public int? Right_Answer { get; set; }
         [ForeignKey("Question_Id")]
         [JsonIgnore]
         public Question? Questions { get; set; }

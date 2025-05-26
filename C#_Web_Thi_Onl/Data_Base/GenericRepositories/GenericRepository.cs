@@ -98,7 +98,7 @@ namespace Data_Base.GenericRepositories
 
         public async Task<string> GetLastGradeCodeAsync()
         {
-            string DateTimeNow = DateTime.Now.ToString("yyyyy");
+            string DateTimeNow = DateTime.Now.ToString("yyyy");
             return await _context.Set<Grade>()
             .Where(g => g.Grade_Code.StartsWith($"GRD{DateTimeNow}"))
             .OrderByDescending(g => g.Grade_Code)

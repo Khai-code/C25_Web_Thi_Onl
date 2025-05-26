@@ -1,6 +1,7 @@
 ﻿using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
+using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
@@ -24,6 +25,7 @@ namespace Blazor_Server.Services
             if (lstPackage == null || lstPackage.Count == 0)
                 return new List<PackageInactive>();
 
+            var lstPackageType = await _httpClient.GetFromJsonAsync<List<Package_Type>>("https://localhost:7187/api/Package_Type/Get");
             var lstClass = await _httpClient.GetFromJsonAsync<List<Class>>("https://localhost:7187/api/Class/Get");
             var lstSubject = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
             var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
@@ -36,6 +38,7 @@ namespace Blazor_Server.Services
             // Dictionary
             var subjectDict = lstSubject.ToDictionary(s => s.Id);
             var classDict = lstClass.ToDictionary(c => c.Id);
+            var PackageTypeDict = lstPackageType.ToDictionary(c => c.Id);
             var examRoomDict = lstExamRoom.ToDictionary(e => e.Id);
             var teacherDict = lstTeacher.ToDictionary(t => t.Id);   
             var userDict = lstUser.ToDictionary(u => u.Id);
@@ -62,6 +65,8 @@ namespace Blazor_Server.Services
                         Id = p.Id,
                         Name = p.Package_Name,
                         Code = p.Package_Code,
+                        PackageTypeId = p.Package_Type_Id,
+                        PackageTypeName = PackageTypeDict.TryGetValue(p.Package_Type_Id, out var pt) ? pt.Package_Type_Name : "N/A",
                         SubjectName = subjectDict.TryGetValue(p.Subject_Id, out var sub) ? sub.Subject_Name : "N/A",
                         ClassName = classDict.TryGetValue(p.Class_Id, out var cl) ? cl.Class_Name : "N/A",
                         ClassNub = classDict.TryGetValue(p.Class_Id, out var cln) ? cln.Number : 0,
@@ -98,6 +103,63 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
+        public async Task<bool> CreateQuestion(Question model)
+        {
+            try
+            {
+                var Question = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/Post", model);
+                if (!Question.IsSuccessStatusCode)
+                    return false;
+
+                var addQuestion = await Question.Content.ReadFromJsonAsync<Question>();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<List<QuestionTypeViewModel>> GetQuestionType()
+        {
+            var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Type>>("https://localhost:7187/api/Question_Type/Get");
+
+            var questionType = (from qt in lstquestionType
+                                select new QuestionTypeViewModel
+                                {
+                                    Question_Type_Id = qt.Id,
+                                    Question_Type_Name = qt.Question_Type_Name
+                                }).ToList();
+
+            return questionType;
+        }
+
+        public async Task<List<QuestionlevelViewModel>> GetQuestionLevel()
+        {
+            var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Type>>("https://localhost:7187/api/Question_Type/Get");
+
+            var questionLevel = (from qt in lstquestionType
+                                 select new QuestionlevelViewModel
+                                 {
+                                     Question_Level_Id = qt.Id,
+                                     Question_Level_Name = qt.Question_Type_Name
+                                 }).ToList();
+
+            return questionLevel;
+        }
+
+        public class QuestionTypeViewModel
+        {
+            public int Question_Type_Id { get; set; }
+            public string Question_Type_Name { get; set; }
+        }
+
+        public class QuestionlevelViewModel
+        {
+            public int Question_Level_Id { get; set; }
+            public string Question_Level_Name { get; set; }
+        }
 
         public class TeacherViewModel
         {
@@ -109,6 +171,8 @@ namespace Blazor_Server.Services
         {
             public int Id { get; set; }
             public string Name { get; set; }
+            public int PackageTypeId { get; set; }
+            public string PackageTypeName { get; set; }
             public int Code { get; set; }
             public string SubjectName { get; set; }
             public string ClassName { get; set; }

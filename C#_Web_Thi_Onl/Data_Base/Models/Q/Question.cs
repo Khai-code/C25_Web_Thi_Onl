@@ -20,12 +20,19 @@ namespace Data_Base.Models.Q
         public int Id { get; set; }
         [StringLength(4000, ErrorMessage = "Nội dung câu hỏi không quá 4000 ký tự")]
         public string Question_Name { get; set; }
-        public int Type { get; set; }
         public int Level { get; set; }
+        [ForeignKey("Question_Type_Id")]
+        [JsonIgnore]
+        public Question_Type? Question_Types { get; set; }
+        public int Question_Type_Id { get; set; }
         [ForeignKey("Package_Id")]
         [JsonIgnore]
         public Package? Packages { get; set; }
         public int Package_Id { get; set; }
+        [ForeignKey("Question_Level_Id")]
+        [JsonIgnore]
+        public Question_Level? Question_Levels { get; set; }
+        public int Question_Level_Id { get; set; }
         [JsonIgnore]
         public ICollection<Answers> Answerses { get; set; } = new List<Answers>();
         [JsonIgnore]
