@@ -30,7 +30,7 @@ namespace Blazor_Server.Services
             var roomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
 
             // Lấy tất cả packages
-            var packages = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+            var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
 
             foreach (var exam in listExam)
             {
@@ -88,7 +88,7 @@ namespace Blazor_Server.Services
                     var rpk = roomPackages.Where(x => x.Exam_Room_Id == room.Id);
                     foreach(var pakage in rpk)
                     {
-                        var package = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+                        var package = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
                         var list = package.Where(x => x.Id == pakage.Package_Id);
                         if (list != null) total++;
                     }
@@ -104,7 +104,7 @@ namespace Blazor_Server.Services
         }
         public async Task<List<listpackage>> GetallPackage(int id)
         {
-            var listPackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+            var listPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
 
             var tasks = listPackage.Select(async package =>
             {
@@ -112,7 +112,7 @@ namespace Blazor_Server.Services
                 var exrPackage = listExamRoomPackage.FirstOrDefault(x => x.Package_Id == package.Id);
                 if (exrPackage == null) return null;
                 var listExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")?? new List<Exam_Room>();
-                var examRoom = listExamRoom.FirstOrDefault(x =>x.Id == exrPackage.Exam_Room_Id &&x.Exam_Id == id &&IsOverlapCurrentWeek(x.Start_Time, x.End_Time));
+                var examRoom = listExamRoom.FirstOrDefault(x =>x.Id == exrPackage.Exam_Room_Id &&x.Exam_Id == id && IsOverlapCurrentWeek(x.Start_Time, x.End_Time));
                 if (examRoom == null) return null;
                 var listRoom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get")?? new List<Room>();
                 var room = listRoom.FirstOrDefault(x => x.ID == examRoom.Room_Id);
@@ -129,12 +129,13 @@ namespace Blazor_Server.Services
             });
 
             var results = await Task.WhenAll(tasks);
-            return results.ToList();
+            return results.Where(x => x != null).Distinct().ToList();
+
         }
 
         public async Task<List<listStudent>> GetAllStudent(int Id)
         {
-            var Listpackage = await _httpClient.GetFromJsonAsync<List<Package>>("/api/Package/Get") ?? new List<Package>();
+            var Listpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
             var package = Listpackage.FirstOrDefault(x => x.Id == Id);
             if (package == null) return new List<listStudent>();
             var Lisclass = await _httpClient.GetFromJsonAsync<List<Class>>("/api/Class/Get") ?? new List<Class>();
