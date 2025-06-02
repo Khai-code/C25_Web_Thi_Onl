@@ -1,4 +1,5 @@
-﻿using Data_Base.Models.C;
+﻿using Data_Base.Filters;
+using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
@@ -30,7 +31,6 @@ namespace Blazor_Server.Services
             var lstSubject = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
             var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
             var lstExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("https://localhost:7187/api/Exam_Room/Get");
-            var lstTeacherClass = await _httpClient.GetFromJsonAsync<List<Teacher_Class>>("https://localhost:7187/api/Teacher_Class/Get");
             var lstExamRoomTeacher = await _httpClient.GetFromJsonAsync<List<Exam_Room_Teacher>>("https://localhost:7187/api/Exam_Room_Teacher/Get");
             var lstTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("https://localhost:7187/api/Teacher/Get");
             var lstUser = await _httpClient.GetFromJsonAsync<List<User>>("https://localhost:7187/api/User/Get");
@@ -51,7 +51,7 @@ namespace Blazor_Server.Services
                     examRoomDict.TryGetValue(examRoomPackage?.Exam_Room_Id ?? 0, out var examRoom);
 
                     // Lấy giáo viên phụ trách lớp
-                    var teacherClassId = lstTeacherClass.FirstOrDefault(tc => tc.Class_Id == p.Class_Id)?.Teacher_Id;
+                    var teacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id;
                     var teacherClass = teacherDict.TryGetValue(teacherClassId ?? 0, out var tClass) ? tClass : null;
                     var teacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A";
 
@@ -103,15 +103,54 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
-        public async Task<bool> CreateQuestion(Question model)
+        public async Task<bool> CreateQuestion(QuestionAnswers model)
         {
             try
             {
-                var Question = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/Post", model);
-                if (!Question.IsSuccessStatusCode)
+                var questionCreate = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/Post", model.question);
+                if (!questionCreate.IsSuccessStatusCode)
+                {
+                    var errorContent = await questionCreate.Content.ReadAsStringAsync();
+                    Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                    Console.WriteLine(errorContent);
                     return false;
+                }
+                    
 
-                var addQuestion = await Question.Content.ReadFromJsonAsync<Question>();
+                var addQuestion = await questionCreate.Content.ReadFromJsonAsync<Question>();
+
+                var filterRequest = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", model.question.Package_Id.ToString() }
+                    },
+                    Entity = model.question
+                };
+
+                var questionGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequest);
+
+                if (questionGetResponse.IsSuccessStatusCode)
+                {
+                    var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Question>>();
+
+                    if (questionList != null && questionList.Any())
+                    {
+                        var totalMaxScore = questionList.Sum(q => q.Maximum_Score);
+                        if (totalMaxScore > 10) 
+                        {
+                            if (addQuestion != null)
+                            {
+                                var deleteResponse = await _httpClient.DeleteAsync($"https://localhost:7187/api/Question/Delete/{addQuestion.Id}");
+                                if (deleteResponse.IsSuccessStatusCode)
+                                {
+                                    Console.WriteLine($"Không thể tạo câu hỏi : {addQuestion.Question_Name} vì tổng điểm vượt quá 10");
+                                    return false; // Trả về false vì đã xóa
+                                }
+                            }
+                        }
+                    }
+                }
 
                 return true;
             }
@@ -121,9 +160,11 @@ namespace Blazor_Server.Services
             }
         }
 
-        public async Task<List<QuestionTypeViewModel>> GetQuestionType()
+        public async Task<List<QuestionTypeViewModel>> GetQuestionType(int idPackageType)
         {
             var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Type>>("https://localhost:7187/api/Question_Type/Get");
+
+            lstquestionType = lstquestionType.Where(o => o.Package_Type_Id == idPackageType).ToList();
 
             var questionType = (from qt in lstquestionType
                                 select new QuestionTypeViewModel
@@ -137,18 +178,23 @@ namespace Blazor_Server.Services
 
         public async Task<List<QuestionlevelViewModel>> GetQuestionLevel()
         {
-            var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Type>>("https://localhost:7187/api/Question_Type/Get");
+            var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Level>>("https://localhost:7187/api/Question_Level/Get");
 
             var questionLevel = (from qt in lstquestionType
                                  select new QuestionlevelViewModel
                                  {
                                      Question_Level_Id = qt.Id,
-                                     Question_Level_Name = qt.Question_Type_Name
+                                     Question_Level_Name = qt.Question_Level_Name
                                  }).ToList();
 
             return questionLevel;
         }
 
+        public class QuestionAnswers
+        {
+            public Question question { get; set; }
+            public long Maximum_Score { get; set; }
+        }
         public class QuestionTypeViewModel
         {
             public int Question_Type_Id { get; set; }

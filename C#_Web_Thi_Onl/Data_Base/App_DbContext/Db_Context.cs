@@ -38,7 +38,6 @@ namespace Data_Base.App_DbContext
         public DbSet<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; }
         public DbSet<Teacher_Subject> Teacher_Subjects { get; set; }
         public DbSet<Subject> Subjects { get; set; }
-        public DbSet<Subject_Grade> Subject_Grades { get; set; }
         public DbSet<Point_Type_Subject> Point_Type_Subjects { get; set; }
         public DbSet<Class> Classes { get; set; }
         public DbSet<Grade> Grades { get; set; }
@@ -56,7 +55,6 @@ namespace Data_Base.App_DbContext
         public DbSet<Answers> Answerses { get; set; }
         public DbSet<Question> Questions { get; set; }
         public DbSet<Package> Packages { get; set; }
-        public DbSet<Teacher_Class> Teacher_Classes { get; set; }
         public DbSet<Exam_Room_Teacher> Exam_Room_Teachers { get; set; }
         public DbSet<Package_Type> Package_Types { get; set; }
         public DbSet<Question_Type> Question_Types { get; set; }

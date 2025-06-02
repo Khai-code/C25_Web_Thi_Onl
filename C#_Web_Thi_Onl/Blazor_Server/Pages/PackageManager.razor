@@ -112,8 +112,8 @@
                     <td>@baiThi.ClassNub</td>
                     <td>@baiThi.TeacherExamRoom</td>
                     <td>@baiThi.TeacherClass</td>
-                    <td>@baiThi.StartTime</td>
-                    <td>@baiThi.EndTime</td>
+                    <td>@ConvertLong.ConvertLongToDateTime(baiThi.StartTime)</td>
+                    <td>@ConvertLong.ConvertLongToDateTime(baiThi.EndTime)</td>
                     <td>
                         <button class="btn btn-secondary btn-sm me-1" @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId)" title="Thêm câu hỏi">
                             <i class="bi bi-plus-circle"></i> Thêm câu hỏi
@@ -278,12 +278,12 @@
                     <form>
                         <div class="mb-3">
                             <label for="questionName" class="form-label">Nội dung câu hỏi</label>
-                            <textarea class="form-control" id="questionName" rows="5" placeholder="Nhập nội dung câu hỏi" @bind="question.Question_Name"></textarea>
+                            <textarea class="form-control" id="questionName" rows="5" placeholder="Nhập nội dung câu hỏi" @bind="questionAnswers.question.Question_Name"></textarea>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Loại câu hỏi</label>
-                            <select class="form-control" @bind="question.Question_Type_Id">
+                            <select class="form-control" @bind="questionAnswers.question.Question_Type_Id">
                                 <option value="">-- Chọn Loại câu hỏi --</option>
                                 @foreach (var qt in questionTypeViewModels)
                                 {
@@ -294,7 +294,7 @@
 
                         <div class="mb-3">
                             <label class="form-label">Mức độ</label>
-                            <select class="form-control" @bind="question.Level">
+                            <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
                                 <option value="">-- Chọn mức độ câu hỏi --</option>
                                 @foreach (var ql in questionlevelViewModel)
                                 {
@@ -302,10 +302,15 @@
                                 }
                             </select>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="questionName" class="form-label">Số điểm</label>
+                            <input class="form-control" id="questionName" type="text" placeholder="Số điểm cho câu hỏi" @bind="questionAnswers.question.Maximum_Score" />
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-success">
+                    <button class="btn btn-success" @onclick="CreateQues">
                         <i class="bi bi-save"></i> Lưu
                     </button>
                     <button class="btn btn-secondary" @onclick="CloseModal">
@@ -318,6 +323,58 @@
 }
 
 
+@if (IsAddExamModalQuesMultipleChoice)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Thêm Câu Hỏi</h5>
+                </div>
+                <div class="modal-body">
+                    <!-- Nội dung form -->
+                    <form>
+                        <div class="mb-3">
+                            <label for="questionName" class="form-label">Nội dung câu hỏi</label>
+                            <input class="form-control" id="questionName" type="text" placeholder="Số điểm cho câu hỏi" @bind="questionAnswers.question.Question_Name" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Loại câu hỏi</label>
+                            <select class="form-control" @bind="questionAnswers.question.Question_Type_Id">
+                                <option value="">-- Chọn Loại câu hỏi --</option>
+                                @foreach (var qt in questionTypeViewModels)
+                                {
+                                    <option value="@qt.Question_Type_Id">@qt.Question_Type_Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Mức độ</label>
+                            <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
+                                <option value="">-- Chọn mức độ câu hỏi --</option>
+                                @foreach (var ql in questionlevelViewModel)
+                                {
+                                    <option value="@ql.Question_Level_Id">@ql.Question_Level_Name</option>
+                                }
+                            </select>
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" >
+                        <i class="bi bi-save"></i> Lưu
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CloseModal">
+                        Hủy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     private bool IsAddExamModalOpen = false;
@@ -332,6 +389,10 @@
             Exam_Room_Package = new Exam_Room_Package(),
             Package = new Data_Base.Models.P.Package(),
             Exam_Room_Teacher = new Exam_Room_Teacher()
+        };
+    QuestionAnswers questionAnswers = new QuestionAnswers
+        {
+            question = new Question()
         };
     Question question = new Question();
     List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
@@ -360,7 +421,7 @@
         await Room();
         await PackageInactive();
         await TeacherViewModel();
-        await QuestionTypeViewModels();
+        //await QuestionTypeViewModels();
         await QuestionlevelViewModel();
     }
 
@@ -376,7 +437,7 @@
         IsAddExamModalOpen = true;
     }
 
-    private void OpenAddExamModalQuesEssay(int packageId, int packageTypeId)
+    private async Task OpenAddExamModalQuesEssay(int packageId, int packageTypeId)
     {
         try
         {
@@ -407,7 +468,7 @@
                     toastService.ShowWarning("Không tìm thấyloại bài thi");
                 }
             }
-            
+            questionTypeViewModels = await pm.GetQuestionType(packageTypeId);
         }
         catch (Exception ex)
         {
@@ -420,8 +481,8 @@
     {
         try
         {
-            question.Package_Id = this.packageTypeId;
-            var Addquestion = await pm.CreateQuestion(question);
+            questionAnswers.question.Package_Id = this.packageTypeId;
+            var Addquestion = await pm.CreateQuestion(questionAnswers);
             if (Addquestion == true)
             {
                 toastService.ShowSuccess("Thêm dữ liệu thành công!");
@@ -432,6 +493,7 @@
         }
         catch (Exception ex)
         {
+            
         }
     }
 
@@ -447,11 +509,12 @@
             Console.WriteLine($"Lỗi: {ex.Message}");
         }
     }
+
     public async Task QuestionTypeViewModels()
     {
         try
         {
-            questionTypeViewModels = await pm.GetQuestionType();
+            
         }
         catch (Exception ex)
         {

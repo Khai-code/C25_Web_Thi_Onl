@@ -2,13 +2,16 @@
 using Data_Base.Models.C;
 using Data_Base.Models.G;
 using Data_Base.Models.P;
+using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -96,26 +99,6 @@ namespace Data_Base.GenericRepositories
             .FirstOrDefaultAsync();
         }
 
-        public async Task<string> GetLastGradeCodeAsync()
-        {
-            string DateTimeNow = DateTime.Now.ToString("yyyy");
-            return await _context.Set<Grade>()
-            .Where(g => g.Grade_Code.StartsWith($"GRD{DateTimeNow}"))
-            .OrderByDescending(g => g.Grade_Code)
-            .Select(g => g.Grade_Code)
-            .FirstOrDefaultAsync();
-        }
-
-        public async Task<string> GetLastSubjectCodeAsync()
-        {
-            string yearSuffix = DateTime.Now.ToString("yy"); // Lấy 2 số cuối của năm
-            return await _context.Set<Subject>()
-                .Where(s => s.Subject_Code.StartsWith($"SUB{yearSuffix}"))
-                .OrderByDescending(s => s.Subject_Code)
-                .Select(s => s.Subject_Code)
-                .FirstOrDefaultAsync();
-        }
-
         public async Task<int> GetLastTestNumberAsync(string year, string testType)
         {
             var lastTest = await _context.Tests
@@ -126,19 +109,6 @@ namespace Data_Base.GenericRepositories
             if (lastTest == null) return 0;
 
             string lastNumberStr = lastTest.Test_Code.Substring(6, 5); // Lấy 3 số cuối
-            return int.TryParse(lastNumberStr, out int lastNumber) ? lastNumber : 0;
-        }
-
-        public async Task<int> GetLastRoomNumberAsync()
-        {
-            var lastRoom = await _context.Rooms
-                .Where(r => r.Room_Code.StartsWith("R"))
-                .OrderByDescending(r => r.Room_Code)
-                .FirstOrDefaultAsync();
-
-            if (lastRoom == null) return 0;
-
-            string lastNumberStr = lastRoom.Room_Code.Substring(1, 3); // Lấy 3 số cuối
             return int.TryParse(lastNumberStr, out int lastNumber) ? lastNumber : 0;
         }
 
@@ -153,6 +123,11 @@ namespace Data_Base.GenericRepositories
         {
             _context.Set<Class>().Update(classEntity);
             return await _context.SaveChangesAsync() > 0;
+        }
+
+        public async Task<IEnumerable<T>> GetWithFilterAsync<T>(Expression<Func<T, bool>> filter) where T : class
+        {
+            return await _context.Set<T>().Where(filter).ToListAsync();
         }
     }
 }
