@@ -6,6 +6,7 @@
 @using Data_Base.Models.S
 @using static Blazor_Server.Services.ReviewExam
 @inject ReviewExam review
+@inject HistoriesExam historiesExam
 @inject Notification infor
 
 <div class="position-relative" style="height: 100vh;">
@@ -93,7 +94,7 @@
                                 <dd class="col-sm-7">@item.End_Time_stop.ToString("HH:mm dd/MM/yyyy")</dd>
 
                                 <dt class="col-sm-5">Điểm:</dt>
-                                <dd class="col-sm-7 fw-bold text-success fs-5">@item.Score</dd>
+                                <dd class="col-sm-7 fw-bold text-success fs-5">@TotalScore</dd>
                             </dl>
                         </div>
                     </div>
@@ -130,26 +131,22 @@
                                 <strong>@GetAnswerLabel(answersOfQuestion, ans):</strong> @ans.Answers_Name
                                 @if (isEditing)
                                 {
-                                    if (q.Question_Type_Id == 1) // Chọn 1 đáp án (Radio)
+                                    if (q.Question_Type_Id == 2 || q.Question_Type_Id==1) // Chọn 1 đáp án (Radio)
                                     {
                                         <div>
                                             <input type="radio"
                                             name="question_@q.Id"
-                                            value="@ans.Id"
-                                           
-                                            @onchange="@((ChangeEventArgs e) => SelectAnswer(ans.Id,true))" />
-                                            <label>@ans.Answers_Name</label>
+                                            checked="@((ans.Right_Answer == 1))"
+                                            @onchange="@((ChangeEventArgs e) => SelectAnswer(q.Id, ans.Id, true))" />
                                         </div>
                                     }
-                                    else if (q.Question_Type_Id == 2) // Nhiều đáp án (Checkbox)
+                                    else if (q.Question_Type_Id == 3) // Nhiều đáp án (Checkbox)
                                     {
                                         <div>
                                             <input type="checkbox"
                                             name="question_@q.Id"
-                                            value="@ans.Id"
-                                           
-                                            @onchange="@((ChangeEventArgs e) => SelectAnswer(ans.Id,(bool)e.Value))" />
-                                            <label>@ans.Answers_Name</label>
+                                            checked="@((ans.Right_Answer == 1))"
+                                            @onchange="@((ChangeEventArgs e) => SelectAnswer(q.Id, ans.Id, (bool)e.Value))" />
                                         </div>
                                     }
                                 }
@@ -168,18 +165,17 @@
     private bool isEditing = false;
     private PhucKhaoFormModel formModel = new();
     private List<Review> reviews = new();
-    private List<Summary> summaries = new List<Summary>();
-    protected override async Task OnInitializedAsync()
-    {
-        summaries = await review.GetAllSumary();
-    }
-
     private async Task HandleSubmit()
     {
         isLoading = true;
         try
         {
             reviews = await review.SeacherReview(formModel.StudentCode, formModel.ExamCode);
+            foreach (var item in reviews)
+            {
+                double scoreDouble = Convert.ToDouble(item.Score);
+                TotalScore = (long?)scoreDouble; 
+            }
             if (reviews == null || reviews.Count == 0)
             {
                 await infor.ShowSweetAlert("Không tìm thấy kết quả cho mã học sinh và mã bài thi này.", "error");
@@ -210,19 +206,14 @@
     {
         try
         {
-            int i = 0;
-            while (i < reviews.Count)
+            foreach (var item in reviews)
             {
-                var item = reviews[i];
-                int j = 0;
-                while (j < item.answers.Count)
+                foreach (var sa in item.answers)
                 {
-                    var sa = item.answers[j];
-                    int status = (sa.Id == idanwer) ? 1 : 0;
+                    int status = sa.Right_Answer == 1 ? 1 : 0;
                     await review.UpdateReview(sa.Id, status);
-                    j++;
                 }
-                i++;
+                await historiesExam.updateExamHis(item.idtest,Convert.ToDouble(TotalScore));
             }
 
             await infor.ShowSweetAlert("Đã lưu thay đổi thành công!", "success");
@@ -235,33 +226,68 @@
         }
     }
 
+    private long? TotalScore = 0;
 
-    private async Task SelectAnswer(int id, bool isChecked)
+    private async Task SelectAnswer(int questionId, int answerId, bool isChecked)
     {
-        int i = 0;
-        while (i < reviews.Count)
+        foreach (var item in reviews)
         {
-            var item = reviews[i];
-            int j = 0;
-            while (j < item.answers.Count)
+            var answersOfQuestion = item.answers.Where(a => a.Question_Id == questionId).ToList();
+            var question = item.questions.FirstOrDefault(q => q.Id == questionId);
+            if (question == null) continue;
+
+            // --- Cập nhật trạng thái Right_Answer theo loại câu hỏi ---
+            if (question.Question_Type_Id == 1 || question.Question_Type_Id == 2) // Radio
             {
-                var sa = item.answers[j];
-                if (sa.Id == id)
+                foreach (var ans in answersOfQuestion)
                 {
-                    int status = isChecked ? 1 : 0;
-                    await review.UpdateReview(sa.Id, status);
-                    if (isChecked)
-                    {
-                        idanwer = id;
-                    }
+                    ans.Right_Answer = (ans.Id == answerId && isChecked) ? 1 : 0;
                 }
-                j++;
             }
-            i++;
+            else if (question.Question_Type_Id == 3) // Checkbox
+            {
+                var ans = answersOfQuestion.FirstOrDefault(a => a.Id == answerId);
+                if (ans != null)
+                {
+                    ans.Right_Answer = isChecked ? 1 : 0;
+                }
+            }
+
+            // --- Tính lại điểm sau khi chọn ---
+            long? totalScore = 0;
+
+            foreach (var q in item.questions)
+            {
+                // Lấy danh sách đáp án đúng
+                var correctAnswers = item.answers
+                    .Where(a => a.Question_Id == q.Id && a.Right_Answer == 1)
+                    .Select(a => a.Id)
+                    .ToList();
+
+                // Lấy danh sách đáp án học sinh chọn (bạn đổi item.studentAnswers thành tên đúng)
+                var selectedAnswers = item.studentAnswers
+                     .Where(sa => correctAnswers.Contains(sa.Answer_Id))
+                     .Select(sa => sa.Answer_Id)
+                     .ToList();
+
+
+                // Kiểm tra xem học sinh chọn đúng hoàn toàn các đáp án đúng
+                bool isCorrect = correctAnswers.Count == selectedAnswers.Count &&
+                                 !correctAnswers.Except(selectedAnswers).Any();
+
+                if (isCorrect)
+                {
+                    totalScore += q.Maximum_Score;  // Cộng điểm
+                }
+               
+            }
+            TotalScore = totalScore;
         }
     }
 
-   
+
+
+
 
     private string GetAnswerLabel(List<Answers> answersOfQuestion, Answers currentAnswer)
     {

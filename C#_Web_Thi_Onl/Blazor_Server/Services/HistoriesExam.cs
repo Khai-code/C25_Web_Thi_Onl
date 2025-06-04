@@ -9,6 +9,7 @@ using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
 using System.Net.Http;
+using System.Net.WebSockets;
 using static Blazor_Server.Services.ExammanagementService;
 
 namespace Blazor_Server.Services
@@ -169,65 +170,127 @@ namespace Blazor_Server.Services
         public async Task<bool> updateExamHis(int id, double score)
         {
             var getExamRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var Examroomstudent = getExamRoomStudents.FirstOrDefault(x => x.Test_Id == id);
+            var examRoomStudentList = getExamRoomStudents.Where(x => x.Test_Id == id).ToList();
 
-            if (Examroomstudent == null)
+            if (!examRoomStudentList.Any())
             {
                 Console.WriteLine($"Không tìm thấy ExamRoomStudent cho Test_Id = {id}");
                 return false;
             }
+
             var getallexamhis = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
-            var examhis = getallexamhis.FirstOrDefault(x => x.Exam_Room_Student_Id == Examroomstudent.Id);
-            if (examhis == null)
+            var examHisList = getallexamhis
+                .Where(x => examRoomStudentList.Any(s => s.Id == x.Exam_Room_Student_Id))
+                .ToList();
+
+            if (!examHisList.Any())
             {
-                Console.WriteLine($"Không tìm thấy Exam_HisTory cho Exam_Room_Student_Id = {Examroomstudent.Id}");
+                Console.WriteLine($"Không tìm thấy Exam_HisTory");
                 return false;
             }
-            examhis.Score = score;
-            var respon = await _httpClient.PutAsJsonAsync($"/api/Exam_HisTory/Pus/{examhis.Id}", examhis);
-            if (!respon.IsSuccessStatusCode)
+
+            foreach (var examhis in examHisList)
             {
-                Console.WriteLine($"Cập nhật thất bại: {(int)respon.StatusCode} - {respon.ReasonPhrase}");
-                return false;
+                examhis.Score = score;
+                var respon = await _httpClient.PutAsJsonAsync($"/api/Exam_HisTory/Pus/{examhis.Id}", examhis);
+                if (!respon.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Cập nhật Exam_HisTory thất bại: {(int)respon.StatusCode} - {respon.ReasonPhrase}");
+                    return false;
+                }
             }
+
             var getTests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
-            var test = getTests.FirstOrDefault(x => x.Id == id);
-            if (test == null)
+            var testList = getTests.Where(x => x.Id == id).ToList();
+
+            if (!testList.Any())
             {
-                Console.WriteLine($"Không tìm thấy test");
+                Console.WriteLine("Không tìm thấy test");
                 return false;
             }
+
             var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
-            var package = getallpackage.FirstOrDefault(x => x.Id == test.Package_Id);
-            if (package == null)
+            var packageList = getallpackage
+                .Where(p => testList.Any(t => t.Package_Id == p.Id))
+                .ToList();
+
+            if (!packageList.Any())
             {
-                Console.WriteLine($"Không tìm thấy package");
+                Console.WriteLine("Không tìm thấy package");
                 return false;
             }
+
+            var getallsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
+            var subjectList = getallsubject
+                .Where(s => packageList.Any(p => p.Subject_Id == s.Id))
+                .ToList();
+
+            if (!subjectList.Any())
+            {
+                Console.WriteLine("Không tìm thấy subject");
+                return false;
+            }
+
+            var getallpointtype_subject = await _httpClient.GetFromJsonAsync<List<Point_Type_Subject>>("/api/Point_Type_Subject/Get");
+            var ptsList = getallpointtype_subject
+                .Where(pts => subjectList.Any(s => s.Id == pts.Subject_Id))
+                .ToList();
+
+            if (!ptsList.Any())
+            {
+                Console.WriteLine("Không tìm thấy pointtype_subject");
+                return false;
+            }
+
             var getallpointype = await _httpClient.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get");
-            var pointype = getallpointype.FirstOrDefault(x => x.Id == package.Point_Type_Id);
-            if (pointype == null)
+            var pointypeList = getallpointype
+                .Where(pt => ptsList.Any(pts => pts.Point_Type_Id == pt.Id))
+                .ToList();
+
+            if (!pointypeList.Any())
             {
-                Console.WriteLine($"Không tìm thấy pointype");
+                Console.WriteLine("Không tìm thấy pointype");
                 return false;
             }
-            var getallscore =await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
-            var allscore = getallscore.FirstOrDefault(x => x.Point_Type_Id == pointype.Id);
-            if (allscore == null)
+
+            var getallscore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
+            var scoreList = getallscore
+                .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id))
+                .ToList();
+
+            if (!scoreList.Any())
             {
-                Console.WriteLine($"Không tìm thấy allscore");
+                Console.WriteLine("Không tìm thấy allscore");
                 return false;
             }
-            allscore.Point = score;
-            var updatescore =await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{allscore.Id}", allscore);
-            if (!updatescore.IsSuccessStatusCode)
+
+            foreach (var s in scoreList)
             {
-                Console.WriteLine($"Cập nhật thất bại: {(int)updatescore.StatusCode} - {updatescore.ReasonPhrase}");
+                s.Point = score;
+                var updatescore = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{s.Id}", s);
+                if (!updatescore.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Cập nhật điểm thất bại: {(int)updatescore.StatusCode} - {updatescore.ReasonPhrase}");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        public async Task<bool> updatecomemt(int id,string? text)
+        {
+            var existing = await _httpClient.GetFromJsonAsync<Question>($"/api/Question/GetBy/{id}");
+            if (existing == null) return false;
+            existing.Note = text;
+            var update = await _httpClient.PutAsJsonAsync($"/api/Question/Pus/{id}", existing);
+            if (!update.IsSuccessStatusCode)
+            {
+                Console.WriteLine($"Cập nhật thất bại: {(int)update.StatusCode} - {update.ReasonPhrase}");
                 return false;
             }
             return true;
         }
-
         public class lispackage
         {
             public int Id { get; set; }
