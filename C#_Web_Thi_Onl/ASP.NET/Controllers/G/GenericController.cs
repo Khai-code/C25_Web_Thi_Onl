@@ -1,15 +1,20 @@
 ﻿using Data_Base.App_DbContext;
+using Data_Base.Filters;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.C;
 using Data_Base.Models.G;
 using Data_Base.Models.P;
+using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.U;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
+using System.Reflection;
 
 namespace ASP.NET.Controllers.G
 {
@@ -21,6 +26,34 @@ namespace ASP.NET.Controllers.G
         public GenericController(GenericRepository<T> repository)
         {
             _repository = repository;
+        }
+
+        [HttpPost("common/get")]
+        public async Task<IActionResult> GetWithDynamicFilters([FromBody] CommonFilterRequest request)
+        {
+            string entityName = typeof(T).Name;
+            switch (entityName)
+            {
+                case "Question":
+                    return await HandleQuestionFilter(request.Filters);
+                default:
+                    return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
+            }
+        }
+
+        private string GetTableName(object entity)
+        {
+            if (entity == null) return null;
+            string entityName = typeof(T).Name;
+            var type = entity.GetType();
+            Console.WriteLine("Đang lấy tên bảng cho type: " + type.FullName); // debug
+
+            var tableAttribute = type.GetCustomAttribute<TableAttribute>();
+            if (tableAttribute != null && !string.IsNullOrEmpty(tableAttribute.Name))
+            {
+                return tableAttribute.Name;
+            }
+            return type.Name;
         }
 
         // 🔵 GetAll
@@ -89,19 +122,9 @@ namespace ASP.NET.Controllers.G
                 var lastCode = await _repository.GetLastClassCodeAsync(gradeId);
                 entity.GetType().GetProperty("Class_Code")?.SetValue(entity, GenerateClassCode(lastCode, gradeName));
             }
-            else if (entityName == "Grade")
-            {
-                var lastCode = await _repository.GetLastGradeCodeAsync();
-                entity.GetType().GetProperty("Grade_Code")?.SetValue(entity, GenerateGradeCode(lastCode));
-            }
             else if (entityName == "Package")
             {
                 entity.GetType().GetProperty("Package_Code")?.SetValue(entity, GenerateRandomPackageCode());
-            }
-            else if (entityName == "Subject")
-            {
-                var lastCode = await _repository.GetLastSubjectCodeAsync();
-                entity.GetType().GetProperty("Subject_Code")?.SetValue(entity, GenerateSubjectCode(lastCode));
             }
             else if (entityName == "Test")
             {
@@ -116,31 +139,6 @@ namespace ASP.NET.Controllers.G
 
                 string testCode = await GenerateTestCodeAsync(pointTypeId);
                 entity.GetType().GetProperty("Test_Code")?.SetValue(entity, testCode);
-            }
-            else if (entityName == "Room")
-            {
-                string roomCode = await GenerateRoomCodeAsync();
-                entity.GetType().GetProperty("Room_Code")?.SetValue(entity, roomCode);
-            }
-            else if (entityName == "Summary")
-            {
-                var startDateProperty = entity.GetType().GetProperty("Start_Time");
-                var endDateProperty = entity.GetType().GetProperty("End_Time");
-                var lastNumberProperty = entity.GetType().GetProperty("Summary_Name");
-
-                if (startDateProperty == null || endDateProperty == null || lastNumberProperty == null)
-                {
-                    return BadRequest("Missing required properties (Start_Date, End_Date, Last_Number)!");
-                }
-
-                long startDateLong = (long)startDateProperty.GetValue(entity);
-                long endDateLong = (long)endDateProperty.GetValue(entity);
-
-                DateTime startDate = DateTime.ParseExact(startDateLong.ToString(), "yyyyMMddHHmmss", null);
-                DateTime endDate = DateTime.ParseExact(endDateLong.ToString(), "yyyyMMddHHmmss", null);
-
-                string summaryCode = GenerateSummaryCode(startDate, endDate);
-                entity.GetType().GetProperty("Summary_Code")?.SetValue(entity, summaryCode);
             }
             else if (entityName == "Student_Class")
             {
@@ -220,25 +218,10 @@ namespace ASP.NET.Controllers.G
             return $"CLS{year}{gradeName}{newIndex:D3}";
         }
 
-        // 🔥 Hàm tạo Grade
-        private string GenerateGradeCode(string lastCode)
-        {
-            string year = DateTime.Now.ToString("yyyy");
-            int lastIndex = lastCode != null ? int.Parse(lastCode.Substring(7)) : 0;
-            return $"GRD{year}{(lastIndex + 1):D3}";
-        }
-
         private int GenerateRandomPackageCode()
         {
             Random random = new Random();
             return random.Next(10000000, 99999999); // Tạo số nguyên ngẫu nhiên có 8 chữ số
-        }
-
-        private string GenerateSubjectCode(string lastCode)
-        {
-            string yearSuffix = DateTime.Now.ToString("yy");
-            int lastIndex = lastCode != null ? int.Parse(lastCode.Substring(5)) : 0;
-            return $"SUB{yearSuffix}{(lastIndex + 1):D3}";
         }
 
         private string GetTestType(int pointTypeId)
@@ -264,20 +247,20 @@ namespace ASP.NET.Controllers.G
 
             return $"T{testType}{year}{newNumber:D5}"; // Ví dụ: TATT2024001, TFIN2024002
         }
-        private async Task<string> GenerateRoomCodeAsync()
-        {
-            int lastNumber = await _repository.GetLastRoomNumberAsync();
-            int newNumber = lastNumber + 1;
 
-            return $"R{newNumber:D3}";
+        private async Task<IActionResult> HandleQuestionFilter(Dictionary<string, string> filters)
+        {
+            int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
+            int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
+            string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
+
+            var result = await _repository.GetWithFilterAsync<Question>(q =>
+                (!packageId.HasValue || q.Package_Id == packageId) &&
+                (string.IsNullOrEmpty(keyword) || q.Question_Name.Contains(keyword))
+            );
+
+            return Ok(result);
         }
 
-        private string GenerateSummaryCode(DateTime startDate, DateTime endDate)
-        {
-            string lastTwoDigits = DateTime.Now.ToString("yy");
-            string startStr = startDate.ToString("MMdd"); // Chuyển ngày tháng thành MMDD
-            string endStr = endDate.ToString("MMdd");     // Chuyển ngày tháng kết thúc thành MMDD
-            return $"S{lastTwoDigits}_{startStr}_{endStr}";
-        }
     }
 }

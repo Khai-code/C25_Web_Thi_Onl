@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace Data_Base.Models.Q
 {
+    [Table("Questions")]
     public class Question
     {
         [Key]
@@ -20,7 +21,8 @@ namespace Data_Base.Models.Q
         public int Id { get; set; }
         [StringLength(4000, ErrorMessage = "Nội dung câu hỏi không quá 4000 ký tự")]
         public string Question_Name { get; set; }
-        public int Level { get; set; }
+        public long? Maximum_Score { get; set; }
+        public string? Note { get; set; }
         [ForeignKey("Question_Type_Id")]
         [JsonIgnore]
         public Question_Type? Question_Types { get; set; }

@@ -8,6 +8,7 @@
 @inject Notification notification
 @inject ExammanagementService exammanagement
 @inject Package_Test_ERP Pack
+@inject Blazored.Toast.Services.IToastService toastService
 @using Data_Base.Models.E
 <div class="d-flex justify-content-between align-items-center mb-3">
     <button class="btn btn-success" @onclick="OpenAddExamModal">
@@ -15,33 +16,50 @@
     </button>
 </div>
 <div class="split-container">
-    <div class="left-panel">
-        <h6 class="text-center text-primary fw-bold">📋 Danh sách bài thi</h6>
+    <div class="left-panel px-2">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="text-primary fw-bold mb-0">📋 Danh sách bài thi</h6>
 
-        <!-- Nút ẩn/hiện form tìm kiếm -->
-        <div class="text-end mb-2 px-2">
-            <button class="btn btn-sm btn-outline-secondary" @onclick="ToggleSearch">
-                <i class="bi @(isSearchVisible ? "bi-chevron-up" : "bi-chevron-down")"></i> Tìm kiếm
-            </button>
-        </div>
-
-        <!-- Form tìm kiếm theo thời gian (ẩn/hiện) -->
-        @if (isSearchVisible)
-        {
-            <div class="mb-3 px-2">
-                <div class="form-group mb-2">
-                    <label class="form-label">Từ ngày:</label>
-                    <input type="datetime-local" @bind="star" class="form-control" />
-                </div>
-                <div class="form-group mb-2">
-                    <label class="form-label">Đến ngày:</label>
-                    <input type="datetime-local" @bind="end" class="form-control" />
-                </div>
-                <button class="btn btn-sm btn-primary w-100" @onclick="seacher">
-                    <i class="bi bi-search"></i> Tìm kiếm
+            <!-- Nút Lọc (Dropdown) -->
+            <div class="dropdown" >
+                <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center gap-1"
+                type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    <i class="bi bi-funnel-fill"></i> Lọc
                 </button>
+                <ul class="dropdown-menu shadow p-3" aria-labelledby="filterDropdown" style="min-width: 220px;">
+                    @foreach (var option in timeOptions)
+                    {
+                        <li class="form-check mb-2">
+                            <input class="form-check-input"
+                            type="radio"
+                            id="@option.Id"
+                            name="timeFilter"
+                            value="@option.Id"
+                            checked="@(_selectedTimeFilter == option.Id)"
+                            @onchange="@(() => OnTimeOptionChanged(option.Id))" />
+                            <label class="form-check-label" for="@option.Id" style="cursor: pointer;">@option.Label</label>
+                        </li>
+
+                    }
+
+                    @if (_selectedTimeFilter == 7) // Nếu là tùy chọn chọn ngày thủ công
+                    {
+                        <div class="mt-2">
+                            <label class="form-label">Từ ngày:</label>
+                            <input type="date" class="form-control form-control-sm mb-2" @bind="startDate" />
+                            <label class="form-label">Đến ngày:</label>
+                            <input type="date" class="form-control form-control-sm mb-2" @bind="endDate" />
+                        </div>
+                    }
+
+                    <li>
+                        <button class="btn btn-sm btn-primary w-100 mb-2" @onclick="ApplyDateFilter">
+                            <i class="bi bi-filter"></i> Áp dụng lọc
+                        </button>
+                    </li>
+                </ul>
             </div>
-        }
+        </div>
 
         <!-- Danh sách bài thi -->
         <div class="list-group">
@@ -54,7 +72,7 @@
                 @foreach (var exam in exams)
                 {
                     <a class="list-group-item d-flex justify-content-between align-items-center
-                     @(SelectedExam == exam.Id ? "active text-white bg-primary" : "")"
+                   @(SelectedExam == exam.Id ? "active text-white bg-primary" : "")"
                     @onclick="() => SelectExam(exam.Id)">
                         <div>
                             <span class="fw-bold">📚 @exam.NameExam</span>
@@ -67,6 +85,7 @@
             }
         </div>
     </div>
+
 
 
     <div class="right-panel">
@@ -193,15 +212,85 @@
         </div>
     }
 </div>
-
 @code {
     [Parameter] public EventCallback OnStopTest { get; set; }
     private List<listexam> exams = new List<listexam>();
     private List<listpackage> Listpackages = new List<listpackage>();
     private List<listStudent> listStudents = new List<listStudent>();
     List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
-    private DateTime star;
-    private DateTime end=DateTime.Today;
+    private int _selectedTimeFilter = 0;
+    private DateTime startDate = DateTime.Today;
+    private DateTime endDate = DateTime.Today;
+    [Inject] IJSRuntime JS { get; set; }
+    private List<(int Id, string Label)> timeOptions = new()
+{
+    (0, "Tất cả"),
+    (1, "Hôm nay"),
+    (2, "7 ngày tới"),
+    (3, "14 ngày tới"),
+    (4, "30 ngày tới"),
+    (5, "Tuần trước"),
+    (6, "Tháng trước"),
+    (7, "Tùy chọn ngày")
+};
+    private void OnTimeOptionChanged(int id)
+    {
+        _selectedTimeFilter = id;
+    }
+
+
+    private async Task ApplyDateFilter()
+    {
+        DateTime? from = null;
+        DateTime? to = null;
+
+        switch (_selectedTimeFilter)
+        {
+            case 1:
+                from = DateTime.Today;
+                to = DateTime.Today.AddDays(1).AddTicks(-1);
+                break;
+            case 2:
+                from = DateTime.Today;
+                to = DateTime.Today.AddDays(7);
+                break;
+            case 3:
+                from = DateTime.Today;
+                to = DateTime.Today.AddDays(14);
+                break;
+            case 4:
+                from = DateTime.Today;
+                to = DateTime.Today.AddDays(30);
+                break;
+            case 5:
+                from = DateTime.Today.AddDays(-7);
+                to = DateTime.Today.AddTicks(-1);
+                break;
+            case 6:
+                from = DateTime.Today.AddMonths(-1);
+                to = DateTime.Today.AddTicks(-1);
+                break;
+            case 7:
+                from = startDate;
+                to = endDate;
+                break;
+            default:
+                // Nếu là "Tất cả", lấy toàn bộ, để from và to = null
+                from = null;
+                to = null;
+                break;
+        }
+
+        await JS.InvokeVoidAsync("eval", "document.getElementById('filterDropdown').click()");
+
+        if (from.HasValue && to.HasValue)
+        {
+            exams = await exammanagement.SeachExam(from.Value, to.Value);
+        }
+
+        else
+            exams = await exammanagement.GetallExam(); 
+    }
     protected override async Task OnInitializedAsync()
     {
         try{
@@ -209,10 +298,6 @@
             await Subject();
         }catch{}
 
-    }
-    private async Task seacher()
-    {
-        exams = await exammanagement.SeachExam(star,end);
     }
     private async Task TriggerStopTest()
     {
@@ -241,7 +326,7 @@
         subjectId = 0;
     }
 
-    public async Task<string> CreateExam()
+    public async Task CreateExam()
     {
         try
         {
@@ -251,17 +336,26 @@
                 exam.Exam_Name = NewExamName;
             }
             else
-                return "Tên bài thi không đc để trống";
+            {
+                toastService.ShowWarning("Tên bài thi không đc để trống!");
+                return;
+            }
+
             if (subjectId != null && subjectId > 0)
             {
                 exam.Subject_Id = subjectId;
             }
-            else 
-                return "Bạn chưa chọn môn học";
-
+            else
+            {
+                toastService.ShowWarning("Bạn chưa chọn môn học!");
+                return;
+            } 
+          
             await exammanagement.AddExam(exam);
-
-            return "Tạo kỳ thi thành công!";
+            toastService.ShowSuccess("Tạo bài thi thành công");
+            exams = await exammanagement.GetallExam();
+            IsAddExamModalOpen = false;
+            
         }
         catch (Exception ex)
         {

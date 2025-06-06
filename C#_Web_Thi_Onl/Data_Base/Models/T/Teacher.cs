@@ -23,8 +23,6 @@ namespace Data_Base.Models.T
         public User? User { get; set; }
         public int User_Id { get; set; }
         [JsonIgnore]
-        public ICollection<Teacher_Class> Teacher_Classes { get; set; } = new List<Teacher_Class>();
-        [JsonIgnore]
         public ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]
         public ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();

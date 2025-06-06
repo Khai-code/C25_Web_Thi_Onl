@@ -19,29 +19,21 @@ namespace Blazor_Server.Services
         public async Task<List<listexam>> SeachExam(DateTime start, DateTime end)
         {
             var result = new List<listexam>();
-
-            // Lấy tất cả bài thi
             var listExam = await _httpClient.GetFromJsonAsync<List<Exam>>("/api/Exam/Get") ?? new List<Exam>();
-
-            // Lấy tất cả phòng thi
             var examRooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
-
-            // Lấy tất cả phòng-package
             var roomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
-
-            // Lấy tất cả packages
             var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
-
             foreach (var exam in listExam)
             {
-                // Lọc các phòng thi thuộc bài thi hiện tại và nằm trong khoảng thời gian yêu cầu
+                // Lọc các phòng thi thuộc bài thi hiện tại và có thời gian bắt đầu hoặc kết thúc trong khoảng start-end
                 var validRooms = examRooms
                     .Where(x => x.Exam_Id == exam.Id)
                     .Where(x =>
                     {
                         var roomStart = ConvertLong.ConvertLongToDateTime(x.Start_Time);
                         var roomEnd = ConvertLong.ConvertLongToDateTime(x.End_Time);
-                        return roomStart >= start && roomEnd <= end;
+                        // Chỉnh lại điều kiện: phòng thi có bắt đầu hoặc kết thúc trong khoảng start - end
+                        return (roomStart >= start && roomStart <= end) || (roomEnd >= start && roomEnd <= end);
                     })
                     .ToList();
 
@@ -79,8 +71,8 @@ namespace Blazor_Server.Services
             foreach(var exam in ListExam)
             {
                 var examroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
-                var valiTime = examroom.Where(x=>x.Exam_Id==exam.Id && IsOverlapCurrentWeek(x.Start_Time,x.End_Time)).ToList();
-                if (!valiTime.Any()) continue;
+                var valiTime = examroom.Where(x=>x.Exam_Id==exam.Id).ToList();
+                //if (!valiTime.Any()) continue;
                 int total = 0;
                 foreach(var room in valiTime)
                 {
@@ -243,7 +235,7 @@ namespace Blazor_Server.Services
         {
             try
             {
-                var addexam = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam/Post", exam);
+                var addexam = await _httpClient.PostAsJsonAsync("/api/Exam/Post", exam);
 
                 if (!addexam.IsSuccessStatusCode)
                     return null;

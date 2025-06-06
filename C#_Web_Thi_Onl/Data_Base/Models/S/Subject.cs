@@ -22,9 +22,6 @@ namespace Data_Base.Models.S
         public int Id { get; set; }
         [StringLength(20, ErrorMessage = "Tên môn không quá 20 ký tự")]
         public string Subject_Name { get; set; }
-        public string Subject_Code { get; set; }
-        [JsonIgnore]
-        public ICollection<Subject_Grade> Subject_Grade { get; set; } = new List<Subject_Grade>();
         [JsonIgnore]
         public ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]
