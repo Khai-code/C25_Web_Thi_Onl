@@ -1,0 +1,404 @@
+﻿@page "/student-exam-history"
+@using Blazor_Server.Services
+@using Data_Base.Models.S
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using static Blazor_Server.Services.HistoriesExam
+@inject HistoriesExam HistoriesExam
+@inject ProtectedSessionStorage SessionStorage
+@inject Blazored.Toast.Services.IToastService toastService
+@layout StudentLayout
+
+<h3 class="mb-4 text-primary">Lịch sử bài thi của @studentFullName</h3>
+
+<div class="bg-body-secondary p-3 rounded shadow-sm mb-4">
+    <div class="row g-2 align-items-end">
+        <!-- Chọn môn -->
+        <div class="col-md-2">
+            <label class="form-label fw-semibold text-dark">Môn học</label>
+            <select class="form-select form-select-sm" @bind="selectedSubjectId">
+                <option value="">-- Chọn môn --</option>
+                @foreach (var subject in subjectList)
+                {
+                    <option value="@subject.Id">@subject.Subject_Name</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-dark">Từ ngày</label>
+            <input type="datetime-local" class="form-control form-control-sm" @bind="startDate" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label fw-semibold text-dark">Đến ngày</label>
+            <input type="datetime-local" class="form-control form-control-sm" @bind="endDate" />
+        </div>
+        <div class="col-md-2 d-grid">
+            <button class="btn btn-success btn-sm" @onclick="OnSearch">
+                <i class="bi bi-search me-1"></i> Tìm kiếm
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (isLoading)
+{
+    <div>Đang tải dữ liệu...</div>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else
+{
+    <div class="row g-4">
+        <div class="@((selectedExamId == null ? "col-md-12" : "col-md-4"))">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-journal-bookmark-fill me-2"></i> Danh sách gói đề
+                    </div>
+                    <div class="dropdown">
+                        <span class="text-white d-flex align-items-center dropdown-toggle"
+                              type="button" id="filterDropdown"
+                              data-bs-toggle="dropdown" aria-expanded="false"
+                              title="Lọc loại gói đề"
+                              style="position: relative;">
+                            <i class="bi bi-funnel-fill me-1"></i> <span>Lọc</span>
+                        </span>
+                        <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filterDropdown" style="min-width: 250px;">
+                            <div class="dropdown-arrow"></div>
+                            <li>
+                                <button class="btn btn-sm btn-outline-primary mb-2 w-100" @onclick="ToggleSelectAll">
+                                    @(selectedTypes.Count < packageTypes.Count ? "Chọn tất cả" : "Bỏ chọn tất cả")
+                                </button>
+                            </li>
+                            @foreach (var type in packageTypes)
+                            {
+                                <li class="form-check mb-1">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="@type"
+                                           checked="@selectedTypes.Contains(type)"
+                                           @onchange="@(() => ToggleFilter(type))" />
+                                    <label class="form-check-label" for="@type">@type</label>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
+
+                <ul class="list-group list-group-flush">
+                    @foreach (var exam in FilteredPackages)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center list-hover"
+                            @onclick="() => SelectExam(exam.Id)">
+                            <div>
+                                <i class="bi bi-journal-text me-2 text-primary"></i>@exam.Name_package (@exam.Name_Package_Type)
+                            </div>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        @if (selectedExamId.HasValue)
+        {
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-clipboard-data me-2"></i> Danh sách bài thi của bạn
+                        </div>
+                        <button class="btn btn-sm btn-outline-light" @onclick="() => selectedExamId = null">
+                            <i class="bi bi-x-circle"></i> Đóng
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" class="form-control mb-3" placeholder="🔍 Tìm kiếm mã bài thi..."
+                               @bind="studentSearch" />
+
+                        @if (listTests.Any(r => r.Idpackage == selectedExamId && MatchesSearch(r.Test_Code)))
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>📦 Mã bài thi</th>
+                                            <th>📊 Trạng thái</th>
+                                            <th>Điểm</th>
+                                            <th>Thao tác</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in listTests)
+                                        {
+                                            <tr>
+                                                <td>@r.Test_Code</td>
+                                                <td class="text-center">
+                                                    @if (r.Status == 1)
+                                                    {
+                                                        <span class="badge bg-success">Đã thi</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-warning text-dark">Chưa thi</span>
+                                                    }
+                                                </td>
+                                                <td>@r.score</td>
+                                                <td>
+                                                    <button @onclick="() => ShowQuestions(r.Id)"
+                                                            class="btn btn-sm btn-primary"
+                                                            style="@(r.Status == 0 ? "display:none;" : "")">
+                                                        <i class="bi bi-eye"></i> Xem chi tiết
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning text-center">
+                                Không tìm thấy bài thi phù hợp.
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (showQuestionModal && selectedQuestions != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title">Danh sách câu hỏi</h5>
+                    <button type="button" class="btn-close" @onclick="CloseModal"></button>
+                </div>
+                <div class="modal-body">
+                    @foreach (var item in selectedQuestions)
+                    {
+                        <div class="mb-3 border p-3 rounded shadow-sm">
+                            <p>
+                                <strong>Câu hỏi:</strong> @item.Questions.Question_Name
+                            </p>
+                            <div class="mb-2">
+                                <span class="badge bg-info me-2">Độ khó: @item.question_lever</span>
+                                <span class="badge bg-warning text-dark">Điểm tối đa: @item.Questions.Maximum_Score</span>
+                            </div>
+                            <ul class="list-group">
+                                @foreach (var ans in item.Answers)
+                                {
+                                    var isChosen = item.Exam_Room_Student_Answer_HisTories.Any(h => h.Answer_Id == ans.Id);
+                                    bool isCorrect = ans.Right_Answer == 1;
+                                    string cssClass = "list-group-item";
+                                    if (isChosen && isCorrect)
+                                    {
+                                        cssClass += " bg-success rounded text-white";
+                                    }
+                                    else if (isChosen && !isCorrect)
+                                    {
+                                        cssClass += " border rounded border-danger";
+                                    }
+                                    else if (!isChosen && isCorrect)
+                                    {
+                                        cssClass += " border rounded border-success";
+                                    }
+
+                                    <li class="@cssClass mb-2 p-2 border rounded bg-light">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span>@ans.Answers_Name</span>
+                                            @if (isChosen)
+                                            {
+                                                <span class="badge bg-primary ms-2">Bạn đã chọn</span>
+                                            }
+                                            @if (isCorrect)
+                                            {
+                                                <span class="badge bg-success ms-2">Đáp án đúng</span>
+                                            }
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isLoading = true;
+    private string studentCode;
+    private string studentFullName;
+    private string errorMessage;
+    private List<lispackage> packagess = new List<lispackage>();
+    private List<listTest> listTests = new List<listTest>();
+    public List<Subject> subjectList = new List<Subject>();
+    private int selectedSubjectId;
+    private DateTime startDate;
+    private DateTime endDate = DateTime.Now;
+    private List<string> packageTypes = new();
+    private HashSet<string> selectedTypes = new();
+    private string studentSearch = "";
+    int? selectedExamId = null;
+    bool showQuestionModal = false;
+    List<listquestion> selectedQuestions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStudentCodeAndFullName();
+        if (!string.IsNullOrEmpty(studentCode))
+        {
+            subjectList = await HistoriesExam.getallsubjects();
+        }
+        isLoading = false;
+    }
+
+    private async Task OnSearch()
+    {
+        if (selectedSubjectId <= 0)
+        {
+            toastService.ShowWarning("Vui lòng chọn môn học!");
+            return;
+        }
+
+        if (startDate == default || endDate == default)
+        {
+            toastService.ShowWarning("Vui lòng chọn khoảng thời gian hợp lệ!");
+            return;
+        }
+
+        if (startDate > endDate)
+        {
+            toastService.ShowWarning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+            return;
+        }
+
+        packagess = await HistoriesExam.GetAllHistoriesForStudent(studentCode, selectedSubjectId, startDate, endDate);
+        selectedExamId = null;
+        packageTypes = packagess.Select(p => p.Name_Package_Type).Distinct().OrderBy(x => x).ToList();
+        selectedTypes = packageTypes.ToHashSet();
+        if (packagess.Count == 0)
+        {
+            toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
+        }
+    }
+
+    private IEnumerable<lispackage> FilteredPackages =>
+        selectedTypes.Count == 0
+            ? Enumerable.Empty<lispackage>()
+            : packagess.Where(p => selectedTypes.Contains(p.Name_Package_Type));
+
+    private void ToggleFilter(string type)
+    {
+        if (selectedTypes.Contains(type))
+        {
+            selectedTypes.Remove(type);
+            listTests = new List<listTest>();
+            selectedExamId = 0;
+        }
+        else
+            selectedTypes.Add(type);
+    }
+
+    private void ToggleSelectAll()
+    {
+        if (selectedTypes.Count < packageTypes.Count)
+        {
+            selectedTypes = packageTypes.ToHashSet();
+            listTests = new List<listTest>();
+            selectedExamId = 0;
+        }
+        else
+        {
+            selectedTypes.Clear();
+            listTests = new List<listTest>();
+            selectedExamId = 0;
+        }
+    }
+
+    private async Task SelectExam(int id)
+    {
+        await GetTests(id);
+        selectedExamId = id;
+        studentSearch = "";
+        StateHasChanged();
+    }
+
+    private async Task GetTests(int packageId)
+    {
+        listTests = await HistoriesExam.GetTestsForStudent(packageId, studentCode);
+    }
+
+    private bool MatchesSearch(string code) =>
+        string.IsNullOrWhiteSpace(studentSearch) || code.Contains(studentSearch, StringComparison.OrdinalIgnoreCase);
+
+    async Task ShowQuestions(int testId)
+    {
+        selectedQuestions = await HistoriesExam.GetQuestions(testId);
+        showQuestionModal = true;
+    }
+
+    void CloseModal()
+    {
+        showQuestionModal = false;
+        selectedQuestions = null;
+    }
+
+    private async Task LoadStudentCodeAndFullName()
+    {
+        var result = await SessionStorage.GetAsync<string>("authToken");
+
+        if (!(result.Success && !string.IsNullOrEmpty(result.Value)))
+        {
+            errorMessage = "Không tìm thấy token đăng nhập.";
+            return;
+        }
+
+        var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+        var jsonToken = handler.ReadToken(result.Value) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+        if (jsonToken == null)
+        {
+            errorMessage = "Token không hợp lệ.";
+            return;
+        }
+
+        var studentCodeClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Student_Code");
+        var fullNameClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Full_Name");
+
+        if (fullNameClaim != null)
+            studentFullName = fullNameClaim.Value;
+
+        if (studentCodeClaim != null)
+        {
+            studentCode = studentCodeClaim.Value;
+            return;
+        }
+
+        var userIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Id");
+        if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int userId))
+        {
+            errorMessage = "Không tìm thấy userId trong token.";
+            return;
+        }
+
+        var matchedStudent = await HistoriesExam.GetStudentByUserIdAsync(userId);
+        if (matchedStudent != null)
+        {
+            studentCode = matchedStudent.Student_Code;
+        }
+        else
+        {
+            errorMessage = "Không tìm thấy học sinh tương ứng.";
+        }
+    }
+}

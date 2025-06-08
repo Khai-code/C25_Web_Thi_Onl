@@ -1,4 +1,4 @@
-﻿@*     @page "/classs"
+﻿    @page "/classs"
     @using Blazor_Server.Services
     @using Data_Base.Models.C
     @using Data_Base.Models.G
@@ -88,9 +88,8 @@
 
 
         </div>
-    </div> *@
+    </div>
 
-@* 
     @if (selectedClass != null)
     {
         <div class="row mb-3">
@@ -260,8 +259,7 @@
             </div>
         </div>
     }
- *@
-@*     @if (showStudentScoreMessageBox)
+    @if (showStudentScoreMessageBox)
     {
         <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1" role="dialog">
             <div class="modal-dialog" role="document">
@@ -393,10 +391,10 @@
                 </div>
             </div>
         </div>
-    } *@
+    }
 
     <!-- MODAL THÊM LỚP -->
-@*     @if (showAddClassModal)
+    @if (showAddClassModal)
     {
         <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
             <div class="modal-dialog" role="document">
@@ -433,10 +431,10 @@
                 </div>
             </div>
         </div>
-    } *@
+    }
 
     <!-- MODAL XÁC NHẬN XOÁ LỚP -->
-@*     @if (showDeleteClassConfirm)
+    @if (showDeleteClassConfirm)
     {
         <div class="modal fade show" style="display: block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
             <div class="modal-dialog" role="document">
@@ -517,9 +515,9 @@
             </div>
         </div>
     </div>
-</div> *@
+</div>
 
-@* @if (showStudentDetailModal)
+@if (showStudentDetailModal)
 {
     <div class="modal fade show" style="display:block; background-color: rgba(0,0,0,0.5);" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -553,38 +551,38 @@
                                                     <td class="fw-semibold">@group.Key</td>
 
                                                     @* Miệng *@
-@*                                                     @for (int i = 0; i < 3; i++)
+                                                    @for (int i = 0; i < 3; i++)
                                                     {
                                                         var p = group.Where(x => x.PointTypeName == "Attendance").ElementAtOrDefault(i)?.Point ?? 0;
                                                         <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
                                                     }
 
                                                     @* 15 phút *@
-                                                    @* @for (int i = 0; i < 3; i++)
+                                                    @for (int i = 0; i < 3; i++)
                                                     {
                                                         var p = group.Where(x => x.PointTypeName == "Point_15").ElementAtOrDefault(i)?.Point ?? 0;
                                                         <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
-                                                    } *@
+                                                    }
 
                                                     @* 45 phút *@
-                                                    @* @for (int i = 0; i < 2; i++)
+                                                    @for (int i = 0; i < 2; i++)
                                                     {
                                                         var p = group.Where(x => x.PointTypeName == "Point_45").ElementAtOrDefault(i)?.Point ?? 0;
                                                         <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
                                                     }
- *@
+ 
                                                     @* Giữa kỳ *@
-                                                    @* @{
+                                                   @{
                                                         var mid = group.FirstOrDefault(x => x.PointTypeName == "Point_Midterm")?.Point ?? 0;
                                                     }
                                                     <td class="@(mid < 5 ? "score-low" : "score-good")">@mid</td>
- *@
+ 
                                                     @* Cuối kỳ *@
-                                                    @* @{
+                                                    @{
                                                         var final = group.FirstOrDefault(x => x.PointTypeName == "Point_Final")?.Point ?? 0;
                                                     }
-                                                    <td class="@(final < 5 ? "score-low" : "score-good")">@final</td> *@
-@*                                                 </tr>
+                                                    <td class="@(final < 5 ? "score-low" : "score-good")">@final</td>
+                                                 </tr>
                                             }
                                         </tbody>
                                     </table>
@@ -599,10 +597,10 @@
             </div>
         </div>
     </div>
-} *@
+}
 
 
-@* @code {
+@code {
     private List<Class> classes;
     private List<Class> filteredClasses;
     private List<User> classStudents;
@@ -693,7 +691,6 @@
             await LoadGrades();
             await LoadClasses();
             teachers = await ClassService.GetAllTeachersAsync();
-            //teacherClasses = await ClassService.GetAllTeacherClass();
             summaries = await ClassService.GetAllSummaries();
             if (summaries.Any())
             {
@@ -834,99 +831,98 @@
         showAddClassModal = false;
     }
 
-    // private async Task LoadClassTeacherName()
-    // {
-    //     if (teacherClasses == null || selectedClass == null)
-    //     {
-    //         classTeacherName = "Chưa xác định";
-    //         await InvokeAsync(StateHasChanged);
-    //         return;
-    //     }
+    private async Task LoadClassTeacherName()
+    {
+        if (selectedClass == null) return;
 
-    //     var teacherClass = teacherClasses.FirstOrDefault(tc => tc.Class_Id == selectedClass.Id);
-    //     if (teacherClass == null)
-    //     {
-    //         classTeacherName = "Chưa xác định";
-    //         await InvokeAsync(StateHasChanged);
-    //         return;
-    //     }
+        try
+        {
+            // Lấy thông tin giáo viên từ Teacher_Id
+            var teacher = teachers?.FirstOrDefault(t => t.Id == selectedClass.Teacher_Id);
 
-    //     var teacher = teachers?.FirstOrDefault(t => t.Id == teacherClass.Teacher_Id);
-    //     var user = users?.FirstOrDefault(u => u.Id == teacher?.User_Id);
-    //     classTeacherName = user?.Full_Name ?? "Chưa xác định";
+            if (teacher == null)
+            {
+                classTeacherName = "Chưa xác định";
+                return;
+            }
 
-    //     await InvokeAsync(StateHasChanged);
-    // }
+            // Lấy thông tin user tương ứng
+            var user = users?.FirstOrDefault(u => u.Id == teacher.User_Id);
+            classTeacherName = user?.Full_Name ?? "Chưa xác định";
+        }
+        catch
+        {
+            classTeacherName = "Chưa xác định";
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
 
 
 
-    // private async Task SearchClass()
-    // {
-    //     if (string.IsNullOrWhiteSpace(searchTerm))
-    //     {
-    //         FilterClasses();
+    private async Task SearchClass()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            FilterClasses();
 
-    //         // Nếu có lớp trong filteredClasses, chọn lớp đầu tiên để load danh sách học sinh
-    //         if (filteredClasses.Any())
-    //         {
-    //             selectedClass = filteredClasses.First();
-    //             await LoadClassStudents();
-    //             LoadClassTeacherName();
-    //         }
-    //         else
-    //         {
-    //             selectedClass = null;
-    //             classStudents = null;
-    //             classTeacherName = "";
-    //         }
-    //     }
-    //     else
-    //     {
-    //         if (selectedGrade == null)
-    //         {
-    //             filteredClasses = new List<Class>();
-    //             selectedClass = null;
-    //             classStudents = null;
-    //             classTeacherName = "";
-    //             return;
-    //         }
+            // Nếu có lớp trong filteredClasses, chọn lớp đầu tiên để load danh sách học sinh
+            if (filteredClasses.Any())
+            {
+                selectedClass = filteredClasses.First();
+                await LoadClassStudents();
+                LoadClassTeacherName();
+            }
+            else
+            {
+                selectedClass = null;
+                classStudents = null;
+                classTeacherName = "";
+            }
+        }
+        else
+        {
+            if (selectedGrade == null)
+            {
+                filteredClasses = new List<Class>();
+                selectedClass = null;
+                classStudents = null;
+                classTeacherName = "";
+                return;
+            }
 
-    //         var classesInGrade = classes.Where(c => c.Grade_Id == selectedGrade.ID);
-    //         var keyword = searchTerm.Trim().ToLower();
+            var classesInGrade = classes.Where(c => c.Grade_Id == selectedGrade.ID);
+            var keyword = searchTerm.Trim().ToLower();
 
-    //         var matchedTeachers = users
-    //             .Where(u => u.Role_Id == 2 && u.Full_Name.ToLower().Contains(keyword))
-    //             .Select(u => teachers.FirstOrDefault(t => t.User_Id == u.Id))
-    //             .Where(t => t != null)
-    //             .ToList();
+            var matchedTeachers = users
+                .Where(u => u.Role_Id == 2 && u.Full_Name.ToLower().Contains(keyword))
+                .Select(u => teachers.FirstOrDefault(t => t.User_Id == u.Id))
+                .Where(t => t != null)
+                .ToList();
 
-    //         var matchedTeacherIds = matchedTeachers.Select(t => t.Id).ToList();
+            var matchedTeacherIds = matchedTeachers.Select(t => t.Id).ToList();
 
-    //         var classIdsByTeacher = teacherClasses
-    //             .Where(tc => matchedTeacherIds.Contains(tc.Teacher_Id))
-    //             .Select(tc => tc.Class_Id)
-    //             .Distinct()
-    //             .ToList();
+            filteredClasses = classesInGrade.Where(c =>
+          c.Class_Name.ToLower().Contains(keyword) ||
+          matchedTeacherIds.Contains(c.Teacher_Id)
+            ).ToList();
 
-    //         filteredClasses = classesInGrade.Where(c =>
-    //             c.Class_Name.ToLower().Contains(keyword) ||
-    //             classIdsByTeacher.Contains(c.Id)
-    //         ).ToList();
-
-    //         if (filteredClasses.Any())
-    //         {
-    //             selectedClass = filteredClasses.First();
-    //             await LoadClassStudents();
-    //             LoadClassTeacherName();
-    //         }
-    //         else
-    //         {
-    //             selectedClass = null;
-    //             classStudents = null;
-    //             classTeacherName = "";
-    //         }
-    //     }
-    // }
+            if (filteredClasses.Any())
+            {
+                selectedClass = filteredClasses.First();
+                await LoadClassStudents();
+                LoadClassTeacherName();
+            }
+            else
+            {
+                selectedClass = null;
+                classStudents = null;
+                classTeacherName = "";
+            }
+        }
+    }
 
 
 
@@ -1529,4 +1525,4 @@
     {
         showStudentDetailModal = false;
     }
-}  *@ 
+}  

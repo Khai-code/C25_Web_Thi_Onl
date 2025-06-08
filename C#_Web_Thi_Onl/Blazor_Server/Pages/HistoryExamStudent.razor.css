@@ -1,0 +1,32 @@
+﻿.list-hover:hover {
+    background-color: #f1f1f1;
+    cursor: pointer;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #f2f9ff;
+}
+
+.table-info {
+    background-color: #e3f2fd !important;
+}
+
+.badge {
+    font-size: 0.85rem;
+}
+
+
+.dropdown-menu {
+    position: relative;
+}
+
+.dropdown-arrow {
+    position: absolute;
+    top: -8px; /* đưa mũi tên lên trên dropdown */
+    right: 12px; /* canh mũi tên gần phải nút lọc */
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-bottom: 8px solid white; /* màu nền dropdown */
+}
