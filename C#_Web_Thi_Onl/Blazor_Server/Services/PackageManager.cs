@@ -8,6 +8,7 @@ using Data_Base.Models.T;
 using Data_Base.Models.U;
 using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.Package_Test_ERP;
+using static Blazor_Server.Services.Test;
 
 namespace Blazor_Server.Services
 {
@@ -103,6 +104,87 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
+        public async Task<List<ListQuesAns>> GetQues(int subjectId, int packageTypeId, int classId)
+        {
+            try
+            {
+                var lstClass = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.C.Class>>("https://localhost:7187/api/Class/Get");
+
+                int gradeId = lstClass.FirstOrDefault(o => o.Id == classId).Grade_Id;
+
+                var filterRequest = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Subject_Id", subjectId.ToString() },
+                        { "Package_Type_Id", packageTypeId.ToString() }
+                    },
+                };
+
+                var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/common/get", filterRequest);
+                if (packageGetResponse.IsSuccessStatusCode)
+                    return null;
+
+                var lstpackage = await packageGetResponse.Content.ReadFromJsonAsync<List<Package>>();
+                var lstpackageId = lstpackage.Where(o => o.Classes.Grade_Id == gradeId).Select(o => o.Id).ToList();
+
+                var filterRequestQues = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", string.Join(",", lstpackageId) },
+                    },
+                };
+
+                var questionGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQues);
+                if (questionGetResponse.IsSuccessStatusCode)
+                    return null;
+
+                var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
+
+                var lstQuestionId = questionList.Select(o => o.Id).ToList();
+
+                var filterRequestAns = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Question_Id", string.Join(",", lstQuestionId) },
+                    },
+                };
+
+                var questionGetResponseAns = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAns);
+                if (questionGetResponseAns.IsSuccessStatusCode)
+                    return null;
+
+                var AnsList = await questionGetResponseAns.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
+
+                var result = new List<ListQuesAns>();
+
+                foreach (var item in questionList)
+                {
+                    var hist = new ListQuesAns
+                    {
+                        QuestionId = item.Id,
+                        QuestionName = item.Question_Name,
+                        Type = item.Question_Type_Id,
+                        Leva = item.Question_Level_Id,
+                        Answers = AnsList.Select(ans => new Answer
+                        {
+                            AnswerId = ans.Id,
+                            AnswersName = ans.Answers_Name,
+                            Points_Earned = ans.Points_Earned
+                        }).ToList()
+                    };
+
+                    result.Add(hist);
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
         public async Task<bool> CreateQuestion(QuestionAnswers model)
         {
             try
@@ -117,7 +199,7 @@ namespace Blazor_Server.Services
                 }
                     
 
-                var addQuestion = await questionCreate.Content.ReadFromJsonAsync<Question>();
+                var addQuestion = await questionCreate.Content.ReadFromJsonAsync<Data_Base.Models.Q.Question>();
 
                 var filterRequest = new CommonFilterRequest
                 {
@@ -132,7 +214,7 @@ namespace Blazor_Server.Services
 
                 if (questionGetResponse.IsSuccessStatusCode)
                 {
-                    var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Question>>();
+                    var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
 
                     if (questionList != null && questionList.Any())
                     {
@@ -190,9 +272,23 @@ namespace Blazor_Server.Services
             return questionLevel;
         }
 
+        public class ListQuesAns
+        {
+            public int QuestionId { get; set; }
+            public string QuestionName { get; set; }
+            public int Type { get; set; }
+            public int Leva { get; set; }
+            public List<Answer> Answers { get; set; }
+        }
+        public class Answer
+        {
+            public int AnswerId { get; set; }
+            public string AnswersName { get; set; }
+            public double? Points_Earned { get; set; }
+        }
         public class QuestionAnswers
         {
-            public Question question { get; set; }
+            public Data_Base.Models.Q.Question question { get; set; }
             public long Maximum_Score { get; set; }
         }
         public class QuestionTypeViewModel

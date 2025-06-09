@@ -133,134 +133,157 @@
     <!-- Modal Thêm Bài Thi -->
     @if (IsAddExamModalOpen)
     {
-        <div class="modal fade show d-block " tabindex="-1">
-            <div class="modal-dialog modal-lg">
+        <div class="modal fade show d-block" tabindex="-1">
+            <div class="modal-dialog modal-xl">
                 <div class="modal-content relative">
+                    <!-- Nút đóng modal -->
                     <button type="button" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold" @onclick="CloseModal">
                         ×
                     </button>
-                    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-4xl mx-auto">
-                        <h2 class="text-xl md:text-2xl font-bold mb-2 text-center text-green-600">Thêm Gói Đề Thi</h2>
-                        <form class="space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="packageName" class="block font-medium mb-1">Tên Package</label>
-                                    <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
+
+                    <!-- Nội dung chia 2 phần -->
+                    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-7xl mx-auto flex gap-6">
+                        <!-- Form bên trái -->
+                        <div class="w-2/3 space-y-4">
+                            <h2 class="text-xl md:text-2xl font-bold mb-2 text-center text-green-600">Thêm Gói Đề Thi</h2>
+                            <form class="space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="packageName" class="block font-medium mb-1">Tên Package</label>
+                                        <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
+                                    </div>
+
+                                    <div>
+                                        <label for="subject" class="block font-medium mb-1">Bài thi</label>
+                                        <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Package_Type_Id">
+                                            <option value="">-- Chọn bài thi --</option>
+                                            @foreach (var pt in packageTypeViewModels)
+                                            {
+                                                <option value="@pt.Package_Type_Id">@pt.Package_Type_Name</option>
+                                            }
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
-                                    <label for="subject" class="block font-medium mb-1">Bài thi</label>
-                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Package_Type_Id">
-                                        <option value="">-- Chọn bài thi --</option>
-                                        @foreach (var pt in packageTypeViewModels)
-                                        {
-                                            <option value="@pt.Package_Type_Id">@pt.Package_Type_Name</option>
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
-                                <input type="text"
-                                class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600"
-                                value="@CreateTimeFormatted" readonly>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="startTime" class="block font-medium mb-1">Bắt đầu</label>
-                                    <input type="datetime-local" id="startTime" name="startTime" required
-                                    class="w-full border rounded-lg px-3 py-2"
-                                    @bind="Start_Time" />
-                                </div>
-                                <div>
-                                    <label for="endTime" class="block font-medium mb-1">Kết thúc</label>
-                                    <input type="datetime-local" id="endTime" name="endTime" required class="w-full border rounded-lg px-3 py-2" @bind="End_Time">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="subject" class="block font-medium mb-1">Môn học</label>
-                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Subject_Id">
-                                        <option value="">-- Chọn gói môn --</option>
-                                        @foreach (var subj in subjectViewModel)
-                                        {
-                                            <option value="@subj.Subject_Id">@subj.Subject_Name</option>
-                                        }
-                                    </select>
+                                    <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
+                                    <input type="text" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
                                 </div>
 
-                                <div>
-                                    <label for="class" class="block font-medium mb-1">Lớp</label>
-                                    <select id="class" name="class" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Class_Id">
-                                        <option value="">-- Chọn gói lớp --</option>
-                                        @foreach (var classes in classViewModels)
-                                        {
-                                            <option value="@classes.Class_Id">@classes.Class_Name</option>
-                                        }
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="examType" class="block font-medium mb-1">Loại bài thi</label>
-                                    <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Point_Type_Id">
-                                        <option value="">-- Chọn gói loại --</option>
-                                        @foreach (var point in pointTypeViewModels)
-                                        {
-                                            <option value="@point.PointType_Id">@point.PointType_Name</option>
-                                        }
-                                    </select>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="startTime" class="block font-medium mb-1">Bắt đầu</label>
+                                        <input type="datetime-local" id="startTime" name="startTime" required class="w-full border rounded-lg px-3 py-2" @bind="Start_Time" />
+                                    </div>
+                                    <div>
+                                        <label for="endTime" class="block font-medium mb-1">Kết thúc</label>
+                                        <input type="datetime-local" id="endTime" name="endTime" required class="w-full border rounded-lg px-3 py-2" @bind="End_Time">
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label for="room" class="block font-medium mb-1">Phòng thi</label>
-                                    <select id="room" name="room" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Room_Id">
-                                        <option value="">-- Chọn gói phòng --</option>
-                                        @foreach (var room in roomViewModels)
-                                        {
-                                            <option value="@room.Room_Id">@room.Room_Name</option>
-                                        }
-                                    </select>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="subject" class="block font-medium mb-1">Môn học</label>
+                                        <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Subject_Id">
+                                            <option value="">-- Chọn gói môn --</option>
+                                            @foreach (var subj in subjectViewModel)
+                                            {
+                                                <option value="@subj.Subject_Id">@subj.Subject_Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label for="class" class="block font-medium mb-1">Lớp</label>
+                                        <select id="class" name="class" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Class_Id">
+                                            <option value="">-- Chọn gói lớp --</option>
+                                            @foreach (var classes in classViewModels)
+                                            {
+                                                <option value="@classes.Class_Id">@classes.Class_Name</option>
+                                            }
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label for="exam" class="block font-medium mb-1">Đề thi</label>
-                                    <select id="exam" name="exam" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Exam_Id">
-                                        <option value="">-- Chọn gói Exam --</option>
-                                        @foreach (var exam in examsViewModels)
-                                        {
-                                            <option value="@exam.Exams_Id">@exam.Exams_Name</option>
-                                        }
-                                    </select>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="pointType" class="block font-medium mb-1">Loại bài thi</label>
+                                        <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Point_Type_Id">
+                                            <option value="">-- Chọn gói loại --</option>
+                                            @foreach (var point in pointTypeViewModels)
+                                            {
+                                                <option value="@point.PointType_Id">@point.PointType_Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label for="room" class="block font-medium mb-1">Phòng thi</label>
+                                        <select id="room" name="room" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Room_Id">
+                                            <option value="">-- Chọn gói phòng --</option>
+                                            @foreach (var room in roomViewModels)
+                                            {
+                                                <option value="@room.Room_Id">@room.Room_Name</option>
+                                            }
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <div>
-                                    <label for="examType" class="block font-medium mb-1">Giáo viên coi thi</label>
-                                    <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
-                                        <option value="">-- Chọn giáo viên coi thi --</option>
-                                        @foreach (var tea in teacherViewModels)
-                                        {
-                                            <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
-                                        }
-                                    </select>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label for="exam" class="block font-medium mb-1">Đề thi</label>
+                                        <select id="exam" name="exam" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Exam_Id">
+                                            <option value="">-- Chọn gói Exam --</option>
+                                            @foreach (var exam in examsViewModels)
+                                            {
+                                                <option value="@exam.Exams_Id">@exam.Exams_Name</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label for="teacher" class="block font-medium mb-1">Giáo viên coi thi</label>
+                                        <select id="teacher" name="teacher" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
+                                            <option value="">-- Chọn giáo viên coi thi --</option>
+                                            @foreach (var tea in teacherViewModels)
+                                            {
+                                                <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                            }
+                                        </select>
+                                    </div>
                                 </div>
-                            </div>
 
+                                <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold"
+                                        @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
+                                    thêm package
+                                </button>
+                            </form>
+                        </div>
 
-                            <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold" @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
-                                thêm package
-                            </button>
-                        </form>
+                        <!-- Danh sách câu hỏi bên phải -->
+                        <div class="w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-y-auto max-h-[700px]">
+                            <h3 class="text-lg font-semibold text-green-600 mb-3 text-center">Danh sách câu hỏi</h3>
+                            @* @if (questionListViewModels != null && questionListViewModels.Any())
+                            {
+                                <ul class="space-y-2">
+                                    @foreach (var q in questionListViewModels)
+                                    {
+                                        <li class="bg-white p-3 rounded-lg shadow text-sm border border-gray-200">
+                                            <span class="font-medium">Câu hỏi:</span> @q.Question_Text
+                                        </li>
+                                    }
+                                </ul>
+                            }
+                            else
+                            {
+                                <p class="text-gray-500 text-sm text-center">Chưa có câu hỏi nào.</p>
+                            } *@
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
     }
 </div>
 
