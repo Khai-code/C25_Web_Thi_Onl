@@ -20,6 +20,7 @@ namespace Data_Base.Models.A
         public int Id { get; set; }
         public string? Answers_Name { get; set; }
         public int? Right_Answer { get; set; }
+        public double? Points_Earned { get; set; }
         [ForeignKey("Question_Id")]
         [JsonIgnore]
         public Question? Questions { get; set; }

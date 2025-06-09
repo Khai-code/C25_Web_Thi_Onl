@@ -36,6 +36,10 @@ namespace ASP.NET.Controllers.G
             {
                 case "Question":
                     return await HandleQuestionFilter(request.Filters);
+                case "Package":
+                    return await HandlePackageFilter(request.Filters);
+                case "Answers":
+                    return await HandleAnswersFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -250,17 +254,46 @@ namespace ASP.NET.Controllers.G
 
         private async Task<IActionResult> HandleQuestionFilter(Dictionary<string, string> filters)
         {
+            List<int>? lstPackageId = filters.ContainsKey("Package_Id") ? new List<int> { int.Parse(filters["Package_Id"]) } : new List<int>();
             int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
             int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
             string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
 
             var result = await _repository.GetWithFilterAsync<Question>(q =>
                 (!packageId.HasValue || q.Package_Id == packageId) &&
+                (!lstPackageId.Any() || lstPackageId.Contains(q.Package_Id)) &&
                 (string.IsNullOrEmpty(keyword) || q.Question_Name.Contains(keyword))
             );
 
             return Ok(result);
         }
+        private async Task<IActionResult> HandlePackageFilter(Dictionary<string, string> filters)
+        {
+            int? packageTypeId = filters.ContainsKey("Package_Type_Id") ? int.Parse(filters["Package_Id"]) : null;
+            int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
+            string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
 
+            var result = await _repository.GetWithFilterAsync<Package>(p =>
+                (!packageTypeId.HasValue || p.Package_Type_Id == packageTypeId) &&
+                (!subjectId.HasValue || p.Subject_Id == subjectId) &&
+                (string.IsNullOrEmpty(keyword) || p.Package_Name.Contains(keyword))
+            );
+
+            return Ok(result);
+        }
+
+        private async Task<IActionResult> HandleAnswersFilter(Dictionary<string, string> filters)
+        {
+            List<int>? lstquestionId = filters.ContainsKey("Question_Id") ? new List<int> { int.Parse(filters["Question_Id"]) } : new List<int>();
+            int? questionId = filters.ContainsKey("Question_Id") ? int.Parse(filters["Question_Id"]) : null;
+            string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
+
+            var result = await _repository.GetWithFilterAsync<Answers>(a =>
+                (!lstquestionId.Any() || a.Question_Id == questionId) &&
+                (string.IsNullOrEmpty(keyword) || a.Answers_Name.Contains(keyword))
+            );
+
+            return Ok(result);
+        }
     }
 }
