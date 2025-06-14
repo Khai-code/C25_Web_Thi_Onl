@@ -8,6 +8,7 @@ using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.WebSockets;
 using static Blazor_Server.Services.ExammanagementService;
@@ -219,7 +220,7 @@ namespace Blazor_Server.Services
                 Console.WriteLine("Không tìm thấy package");
                 return false;
             }
-
+    
             var getallsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
             var subjectList = getallsubject
                 .Where(s => packageList.Any(p => p.Subject_Id == s.Id))
@@ -255,7 +256,7 @@ namespace Blazor_Server.Services
 
             var getallscore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
             var scoreList = getallscore
-                .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id))
+                .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id)&& subjectList.Any(sj=>sj.Id==s.Subject_Id)&& examRoomStudentList.Any(exstd=>exstd.Student_Id==s.Student_Id))
                 .ToList();
 
             if (!scoreList.Any())
@@ -263,7 +264,6 @@ namespace Blazor_Server.Services
                 Console.WriteLine("Không tìm thấy allscore");
                 return false;
             }
-
             foreach (var s in scoreList)
             {
                 s.Point = score;
@@ -275,6 +275,41 @@ namespace Blazor_Server.Services
                 }
             }
 
+            return true;
+        }
+        public async Task<bool> UpdateAllAnswerScores(Dictionary<int, string> answerScores)
+        {
+            var allAnswers = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
+
+            if (allAnswers == null || !allAnswers.Any())
+            {
+                Console.WriteLine("❌ Không lấy được danh sách câu trả lời từ API.");
+                return false;
+            }
+
+            foreach (var entry in answerScores)
+            {
+                int answerId = entry.Key;
+                string score = entry.Value;
+
+                var answer = allAnswers.FirstOrDefault(a => a.Id == answerId);
+                if (answer == null)
+                {
+                    Console.WriteLine($"⚠ Không tìm thấy câu trả lời với ID {answerId}");
+                    continue;
+                }
+
+                answer.Points_Earned =Convert.ToDouble( score);
+
+                var updateResponse = await _httpClient.PutAsJsonAsync($"/api/Answers/Pus/{answerId}", answer);
+                if (!updateResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"❌ Cập nhật điểm thất bại cho Answer ID {answerId}: {(int)updateResponse.StatusCode} - {updateResponse.ReasonPhrase}");
+                    return false;
+                }
+            }
+
+            Console.WriteLine("✅ Đã cập nhật điểm thành phần cho tất cả câu trả lời.");
             return true;
         }
 

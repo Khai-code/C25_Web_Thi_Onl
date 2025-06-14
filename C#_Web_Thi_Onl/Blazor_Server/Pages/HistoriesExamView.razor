@@ -214,18 +214,18 @@
                                     string cssClass = "list-group-item";
                                     if (isChosen && isCorrect)
                                     {
-                                        cssClass += " bg-success rounded text-white"; 
+                                        cssClass += " bg-success rounded text-white";
                                     }
                                     else if (isChosen && !isCorrect)
                                     {
-                                        cssClass += " border rounded border-danger"; 
+                                        cssClass += " border rounded border-danger";
                                     }
                                     else if (!isChosen && isCorrect)
                                     {
-                                        cssClass += " border rounded border-success"; 
+                                        cssClass += " border rounded border-success";
                                     }
 
-                                    <li class="@cssClass mb-2 p-2 border rounded bg-light">
+                                    <li class="@cssClass mb-2 p-2 border rounded">
                                         @if (item.question_type == 1)
                                         {
                                             @if (!answerComments.ContainsKey(item.Questions.Id))
@@ -246,11 +246,8 @@
                                                             min="0"
                                                             max="@item.Questions.Maximum_Score"
                                                             step="0.1"
-                                                            value="@(answerScores.ContainsKey(ans.Id)
-                                                                    && double.TryParse(answerScores[ans.Id], out var s)
-                                                                    ? Math.Clamp(s, 0, Convert.ToDouble(item.Questions.Maximum_Score)).ToString("0.##")
-                                                                    : "0")"
-                                                            oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString()))"
+                                                            value="@ans.Points_Earned"
+                                                            oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value.ToString()))"
                                                             class="form-control form-control-sm" />
                                                         </div>
                                                         <div class="col-md-6 mb-2">
@@ -337,12 +334,13 @@
         }
         StateHasChanged(); // Cập nhật UI
     }
-    private void UpdateAnswerScore(int answerId, string score)
+    private async Task UpdateAnswerScore(int answerId, string score)
     {
 
         if (answerScores.ContainsKey(answerId))
         {
             answerScores[answerId] = score;
+           
         }
         else
         {
@@ -437,6 +435,7 @@
         }
 
         var respon = await HistoriesExam.updateExamHis(id, score);
+        await HistoriesExam.UpdateAllAnswerScores(answerScores);
         var resspon= await SubmitComments();
         if (respon&& resspon)
         {

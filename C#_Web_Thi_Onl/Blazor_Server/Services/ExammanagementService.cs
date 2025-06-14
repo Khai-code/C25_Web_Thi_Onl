@@ -33,7 +33,8 @@ namespace Blazor_Server.Services
                         var roomStart = ConvertLong.ConvertLongToDateTime(x.Start_Time);
                         var roomEnd = ConvertLong.ConvertLongToDateTime(x.End_Time);
                         // Chỉnh lại điều kiện: phòng thi có bắt đầu hoặc kết thúc trong khoảng start - end
-                        return (roomStart >= start && roomStart <= end) || (roomEnd >= start && roomEnd <= end);
+                        //return (roomStart >= start && roomStart <= end) || (roomEnd >= start && roomEnd <= end);
+                        return roomStart <= end && roomEnd >= start;
                     })
                     .ToList();
 
