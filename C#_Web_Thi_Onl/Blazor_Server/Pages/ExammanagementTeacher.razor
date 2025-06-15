@@ -263,13 +263,20 @@
                 to = DateTime.Today.AddDays(30);
                 break;
             case 5:
-                from = DateTime.Today.AddDays(-7);
-                to = DateTime.Today.AddTicks(-1);
+                var todays = DateTime.Today;
+                int delta = (int)todays.DayOfWeek - (int)DayOfWeek.Monday;
+                if (delta < 0) delta += 7;
+                var startOfThisWeek = todays.AddDays(-delta);
+                from = startOfThisWeek.AddDays(-7); // Bắt đầu của tuần trước
+                to = startOfThisWeek.AddTicks(-1);  // Kết thúc tuần trước (chủ nhật tuần trước, 23:59:59.999)
                 break;
             case 6:
-                from = DateTime.Today.AddMonths(-1);
-                to = DateTime.Today.AddTicks(-1);
+                var today = DateTime.Today;
+                var firstDayOfThisMonth = new DateTime(today.Year, today.Month, 1);
+                from = firstDayOfThisMonth.AddMonths(-1); // ngày 01 của tháng trước
+                to = firstDayOfThisMonth.AddTicks(-1);    // ngày cuối cùng của tháng trước (31/05/2025 23:59:59)
                 break;
+
             case 7:
                 from = startDate;
                 to = endDate;

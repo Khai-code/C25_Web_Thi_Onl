@@ -51,20 +51,31 @@
 
     @if (showResult && !isLoading)
     {
-        <div class="mb-4 text-end">
-            <button class="btn btn-warning me-2" @onclick="EnableEdit">✏️ Chỉnh sửa</button>
-            @if (isEditing)
-            {
-                <button class="btn btn-primary" @onclick="SaveChanges">💾 Lưu chỉnh sửa</button>
-            }
-        </div>
-
         @foreach (var item in reviews)
         {
             <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-info text-white fw-bold rounded-top-2">
-                    👤 Thông tin học sinh
+                <div class="card-header bg-info text-white fw-bold rounded-top-2 d-flex justify-content-between align-items-center">
+                    <span>👤 Thông tin học sinh</span>
+                    <div>
+                        @if (!isEditing)
+                        {
+                            <button class="btn btn-warning me-2" @onclick="EnableEdit">
+                                ✏️ Chỉnh sửa
+                            </button>
+                        }
+
+                        @if (isEditing)
+                        {
+                            <button class="btn btn-primary" @onclick="SaveChanges">
+                                💾 Lưu chỉnh sửa
+                            </button>
+                            <button class="btn btn-danger" @onclick="DisableEdit">
+                                ❌ Thoát
+                            </button>
+                        }
+                    </div>
                 </div>
+
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
@@ -128,7 +139,25 @@
                                 cssClass += " bg-light";
 
                             <div class="@cssClass">
-                                <strong>@GetAnswerLabel(answersOfQuestion, ans):</strong> @ans.Answers_Name
+                                @if(q.Question_Type_Id==4 || q.Question_Type_Id == 5)
+                                {
+                                    <div class="row align-items-center mb-2  p-2 bg-light">
+                                        <div class="col-md-6">
+                                            <strong>Câu trả lời:</strong> @ans.Answers_Name
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Điểm:</strong> @ans.Points_Earned
+                                        </div>
+                                        <div class="col-md-3">
+                                            <strong>Nhận xét:</strong> @q.Note
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <strong>@GetAnswerLabel(answersOfQuestion, ans):</strong> @ans.Answers_Name
+                                }
+                               
                                 @if (isEditing)
                                 {
                                     if (q.Question_Type_Id == 2 || q.Question_Type_Id==1) // Chọn 1 đáp án (Radio)
@@ -199,6 +228,11 @@
     private void EnableEdit()
     {
         isEditing = true;
+    }
+    void DisableEdit()
+    {
+        isEditing = false;
+        StateHasChanged();
     }
     private int correct;
     private int idanwer;
