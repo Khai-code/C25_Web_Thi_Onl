@@ -67,6 +67,8 @@ namespace Blazor_Server.Services
                         Name = p.Package_Name,
                         Code = p.Package_Code,
                         PackageTypeId = p.Package_Type_Id,
+                        SubjectId = p.Subject_Id,
+                        ClassId = p.Class_Id,
                         PackageTypeName = PackageTypeDict.TryGetValue(p.Package_Type_Id, out var pt) ? pt.Package_Type_Name : "N/A",
                         SubjectName = subjectDict.TryGetValue(p.Subject_Id, out var sub) ? sub.Subject_Name : "N/A",
                         ClassName = classDict.TryGetValue(p.Class_Id, out var cl) ? cl.Class_Name : "N/A",
@@ -104,7 +106,7 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
-        public async Task<List<ListQuesAns>> GetQues(int subjectId, int packageTypeId, int classId)
+        public async Task<List<HistDTO>> GetQues(int subjectId, int packageTypeId, int classId)
         {
             try
             {
@@ -158,21 +160,27 @@ namespace Blazor_Server.Services
 
                 var AnsList = await questionGetResponseAns.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
 
-                var result = new List<ListQuesAns>();
+                var result = new List<HistDTO>();
 
-                foreach (var item in questionList)
+                foreach (var item in lstpackage)
                 {
-                    var hist = new ListQuesAns
+                    var hist = new HistDTO
                     {
-                        QuestionId = item.Id,
-                        QuestionName = item.Question_Name,
-                        Type = item.Question_Type_Id,
-                        Leva = item.Question_Level_Id,
-                        Answers = AnsList.Select(ans => new Answer
+                        PackageId = item.Id,
+                        Package_Name = item.Package_Name,
+                        Create_Time = item.Create_Time,
+                        Questions = questionList.Select(q => new ListQuesAns
                         {
-                            AnswerId = ans.Id,
-                            AnswersName = ans.Answers_Name,
-                            Points_Earned = ans.Points_Earned
+                            QuestionId = q.Id,
+                            QuestionName = q.Question_Name,
+                            Type = q.Question_Type_Id,
+                            Leva = q.Question_Level_Id,
+                            Answers = AnsList.Select(ans => new Answer
+                            {
+                                AnswerId = ans.Id,
+                                AnswersName = ans.Answers_Name,
+                                Points_Earned = ans.Points_Earned
+                            }).ToList()
                         }).ToList()
                     };
 
@@ -272,6 +280,14 @@ namespace Blazor_Server.Services
             return questionLevel;
         }
 
+        public class HistDTO
+        {
+            public int PackageId { get; set; }
+            public string Package_Name { get; set; }
+            public long Create_Time { get; set; }
+            public List<ListQuesAns> Questions { get; set; }
+        }
+
         public class ListQuesAns
         {
             public int QuestionId { get; set; }
@@ -316,7 +332,9 @@ namespace Blazor_Server.Services
             public int PackageTypeId { get; set; }
             public string PackageTypeName { get; set; }
             public int Code { get; set; }
+            public int SubjectId { get; set; }
             public string SubjectName { get; set; }
+            public int ClassId { get; set; }
             public string ClassName { get; set; }
             public string TeacherClass { get; set; }
             public string TeacherExamRoom { get; set; }

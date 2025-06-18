@@ -115,7 +115,7 @@
                     <td>@ConvertLong.ConvertLongToDateTime(baiThi.StartTime)</td>
                     <td>@ConvertLong.ConvertLongToDateTime(baiThi.EndTime)</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm me-1" @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId)" title="Thêm câu hỏi">
+                        <button class="btn btn-secondary btn-sm me-1" @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)" title="Thêm câu hỏi">
                             <i class="bi bi-plus-circle"></i> Thêm câu hỏi
                         </button>
                         @* <button class="btn btn-danger btn-sm me-1" @onclick="() => XoaBaiThi(baiThi.Id)" title="Xóa">
@@ -254,7 +254,7 @@
                                 </div>
 
                                 <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold"
-                                        @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
+                                @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
                                     thêm package
                                 </button>
                             </form>
@@ -291,47 +291,93 @@
 @if (IsAddExamModalQuesEssay)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
+            <!-- modal-xl cho rộng thêm -->
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Thêm Câu Hỏi</h5>
                 </div>
                 <div class="modal-body">
-                    <!-- Nội dung form -->
-                    <form>
-                        <div class="mb-3">
-                            <label for="questionName" class="form-label">Nội dung câu hỏi</label>
-                            <textarea class="form-control" id="questionName" rows="5" placeholder="Nhập nội dung câu hỏi" @bind="questionAnswers.question.Question_Name"></textarea>
+                    <div class="row">
+                        <!-- Cột trái: Form nhập liệu -->
+                        <div class="col-md-6 border-end pe-4">
+                            <form>
+                                <div class="mb-3">
+                                    <label for="questionName" class="form-label">Nội dung câu hỏi</label>
+                                    <textarea class="form-control" id="questionName" rows="5" placeholder="Nhập nội dung câu hỏi"
+                                    @bind="questionAnswers.question.Question_Name"></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Loại câu hỏi</label>
+                                    <select class="form-control" @bind="questionAnswers.question.Question_Type_Id">
+                                        <option value="">-- Chọn Loại câu hỏi --</option>
+                                        @foreach (var qt in questionTypeViewModels)
+                                        {
+                                            <option value="@qt.Question_Type_Id">@qt.Question_Type_Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Mức độ</label>
+                                    <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
+                                        <option value="">-- Chọn mức độ câu hỏi --</option>
+                                        @foreach (var ql in questionlevelViewModel)
+                                        {
+                                            <option value="@ql.Question_Level_Id">@ql.Question_Level_Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Số điểm</label>
+                                    <input class="form-control" type="text" placeholder="Số điểm cho câu hỏi"
+                                    @bind="questionAnswers.question.Maximum_Score" />
+                                </div>
+                            </form>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Loại câu hỏi</label>
-                            <select class="form-control" @bind="questionAnswers.question.Question_Type_Id">
-                                <option value="">-- Chọn Loại câu hỏi --</option>
-                                @foreach (var qt in questionTypeViewModels)
+                        <!-- Cột phải: Danh sách câu hỏi đã có -->
+                        <div class="col-md-6 ps-4">
+                            <h6>Danh sách câu hỏi có sẵn</h6>
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                @if (histDTOs != null && histDTOs.Any())
                                 {
-                                    <option value="@qt.Question_Type_Id">@qt.Question_Type_Name</option>
+                                    @foreach (var hist in histDTOs)
+                                    {
+                                        <div class="card mb-3">
+                                            <div class="card-header d-flex justify-content-between align-items-center">
+                                                <strong>@hist.Package_Name</strong>
+                                                <input type="checkbox"
+                                                class="form-check-input"
+                                                checked="@IsAllQuestionsSelected(hist)"
+                                                @onchange="@(() => ToggleAllQuestions(hist))" />
+                                            </div>
+                                            <div class="card-body">
+                                                @foreach (var ques in hist.Questions)
+                                                {
+                                                    <div class="form-check">
+                                                        <input class="form-check-input"
+                                                        type="checkbox"
+                                                        checked="@selectedQuestionIds.Contains(ques.QuestionId)"
+                                                        @onchange="@(() => ToggleSelectedQues(ques.QuestionId))" />
+                                                        <label class="form-check-label">@ques.QuestionName</label>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
                                 }
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Mức độ</label>
-                            <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
-                                <option value="">-- Chọn mức độ câu hỏi --</option>
-                                @foreach (var ql in questionlevelViewModel)
+                                else
                                 {
-                                    <option value="@ql.Question_Level_Id">@ql.Question_Level_Name</option>
+                                    <p>Không có dữ liệu câu hỏi.</p>
                                 }
-                            </select>
+                            </div>
                         </div>
-
-                        <div class="mb-3">
-                            <label for="questionName" class="form-label">Số điểm</label>
-                            <input class="form-control" id="questionName" type="text" placeholder="Số điểm cho câu hỏi" @bind="questionAnswers.question.Maximum_Score" />
-                        </div>
-                    </form>
+                    </div>
                 </div>
+
                 <div class="modal-footer">
                     <button class="btn btn-success" @onclick="CreateQues">
                         <i class="bi bi-save"></i> Lưu
@@ -343,6 +389,7 @@
             </div>
         </div>
     </div>
+
 }
 
 
@@ -405,6 +452,8 @@
     private bool IsAddExamModalQuesMultipleChoice = false;
     public int packageId { get; set; }
     public int packageTypeId { get; set; }
+    public int ClassId { get; set; }
+    public int SubjectId { get; set; }
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -427,12 +476,15 @@
     List<TeacherViewModel> teacherViewModels = new List<TeacherViewModel>();
     List<QuestionlevelViewModel> questionlevelViewModel = new List<QuestionlevelViewModel>();
     List<QuestionTypeViewModel> questionTypeViewModels = new List<QuestionTypeViewModel>();
+    List<HistDTO> histDTOs = new List<HistDTO>();
     public DateTime Create_Time = DateTime.Now;
     private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
 
     public DateTime Start_Time = DateTime.Now;
     public DateTime End_Time = DateTime.Now;
     public string PackageName = null;
+
+    private List<int> selectedQuestionIds = new List<int>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -460,10 +512,46 @@
         IsAddExamModalOpen = true;
     }
 
-    private async Task OpenAddExamModalQuesEssay(int packageId, int packageTypeId)
+    private void ToggleSelectedQues(int questionId)
+    {
+        if (selectedQuestionIds.Contains(questionId))
+            selectedQuestionIds.Remove(questionId);
+        else
+            selectedQuestionIds.Add(questionId);
+    }
+
+    private bool IsAllQuestionsSelected(HistDTO hist)
+    {
+        return hist.Questions.All(q => selectedQuestionIds.Contains(q.QuestionId));
+    }
+
+    private void ToggleAllQuestions(HistDTO hist)
+    {
+        bool allSelected = IsAllQuestionsSelected(hist);
+
+        foreach (var ques in hist.Questions)
+        {
+            if (allSelected)
+            {
+                selectedQuestionIds.Remove(ques.QuestionId); // Bỏ chọn hết
+            }
+            else
+            {
+                if (!selectedQuestionIds.Contains(ques.QuestionId))
+                    selectedQuestionIds.Add(ques.QuestionId); // Thêm nếu chưa có
+            }
+        }
+    }
+
+    private async Task OpenAddExamModalQuesEssay(int packageId, int packageTypeId, int Classid, int SubjectId)
     {
         try
         {
+            if (Classid == 0)
+                toastService.ShowWarning("Không xác định được lớp tham gia thi");
+
+            if (SubjectId == 0)
+                toastService.ShowWarning("Không xác định được môn thi");
             if (packageId != null && packageTypeId != null)
             {
                 this.packageId = packageId;
@@ -492,11 +580,11 @@
                 }
             }
             questionTypeViewModels = await pm.GetQuestionType(packageTypeId);
+            histDTOs = await pm.GetQues(SubjectId, packageTypeId, Classid);
         }
         catch (Exception ex)
         {
-
-            throw;
+            toastService.ShowError("Lỗi: " + ex);
         }
     }
 
