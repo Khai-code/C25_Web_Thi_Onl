@@ -50,6 +50,12 @@ namespace Data_Base.GenericRepositories
             await _context.SaveChangesAsync();
             return entity;
         }
+        public async Task<List<T>> CreateListAsync(List<T> entities)
+        {
+            await _context.Set<T>().AddRangeAsync(entities);
+            await _context.SaveChangesAsync();
+            return entities;
+        }
 
         // 🔵 Update
         public async Task<bool> UpdateAsync(T entity)
