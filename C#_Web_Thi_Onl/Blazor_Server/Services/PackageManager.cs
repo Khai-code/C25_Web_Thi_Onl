@@ -9,6 +9,7 @@ using Data_Base.Models.U;
 using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.Package_Test_ERP;
 using static Blazor_Server.Services.Test;
+using Question = Data_Base.Models.Q.Question;
 
 namespace Blazor_Server.Services
 {
@@ -67,6 +68,8 @@ namespace Blazor_Server.Services
                         Name = p.Package_Name,
                         Code = p.Package_Code,
                         PackageTypeId = p.Package_Type_Id,
+                        SubjectId = p.Subject_Id,
+                        ClassId = p.Class_Id,
                         PackageTypeName = PackageTypeDict.TryGetValue(p.Package_Type_Id, out var pt) ? pt.Package_Type_Name : "N/A",
                         SubjectName = subjectDict.TryGetValue(p.Subject_Id, out var sub) ? sub.Subject_Name : "N/A",
                         ClassName = classDict.TryGetValue(p.Class_Id, out var cl) ? cl.Class_Name : "N/A",
@@ -104,7 +107,7 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
-        public async Task<List<ListQuesAns>> GetQues(int subjectId, int packageTypeId, int classId)
+        public async Task<List<HistDTO>> GetQuesTL(int subjectId, int packageTypeId, int classId)
         {
             try
             {
@@ -142,37 +145,38 @@ namespace Blazor_Server.Services
 
                 var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
 
-                var lstQuestionId = questionList.Select(o => o.Id).ToList();
+                //var lstQuestionId = questionList.Select(o => o.Id).ToList();
 
-                var filterRequestAns = new CommonFilterRequest
+                //var filterRequestAns = new CommonFilterRequest
+                //{
+                //    Filters = new Dictionary<string, string>
+                //    {
+                //        { "Question_Id", string.Join(",", lstQuestionId) },
+                //    },
+                //};
+
+                //var questionGetResponseAns = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAns);
+                //if (questionGetResponseAns.IsSuccessStatusCode)
+                //    return null;
+
+                //var AnsList = await questionGetResponseAns.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
+
+                var result = new List<HistDTO>();
+
+                foreach (var item in lstpackage)
                 {
-                    Filters = new Dictionary<string, string>
+                    var hist = new HistDTO
                     {
-                        { "Question_Id", string.Join(",", lstQuestionId) },
-                    },
-                };
-
-                var questionGetResponseAns = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAns);
-                if (questionGetResponseAns.IsSuccessStatusCode)
-                    return null;
-
-                var AnsList = await questionGetResponseAns.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
-
-                var result = new List<ListQuesAns>();
-
-                foreach (var item in questionList)
-                {
-                    var hist = new ListQuesAns
-                    {
-                        QuestionId = item.Id,
-                        QuestionName = item.Question_Name,
-                        Type = item.Question_Type_Id,
-                        Leva = item.Question_Level_Id,
-                        Answers = AnsList.Select(ans => new Answer
+                        PackageId = item.Id,
+                        Package_Name = item.Package_Name,
+                        Create_Time = item.Create_Time,
+                        Questions = questionList.Select(q => new ListQuesAns
                         {
-                            AnswerId = ans.Id,
-                            AnswersName = ans.Answers_Name,
-                            Points_Earned = ans.Points_Earned
+                            QuestionId = q.Id,
+                            QuestionName = q.Question_Name,
+                            Type = q.Question_Type_Id,
+                            Leva = q.Question_Level_Id,
+                            Answers = null
                         }).ToList()
                     };
 
@@ -185,7 +189,7 @@ namespace Blazor_Server.Services
                 return null;
             }
         }
-        public async Task<bool> CreateQuestion(QuestionAnswers model)
+        public async Task<bool> CreateQuestionTL(QuestionAnswers model)
         {
             try
             {
@@ -227,7 +231,7 @@ namespace Blazor_Server.Services
                                 if (deleteResponse.IsSuccessStatusCode)
                                 {
                                     Console.WriteLine($"Không thể tạo câu hỏi : {addQuestion.Question_Name} vì tổng điểm vượt quá 10");
-                                    return false; // Trả về false vì đã xóa
+                                    return false;
                                 }
                             }
                         }
@@ -241,7 +245,51 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+        public async Task<bool> CreateListQuestionTL(List<int> QuesId, int packageId)
+        {
+            List<Question> lstquestions = new List<Question>();
+            try
+            {
+                if (QuesId != null && QuesId.Count > 0)
+                {
+                    var filter = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
+                        {
+                             { "Id", string.Join(",", QuesId) },
+                        }
+                    };
 
+                    var questionGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filter);
+
+                    if (questionGetResponse.IsSuccessStatusCode)
+                    {
+                        var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
+                        foreach (var item in questionList)
+                        {
+                            Question question = new Question();
+                            question.Question_Level_Id = item.Question_Level_Id;
+                            question.Question_Type_Id = item.Question_Type_Id;
+                            question.Question_Name = item.Question_Name;
+                            question.Maximum_Score = item.Maximum_Score;
+                            question.Package_Id = packageId;
+
+                            lstquestions.Add(question);
+                        }
+                    }
+
+                    if (lstquestions != null && lstquestions.Count > 0)
+                    {
+                        var questionCreate = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/PostList", lstquestions);
+                    }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public async Task<List<QuestionTypeViewModel>> GetQuestionType(int idPackageType)
         {
             var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Type>>("https://localhost:7187/api/Question_Type/Get");
@@ -272,13 +320,21 @@ namespace Blazor_Server.Services
             return questionLevel;
         }
 
+        public class HistDTO
+        {
+            public int PackageId { get; set; }
+            public string Package_Name { get; set; }
+            public long Create_Time { get; set; }
+            public List<ListQuesAns> Questions { get; set; }
+        }
+
         public class ListQuesAns
         {
             public int QuestionId { get; set; }
             public string QuestionName { get; set; }
             public int Type { get; set; }
             public int Leva { get; set; }
-            public List<Answer> Answers { get; set; }
+            public List<Answer>? Answers { get; set; }
         }
         public class Answer
         {
@@ -289,7 +345,6 @@ namespace Blazor_Server.Services
         public class QuestionAnswers
         {
             public Data_Base.Models.Q.Question question { get; set; }
-            public long Maximum_Score { get; set; }
         }
         public class QuestionTypeViewModel
         {
@@ -316,7 +371,9 @@ namespace Blazor_Server.Services
             public int PackageTypeId { get; set; }
             public string PackageTypeName { get; set; }
             public int Code { get; set; }
+            public int SubjectId { get; set; }
             public string SubjectName { get; set; }
+            public int ClassId { get; set; }
             public string ClassName { get; set; }
             public string TeacherClass { get; set; }
             public string TeacherExamRoom { get; set; }

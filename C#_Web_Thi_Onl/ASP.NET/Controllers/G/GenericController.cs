@@ -163,10 +163,105 @@ namespace ASP.NET.Controllers.G
                 }
             }
 
-
             var createdEntity = await _repository.CreateAsync(entity);
             return CreatedAtAction(nameof(GetById), new { id = createdEntity }, createdEntity);
         }
+
+        [HttpPost("PostList")]
+        public async Task<IActionResult> CreateList([FromBody] List<T> entities)
+        {
+            if (entities == null || !entities.Any()) return BadRequest();
+
+            string entityName = typeof(T).Name;
+
+            int counter = 0;
+
+            foreach (var entity in entities)
+            {
+                // Xóa các collection navigation để tránh lỗi vòng lặp
+                foreach (var prop in entity.GetType().GetProperties())
+                {
+                    if (prop.PropertyType.IsGenericType && prop.PropertyType.GetGenericTypeDefinition() == typeof(ICollection<>))
+                    {
+                        prop.SetValue(entity, null);
+                    }
+                }
+
+                if (entityName == "Student")
+                {
+                    // Lấy mã cuối 1 lần và tăng dần để tránh trùng mã
+                    var lastCode = counter == 0 ? await _repository.GetLastStudentCodeAsync() : null;
+                    string newCode = GenerateStudentCode(lastCode, counter);
+                    entity.GetType().GetProperty("Student_Code")?.SetValue(entity, newCode);
+                    counter++;
+                }
+                else if (entityName == "Teacher")
+                {
+                    var userIdProperty = entity.GetType().GetProperty("User_Id");
+                    if (userIdProperty == null) return BadRequest("Missing UserId property!");
+
+                    int userId = (int)userIdProperty.GetValue(entity);
+                    var user = await _repository.GetByIdAsync<User>(userId);
+                    if (user == null) return BadRequest("User not found!");
+
+                    long yearOfBirth = user.Data_Of_Birth / (long)Math.Pow(10, user.Data_Of_Birth.ToString().Length - 4);
+
+                    var lastCode = counter == 0 ? await _repository.GetLastTeacherCodeAsync(yearOfBirth) : null;
+                    string newCode = GenerateTeacherCode(yearOfBirth, lastCode, counter);
+                    entity.GetType().GetProperty("Teacher_Code")?.SetValue(entity, newCode);
+                    counter++;
+                }
+                else if (entityName == "Class")
+                {
+                    var gradeIdProperty = entity.GetType().GetProperty("Grade_Id");
+                    if (gradeIdProperty == null) return BadRequest("Missing Grade_Id property!");
+
+                    int gradeId = (int)gradeIdProperty.GetValue(entity);
+                    var grade = await _repository.GetByIdAsync<Grade>(gradeId);
+                    if (grade == null) return BadRequest("Grade not found!");
+
+                    var lastCode = counter == 0 ? await _repository.GetLastClassCodeAsync(gradeId) : null;
+                    string newCode = GenerateClassCode(lastCode, grade.Grade_Name, counter);
+                    entity.GetType().GetProperty("Class_Code")?.SetValue(entity, newCode);
+                    counter++;
+                }
+                else if (entityName == "Package")
+                {
+                    entity.GetType().GetProperty("Package_Code")?.SetValue(entity, GenerateRandomPackageCode());
+                }
+                else if (entityName == "Test")
+                {
+                    var packageIdProperty = entity.GetType().GetProperty("Package_Id");
+                    if (packageIdProperty == null) return BadRequest("Missing Package_Id property!");
+
+                    int packageId = (int)packageIdProperty.GetValue(entity);
+                    var package = await _repository.GetByIdAsync<Package>(packageId);
+                    if (package == null) return BadRequest("Package not found!");
+
+                    int pointTypeId = package.Point_Type_Id;
+                    string testCode = await GenerateTestCodeAsync(pointTypeId);
+                    entity.GetType().GetProperty("Test_Code")?.SetValue(entity, testCode);
+                }
+                else if (entityName == "Student_Class")
+                {
+                    var classIdProperty = entity.GetType().GetProperty("Class_Id");
+                    if (classIdProperty == null) return BadRequest("Missing Class_Id property!");
+
+                    int classId = (int)classIdProperty.GetValue(entity);
+                    var studentCount = await _repository.GetStudentCountByClassIdAsync(classId);
+                    var classEntity = await _repository.GetByIdAsync<Class>(classId);
+                    if (classEntity != null)
+                    {
+                        classEntity.Number = studentCount;
+                        await _repository.UpdateClassAsync(classEntity);
+                    }
+                }
+            }
+
+            var createdEntities = await _repository.CreateListAsync(entities);
+            return Ok(createdEntities);
+        }
+
 
         // 🔵 Update
         [HttpPut("Pus/{id}")]
@@ -188,23 +283,23 @@ namespace ASP.NET.Controllers.G
         }
 
         // 🔥 Hàm tạo Student_Code
-        private string GenerateStudentCode(string lastCode)
+        private string GenerateStudentCode(string lastCode, int offset = 0)
         {
             string year = DateTime.Now.ToString("yy");
             long lastNumber = lastCode != null ? long.Parse(lastCode.Substring(5)) : 0;
-            return $"STU{year}{lastNumber + 1:D9}";
+            return $"STU{year}{lastNumber + 1 + offset:D9}";
         }
 
         // 🔥 Hàm tạo Teacher_Code
-        private string GenerateTeacherCode(long yearOfBirth, string lastCode)
+        private string GenerateTeacherCode(long yearOfBirth, string lastCode, int offset = 0)
         {
             string year = (yearOfBirth % 100).ToString("D2");
             long lastNumber = lastCode != null ? long.Parse(lastCode.Substring(5)) : 0;
-            return $"TEA{year}{lastNumber + 1:D9}";
+            return $"TEA{year}{lastNumber + 1 + offset:D9}";
         }
 
         // 🔥 Hàm tạo Class
-        private string GenerateClassCode(string lastCode, string gradeName)
+        private string GenerateClassCode(string lastCode, string gradeName, int offset = 0)
         {
             string year = DateTime.Now.ToString("yyyy");
             int lastIndex = 0;
@@ -218,7 +313,7 @@ namespace ASP.NET.Controllers.G
                 }
             }
 
-            int newIndex = lastIndex + 1;
+            int newIndex = lastIndex + offset + 1;
             return $"CLS{year}{gradeName}{newIndex:D3}";
         }
 
@@ -257,11 +352,13 @@ namespace ASP.NET.Controllers.G
             List<int>? lstPackageId = filters.ContainsKey("Package_Id") ? new List<int> { int.Parse(filters["Package_Id"]) } : new List<int>();
             int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
             int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
+            List<int>? lstQuestionId = filters.ContainsKey("Id") ? new List<int> { int.Parse(filters["Id"]) } : new List<int>();
             string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
 
             var result = await _repository.GetWithFilterAsync<Question>(q =>
                 (!packageId.HasValue || q.Package_Id == packageId) &&
                 (!lstPackageId.Any() || lstPackageId.Contains(q.Package_Id)) &&
+                (!lstQuestionId.Any() || lstQuestionId.Contains(q.Id)) &&
                 (string.IsNullOrEmpty(keyword) || q.Question_Name.Contains(keyword))
             );
 
