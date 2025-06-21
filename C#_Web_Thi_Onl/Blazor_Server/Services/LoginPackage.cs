@@ -91,21 +91,22 @@ namespace Blazor_Server.Services
             long time = ConvertLong.ConvertDateTimeToLong(currentTime);
             var examroom = examrooms.FirstOrDefault(o => o.Id == ExamRoomPackage.Exam_Room_Id);
 
-            if (examroom.Start_Time <= time)
+            if (examroom.Start_Time > time)
             {
                 Console.WriteLine("Chưa đến thời gian làm bài thi1.");
                 return false;
             }
-            else if (examroom.Start_Time >= time && (examroom.Start_Time - time) > 1500 && examroom.End_Time > time)
-            {
-                Console.WriteLine("Đã quá thời gian vào thi.");
-                return false;
-            }
-            else if (examroom.Start_Time >= time && (examroom.Start_Time - time) > 1500 && examroom.End_Time < time)
+            else if (examroom.End_Time < time)
             {
                 Console.WriteLine("Đã hết thời gian thi.");
                 return false;
             }
+            else if (examroom.Start_Time <= time && (time - examroom.Start_Time) > 1500 && examroom.End_Time > time)
+            {
+                Console.WriteLine("Đã quá thời gian vào thi.");
+                return false;
+            }
+            
             return true;
         }
 
@@ -121,6 +122,20 @@ namespace Blazor_Server.Services
                 }
 
                 var PackageId = Packages.FirstOrDefault(o => o.Package_Code == packagecode).Id;
+
+                if (PackageId <= 0)
+                    return false;
+
+                Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
+                test.Package_Id = PackageId;
+
+                var TestReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/Post", test);
+
+                if (!TestReport.IsSuccessStatusCode)
+                    return false;
+
+                var TestReportModel = await TestReport.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>();
+                var TestId = TestReportModel.Select(o => o.Id).FirstOrDefault();
 
                 var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
 
@@ -138,8 +153,9 @@ namespace Blazor_Server.Services
                 ERStudent.Exam_Room_Package_Id = ExamRoomPackageId;
                 ERStudent.Student_Id = studetId;
                 ERStudent.Check_Time = dataLong;
+                ERStudent.Test_Id = TestId;
 
-                var Exam_Room_Student = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/Post", ERStudent);
+                var Exam_Room_Student = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/Post", ERStudent);
                 if (!Exam_Room_Student.IsSuccessStatusCode)
                     return false;
 

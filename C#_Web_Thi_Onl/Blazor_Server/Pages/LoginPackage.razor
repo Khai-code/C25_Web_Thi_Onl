@@ -13,6 +13,7 @@
 @layout StudentLayout
 @inject ProtectedSessionStorage sessionstorage
 @inject IJSRuntime jsruntime
+@inject ScoreServices ScoreService
 
 <div class="login-wrapper d-flex justify-content-center align-items-center min-vh-100 bg-light">
     <div class="login-container bg-white p-4 rounded-3 shadow-lg" style="max-width: 400px; width: 100%">
@@ -95,33 +96,54 @@
         }
     }
     
-    protected override async Task OnAfterRenderAsync(bool firstrender)//phần này kiểm tra lại token để lấy được student code nhé vì dữ liệu trả ra đang bị null
+    protected override async Task OnAfterRenderAsync(bool firstrender)
     {
         if (firstrender)
         {
-            var result = await sessionstorage.GetAsync<string>("authtoken");
-
-            if (result.Success)
+            var result = await sessionstorage.GetAsync<string>("authToken");
+            if (result.Success && !string.IsNullOrEmpty(result.Value))
             {
                 var handler = new JwtSecurityTokenHandler();
-                var jsontoken = handler.ReadToken(result.Value) as JwtSecurityToken;
+                var jsonToken = handler.ReadToken(result.Value) as JwtSecurityToken;
 
-                if (jsontoken != null)
+                if (jsonToken != null)
                 {
-                    var studentcodeclaim = jsontoken.Claims.FirstOrDefault(c => c.Type == "student_code");
-                    if (studentcodeclaim != null)
+                    // 1. Ưu tiên lấy từ claim
+                    var studentCodeClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Student_Code");
+                    if (studentCodeClaim != null && !string.IsNullOrWhiteSpace(studentCodeClaim.Value))
                     {
-                        studentcode = studentcodeclaim.Value;
-                        Console.WriteLine($"student code: {studentcode}");
+                        studentcode = studentCodeClaim.Value;
+                        Console.WriteLine($"Student_Code lấy từ token: {studentcode}");
                     }
                     else
                     {
-                        Console.WriteLine("không tìm thấy student_code trong token.");
+                        // 2. Nếu không có thì fallback lấy UserId và tìm qua service
+                        var userIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Id");
+                        if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                        {
+                            var students = await ScoreService.GetAllStudentsAsync();
+                            var matchedStudent = students.FirstOrDefault(s => s.User_Id == userId);
+                            if (matchedStudent != null)
+                            {
+                                studentcode = matchedStudent.Student_Code;
+                                Console.WriteLine($"Student_Code lấy từ service: {studentcode}");
+                            }
+                            else
+                            {
+                                Console.WriteLine("Không tìm thấy học sinh tương ứng.");
+                            }
+                        }
+                        else
+                        {
+                            Console.WriteLine("Không tìm thấy UserId trong token.");
+                        }
                     }
                 }
             }
         }
     }
+
+
     // private async Task Chekcode()
     // {
     //     try

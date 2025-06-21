@@ -4,6 +4,7 @@
 @using Data_Base.Models.Q
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.Test
 @using static Blazor_Server.Services.Package_Test_ERP
 @inject NavigationManager Navigation
 @inject Package_Test_ERP PTERP
@@ -11,27 +12,53 @@
 @layout StudentLayout
 @inject ProtectedSessionStorage SessionStorage
 @inject IJSRuntime JSRuntime
+@inject Blazor_Server.Services.Test TestService
 
-<h3>Test</h3>
+<h3>📝 Bài thi trắc nghiệm</h3>
 
-<div class="quiz-container">
-    <h2>📝 Bài thi trắc nghiệm</h2>
-    <div id="countdown-timer" style="font-size: 24px; font-weight: bold; text-align: center; margin-bottom: 20px;">
-        @GetFormattedTime()
+@if (!isLoaded)
+{
+    <div>Đang tải bài thi...</div>
+}
+else if (histDTO == null)
+{
+    @* <div>Không tìm thấy dữ liệu bài thi.<br /><button class="btn btn-danger" @onclick="GoToLogin">Quay lại đăng nhập</button></div> *@
+}
+else if (isFinished)
+{
+    <div>
+        <h4>🎉 Đã hoàn thành bài thi!</h4>
     </div>
-
-    <div id="question-container">
-        <!-- Câu hỏi sẽ được hiển thị ở đây -->
+}
+else
+{
+    <div class="quiz-container">
+        <div style="font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 20px;">
+            Thời gian: @GetFormattedTime()
+        </div>
+        <div>
+            <b>Câu @(currentQuestionIndex + 1)/@histDTO.Questions.Count:</b>
+            <span>@histDTO.Questions[currentQuestionIndex].QuestionName</span>
+        </div>
+        <div>
+            @foreach (var ans in histDTO.Questions[currentQuestionIndex].Answers)
+            {
+                <div>
+                    <input type="checkbox"
+                           checked="@IsAnswerSelected(histDTO.Questions[currentQuestionIndex].QuestionId, ans.AnswerId)"
+                           @onchange="e => OnAnswerSelected(histDTO.Questions[currentQuestionIndex].QuestionId, ans.AnswerId, e.Value)" />
+                    <span>@ans.AnswersName</span>
+                </div>
+            }
+        </div>
+        <div class="navigation" style="margin-top: 12px;">
+            <button class="btn btn-secondary" @onclick="PrevQuestion" disabled="@(currentQuestionIndex == 0)">⬅ Lùi</button>
+            <button class="btn btn-secondary" @onclick="NextQuestion" disabled="@(currentQuestionIndex == histDTO.Questions.Count - 1)">Tiếp ➡</button>
+        </div>
+        <button class="btn btn-danger mt-3" @onclick="FinishTest">✅ Kết thúc bài thi</button>
     </div>
+}
 
-    <div class="navigation">
-        <button id="prev-btn">⬅ Lùi</button>
-        <button id="next-btn">Tiếp ➡</button>
-    </div>
-
-    <button id="finish-btn">✅ Kết thúc bài thi</button>
-    <div id="result"></div>
-</div>
 <ChildComponent OnStopTest="StopTest" />
 @code {
     private int minutes;
@@ -39,20 +66,56 @@
     private bool isTimeUp;
     private Timer countdownTimer;
 
+    private int packageCode;
+    private HistDTO histDTO;
+    private int currentQuestionIndex = 0;
+    private Dictionary<int, List<int>> selectedAnswers = new();
+    private bool isLoaded = false;
+    private bool isFinished = false;
+
     protected override async Task OnInitializedAsync()
     {
-        var checktimeResult = await SessionStorage.GetAsync<Dictionary<int, int>>("thoigian");
-
-        if (checktimeResult.Success)
+        try
         {
-            var checktime = checktimeResult.Value;
-            foreach (var item in checktime)
+            var codeResult = await SessionStorage.GetAsync<int>("packagecode");
+            if (!codeResult.Success)
             {
-                Console.WriteLine($"Key: {item.Key}, Value: {item.Value}");
-                minutes = item.Key; 
-                seconds = item.Value; 
+                await JSRuntime.InvokeVoidAsync("alert", "Không tìm thấy mã dự thi. Vui lòng đăng nhập lại.");
+                Navigation.NavigateTo("/login-package");
+                return;
+            }
+            packageCode = codeResult.Value;
+
+            // Lấy thời gian từ SessionStorage nếu có
+            var timeResult = await SessionStorage.GetAsync<Dictionary<int, int>>("thoigian");
+            if (timeResult.Success && timeResult.Value != null && timeResult.Value.Count >= 2)
+            {
+                // Định dạng: [số phút, số giây]
+                minutes = timeResult.Value.ElementAt(0).Key;
+                seconds = timeResult.Value.ElementAt(0).Value;
+            }
+            else
+            {
+                minutes = 15; // default nếu không có
+                seconds = 0;
             }
             StartCountdown();
+
+            histDTO = await TestService.GetQuestionAnswers(packageCode);
+
+            if (histDTO != null)
+            {
+                // Khởi tạo selectedAnswers cho từng câu hỏi
+                foreach (var q in histDTO.Questions)
+                    selectedAnswers[q.QuestionId] = new List<int>();
+            }
+
+            isLoaded = true;
+        }
+        catch
+        {
+            isLoaded = true;
+            histDTO = null;
         }
     }
 
@@ -88,6 +151,38 @@
     }
 
     private string GetFormattedTime() => $"{minutes:D2}:{seconds:D2}";
+
+    private void PrevQuestion() { if (currentQuestionIndex > 0) currentQuestionIndex--; }
+    private void NextQuestion() { if (currentQuestionIndex < histDTO.Questions.Count - 1) currentQuestionIndex++; }
+
+    private void OnAnswerSelected(int questionId, int answerId, object checkedValue)
+    {
+        var checkedBool = checkedValue is bool b && b;
+        if (checkedBool)
+        {
+            if (!selectedAnswers[questionId].Contains(answerId))
+                selectedAnswers[questionId].Add(answerId);
+        }
+        else
+        {
+            selectedAnswers[questionId].Remove(answerId);
+        }
+        StateHasChanged();
+    }
+    private bool IsAnswerSelected(int questionId, int answerId)
+        => selectedAnswers.TryGetValue(questionId, out var ansList) && ansList.Contains(answerId);
+
+
+    // Kết thúc bài thi
+    private async Task FinishTest()
+    {
+        isFinished = true;
+        countdownTimer?.Dispose();
+        StateHasChanged();
+        // Optional: gửi đáp án lên server tại đây nếu muốn
+        await JSRuntime.InvokeVoidAsync("alert", "Đã hoàn thành bài thi!");
+    }
+
     private void ResetCountdown()
     {
         var checktimeResult = SessionStorage.GetAsync<Dictionary<int, int>>("thoigian").Result;
