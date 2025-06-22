@@ -257,36 +257,36 @@
     double diemTbKy1 = 0;
     double diemTbKy2 = 0;
 
-    protected override async Task OnInitializedAsync()
-    {
-        if (!hasLoadedFirstRender)
-        {
-            await LoadStudentCodeAndFullName();
-            hasLoadedFirstRender = true;
-        }
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     if (!hasLoadedFirstRender)
+    //     {
+    //         await LoadStudentCodeAndFullName();
+    //         hasLoadedFirstRender = true;
+    //     }
 
-        if (!string.IsNullOrEmpty(studentCode))
-        {
-            try
-            {
-                currentSummaryId = await ScoreService.GetCurrentSummaryId();
+    //     if (!string.IsNullOrEmpty(studentCode))
+    //     {
+    //         try
+    //         {
+    //             currentSummaryId = await ScoreService.GetCurrentSummaryId();
 
-                if (currentSummaryId == 0)
-                {
-                    isAnnualSummary = true;
-                    annualScoresDict = await ScoreService.GetAnnualStudentScoresAsync(studentCode);
-                }
-                else
-                {
-                    scoresList = await ScoreService.GetStudentScoresAsync(studentCode, currentSummaryId);
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"Lỗi khi tải bảng điểm: {ex.Message}";
-            }
-        }
-    }
+    //             if (currentSummaryId == 0)
+    //             {
+    //                 isAnnualSummary = true;
+    //                 annualScoresDict = await ScoreService.GetAnnualStudentScoresAsync(studentCode);
+    //             }
+    //             else
+    //             {
+    //                 scoresList = await ScoreService.GetStudentScoresAsync(studentCode, currentSummaryId);
+    //             }
+    //         }
+    //         catch (Exception ex)
+    //         {
+    //             errorMessage = $"Lỗi khi tải bảng điểm: {ex.Message}";
+    //         }
+    //     }
+    // }
 
     // 🔥 Hàm lấy Student_Code và FullName từ Token
     private async Task LoadStudentCodeAndFullName()

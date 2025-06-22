@@ -3,6 +3,7 @@ using Data_Base.Filters;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.C;
+using Data_Base.Models.E;
 using Data_Base.Models.G;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
@@ -40,6 +41,14 @@ namespace ASP.NET.Controllers.G
                     return await HandlePackageFilter(request.Filters);
                 case "Answers":
                     return await HandleAnswersFilter(request.Filters);
+                case "Student":
+                    return await HandleStudentFilter(request.Filters);
+                case "Student_Class":
+                    return await HandleStudentClassFilter(request.Filters);
+                case "Exam_Room_Package":
+                    return await HandleExamRoomPackageFilter(request.Filters);
+                case "Exam_Room":
+                    return await HandleExamRoomFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -262,7 +271,6 @@ namespace ASP.NET.Controllers.G
             return Ok(createdEntities);
         }
 
-
         // 🔵 Update
         [HttpPut("Pus/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] T entity)
@@ -366,6 +374,8 @@ namespace ASP.NET.Controllers.G
         }
         private async Task<IActionResult> HandlePackageFilter(Dictionary<string, string> filters)
         {
+            int? packageCode = filters.ContainsKey("Package_Code") ? int.Parse(filters["Package_Code"]) : null;
+            int? classId = filters.ContainsKey("Class_Id") ? int.Parse(filters["Class_Id"]) : null;
             int? packageTypeId = filters.ContainsKey("Package_Type_Id") ? int.Parse(filters["Package_Id"]) : null;
             int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
             string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
@@ -373,12 +383,13 @@ namespace ASP.NET.Controllers.G
             var result = await _repository.GetWithFilterAsync<Package>(p =>
                 (!packageTypeId.HasValue || p.Package_Type_Id == packageTypeId) &&
                 (!subjectId.HasValue || p.Subject_Id == subjectId) &&
+                (!classId.HasValue || p.Class_Id == classId) && 
+                (!packageCode.HasValue || p.Package_Code == packageCode) && 
                 (string.IsNullOrEmpty(keyword) || p.Package_Name.Contains(keyword))
             );
 
             return Ok(result);
         }
-
         private async Task<IActionResult> HandleAnswersFilter(Dictionary<string, string> filters)
         {
             List<int>? lstquestionId = filters.ContainsKey("Question_Id") ? new List<int> { int.Parse(filters["Question_Id"]) } : new List<int>();
@@ -386,11 +397,53 @@ namespace ASP.NET.Controllers.G
             string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
 
             var result = await _repository.GetWithFilterAsync<Answers>(a =>
-                (!lstquestionId.Any() || a.Question_Id == questionId) &&
+                (!lstquestionId.Any() || lstquestionId.Contains(a.Question_Id)) &&
                 (string.IsNullOrEmpty(keyword) || a.Answers_Name.Contains(keyword))
             );
 
             return Ok(result);
         }
+        private async Task<IActionResult> HandleStudentFilter(Dictionary<string, string> filters)
+        {
+            string? studentCode = filters.ContainsKey("Student_Code") ? filters["Student_Code"] : null;
+
+            var result = await _repository.GetWithFilterAsync<Student>(a =>
+                (!studentCode.Any() || a.Student_Code == studentCode)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleStudentClassFilter(Dictionary<string, string> filters)
+        {
+            int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
+            string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
+
+            var result = await _repository.GetWithFilterAsync<Student_Class>(a =>
+                (!studentId.HasValue || a.Student_Id == studentId)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleExamRoomPackageFilter(Dictionary<string, string> filters)
+        {
+            int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Exam_Room_Package>(a =>
+                (!packageId.HasValue || a.Package_Id == packageId)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleExamRoomFilter(Dictionary<string, string> filters)
+        {
+            int? id = filters.ContainsKey("Id") ? int.Parse(filters["Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Exam_Room>(a =>
+                (!id.HasValue || a.Id == id)
+            );
+
+            return Ok(result);
+        }
+
     }
 }

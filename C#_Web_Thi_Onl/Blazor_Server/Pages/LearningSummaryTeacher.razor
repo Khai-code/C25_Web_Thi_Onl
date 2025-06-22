@@ -41,7 +41,7 @@
             <div class="row g-3">
                 @if (classList != null && classList.Count > 0)
                 {
-                    @foreach (var classInfo in classList)
+                    @* @foreach (var classInfo in classList)
                     {
                         <div class="col-md-6">
                             <div class="card class-card" @onclick="() => LoadAndCalculateLearningSummary(classInfo.Id)">
@@ -49,12 +49,12 @@
                                     <h5 class="card-title">@classInfo.Class_Name</h5>
                                     <p class="card-text">
                                         <span><strong>Chủ nhiệm:</strong> @classInfo.TeacherName</span><br />
-                                        @* <span><strong>Tổng số học sinh:</strong> @classInfo.Max_Student</span> *@
+                                        @* <span><strong>Tổng số học sinh:</strong> @classInfo.Max_Student</span> 
                                     </p>
                                 </div>
                             </div>
                         </div>
-                    }
+                    } *@
                 }
                 else
                 {
@@ -181,60 +181,60 @@
     }
 
 
-    private async Task LoadAndCalculateLearningSummary(int classId)
-    {
-        try
-        {
-            var classInfo = classList.FirstOrDefault(c => c.Id == classId);
-            if (classInfo == null)
-            {
-                await jsRuntime.InvokeVoidAsync("alert", "Lớp không tồn tại.");
-                return;
-            }
+    // private async Task LoadAndCalculateLearningSummary(int classId)
+    // {
+    //     try
+    //     {
+    //         var classInfo = classList.FirstOrDefault(c => c.Id == classId);
+    //         if (classInfo == null)
+    //         {
+    //             await jsRuntime.InvokeVoidAsync("alert", "Lớp không tồn tại.");
+    //             return;
+    //         }
 
-            className = classInfo.Class_Name;
+    //         className = classInfo.Class_Name;
 
-            var currentSummary = await summaryService.GetCurrentSummary();
-            currentSummaryName = currentSummary?.Summary_Name ?? "Không xác định";
+    //         var currentSummary = await summaryService.GetCurrentSummary();
+    //         currentSummaryName = currentSummary?.Summary_Name ?? "Không xác định";
 
-            // 🔹 Chỉ tính toán
-            var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
+    //         // 🔹 Chỉ tính toán
+    //         var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
 
-            // 🔹 Lưu xuống DB sau khi tính
-            await summaryService.SaveCalculatedSummariesToDatabase(summaries);
+    //         // 🔹 Lưu xuống DB sau khi tính
+    //         await summaryService.SaveCalculatedSummariesToDatabase(summaries);
 
-            if (summaries.Any())
-            {
-                learningSummaryList = summaries
-                    .GroupBy(s => s.StudentId)
-                    .Select(g => new Learning_SummaryView
-                        {
-                            StudentId = g.Key,
-                            Student_Name = g.First().Student_Name,
-                            SubjectScores = g.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
-                            Summary_ID = g.First().Summary_ID
-                        })
-                    .OrderBy(x => x.Student_Name)
-                    .ToList();
+    //         if (summaries.Any())
+    //         {
+    //             learningSummaryList = summaries
+    //                 .GroupBy(s => s.StudentId)
+    //                 .Select(g => new Learning_SummaryView
+    //                     {
+    //                         StudentId = g.Key,
+    //                         Student_Name = g.First().Student_Name,
+    //                         SubjectScores = g.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
+    //                         Summary_ID = g.First().Summary_ID
+    //                     })
+    //                 .OrderBy(x => x.Student_Name)
+    //                 .ToList();
 
-                Subjects = learningSummaryList
-                    .SelectMany(s => s.SubjectScores.Keys)
-                    .Distinct()
-                    .ToList();
-            }
-            else
-            {
-                learningSummaryList.Clear();
-                Subjects.Clear();
-                await jsRuntime.InvokeVoidAsync("alert", "Lớp này chưa có điểm tổng kết.");
-            }
+    //             Subjects = learningSummaryList
+    //                 .SelectMany(s => s.SubjectScores.Keys)
+    //                 .Distinct()
+    //                 .ToList();
+    //         }
+    //         else
+    //         {
+    //             learningSummaryList.Clear();
+    //             Subjects.Clear();
+    //             await jsRuntime.InvokeVoidAsync("alert", "Lớp này chưa có điểm tổng kết.");
+    //         }
 
-            await jsRuntime.InvokeVoidAsync("bootstrapModal.show", "#summaryModal");
-        }
-        catch (Exception ex)
-        {
-            await jsRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải tổng kết: {ex.Message}");
-        }
-    }
+    //         await jsRuntime.InvokeVoidAsync("bootstrapModal.show", "#summaryModal");
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         await jsRuntime.InvokeVoidAsync("alert", $"Lỗi khi tải tổng kết: {ex.Message}");
+    //     }
+    // }
 
 }

@@ -27,6 +27,10 @@ namespace Data_Base.Models.S
         [JsonIgnore]
         public Point_Type? Point_Types { get; set; }
         public int Point_Type_Id { get; set; }
+        [ForeignKey("Summary_Id")]
+        [JsonIgnore]
+        public Summary? Summaries { get; set; }
+        public int Summary_Id { get; set; }
         public double Point { get; set; }
         
         

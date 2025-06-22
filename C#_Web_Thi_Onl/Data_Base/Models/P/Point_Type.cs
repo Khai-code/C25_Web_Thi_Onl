@@ -19,10 +19,6 @@ namespace Data_Base.Models.P
         public int Id { get; set; }
         [StringLength(20, ErrorMessage = "Tên kiêu điểm không quá 20 ký tự")]
         public string Point_Type_Name { get; set; }
-        [ForeignKey("Summary_Id")]
-        [JsonIgnore]
-        public Summary? Summaries { get; set; }
-        public int Summary_Id { get; set; }
         [JsonIgnore]
         public ICollection<Package> Packages { get; set; } = new List<Package>();
         [JsonIgnore]

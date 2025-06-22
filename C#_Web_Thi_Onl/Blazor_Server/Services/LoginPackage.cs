@@ -1,9 +1,12 @@
 ﻿using Blazor_Server.Pages;
+using Data_Base.Filters;
 using Data_Base.GenericRepositories;
+using Data_Base.Migrations;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
 using Data_Base.Models.S;
+using Data_Base.Models.T;
 using Microsoft.AspNetCore.Mvc;
 using static Blazor_Server.Services.Package_Test_ERP;
 
@@ -16,80 +19,102 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public int secondsLeft { get; set; } = 0;
         public async Task<bool> CheckPackage(string Studentcode, int packagecode)
         {
-            var lstStudent = await _httpClient.GetFromJsonAsync<List<Student>>("https://localhost:7187/api/Student/Get");
+            #region Student
 
-            if (lstStudent == null || lstStudent.Count == 0)
+            var filterStudent = new CommonFilterRequest
             {
-                Console.WriteLine("Không tìm thấy sinh viên.");
-                return false;
-            }
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Student_Code", Studentcode.ToString() }
+                    },
+            };
 
-            var student = lstStudent.FirstOrDefault(o => o.Student_Code == Studentcode);
-            if (student == null)
+            var studentResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
+
+            if (studentResponse.IsSuccessStatusCode)
+                return false;
+
+            var studentId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).FirstOrDefault().Id; 
+            #endregion
+
+            #region Student_Class
+            var filterStudentClass = new CommonFilterRequest
             {
-                Console.WriteLine("Không tìm thấy sinh viên.");
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Student_Id", studentId.ToString() }
+                    },
+            };
+
+            var lstStudentClass = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student_Class/common/get", filterStudentClass);
+
+            if (lstStudentClass.IsSuccessStatusCode)
                 return false;
-            }
 
-            int studentId = student.Id;
-            var lstStudentClass = await _httpClient.GetFromJsonAsync<List<Student_Class>>("https://localhost:7187/api/Student_Class/Get");
+            var studentClass_ClassId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).FirstOrDefault().Class_Id;
+            #endregion
 
-            if (lstStudentClass == null || lstStudentClass.Count == 0)
+            #region Package
+            var filterPackage = new CommonFilterRequest
             {
-                Console.WriteLine("Không tìm thấy lớp của sinh viên1.");
-                return false;
-            }
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Class_Id", studentClass_ClassId.ToString() },
+                        { "Package_Code", packagecode.ToString() }
+                    },
+            };
 
-            var StudentClass = lstStudentClass.FirstOrDefault(o => o.Student_Id == studentId);
-            if (StudentClass == null)
+            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student_Class/common/get", filterPackage);
+
+            if (lstPackages.IsSuccessStatusCode)
+                return false;
+
+            var packagesId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).FirstOrDefault().Id;
+
+            #endregion
+
+            #region Exam_Room_Package
+            var filterERP = new CommonFilterRequest
             {
-                Console.WriteLine("Không tìm thấy lớp của sinh viên2.");
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", packagesId.ToString() }
+                    },
+            };
+
+            var ExamRoomPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/common/get", filterERP);
+
+            if (ExamRoomPackages.IsSuccessStatusCode)
                 return false;
-            }
 
-            int ClassId = StudentClass.Class_Id;
+            var ExamRoomPackage = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Package>>()).FirstOrDefault();
 
-            var Packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
-            if (Packages == null || Packages.Count == 0)
+            #endregion
+
+            #region Exam_Room
+            var filterExamRoom = new CommonFilterRequest
             {
-                Console.WriteLine("Không tìm thấy gói1.");
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Id", ExamRoomPackage.Exam_Room_Id.ToString() }
+                    },
+            };
+
+            var examrooms = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterExamRoom);
+
+            if (examrooms.IsSuccessStatusCode)
                 return false;
-            }
 
-            var Package = Packages.FirstOrDefault(o => o.Class_Id == ClassId && o.Package_Code == packagecode);
-            if (Package == null)
-            {
-                Console.WriteLine("Không tìm thấy gói2.");
-                return false;
-            }
+            var examroom = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).FirstOrDefault();
 
-            var ExamRoomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
-            if (ExamRoomPackages == null || ExamRoomPackages.Count == 0)
-            {
-                Console.WriteLine("Không tìm thấy gói phòng thi.");
-                return false;
-            }
+            #endregion
 
-            var ExamRoomPackage = ExamRoomPackages.FirstOrDefault(o => o.Package_Id == Package.Id);
-            if (ExamRoomPackage == null)
-            {
-                Console.WriteLine("Không tìm thấy phòng thi cho gói.");
-                return false;
-            }
-
-            var examrooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("https://localhost:7187/api/Exam_Room/Get");
-
-            if (examrooms == null || examrooms.Count == 0)
-            {
-                Console.WriteLine("Không tìm thấy phòng thi.");
-                return false;
-            }
-
+            #region Check thời gian ko hợp lệ
             DateTime currentTime = DateTime.Now;
             long time = ConvertLong.ConvertDateTimeToLong(currentTime);
-            var examroom = examrooms.FirstOrDefault(o => o.Id == ExamRoomPackage.Exam_Room_Id);
 
             if (examroom.Start_Time > time)
             {
@@ -106,10 +131,62 @@ namespace Blazor_Server.Services
                 Console.WriteLine("Đã quá thời gian vào thi.");
                 return false;
             }
-            
+            #endregion
+
+            #region Create Test vs Exam_Room_Student
+
+            Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
+            test.Package_Id = packagesId;
+
+            var testReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/Post", test);
+
+            if (!testReport.IsSuccessStatusCode)
+                return false;
+
+            var testId = (await testReport.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>()).FirstOrDefault().Id;
+
+            Exam_Room_Student ERStudent = new Exam_Room_Student();
+
+            ERStudent.Exam_Room_Package_Id = ExamRoomPackage.Id;
+            ERStudent.Student_Id = studentId;
+            ERStudent.Check_Time = time;
+            ERStudent.Test_Id = testId;
+
+            var Exam_Room_Student_Post = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/Post", ERStudent);
+            if (!Exam_Room_Student_Post.IsSuccessStatusCode)
+                return false;
+
+            var Exam_Room_Student = (await testReport.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).FirstOrDefault();
+
+            #endregion
+
+            #region Đếm thời gian
+
+            CountingTime(Exam_Room_Student, examroom);
+
+            #endregion
             return true;
         }
 
+        private long CountingTime(Data_Base.Models.E.Exam_Room_Student exam_Room_Student, Data_Base.Models.E.Exam_Room exam_Room)
+        {
+            try
+            {
+                if (exam_Room_Student == null || exam_Room == null)
+                    return 0;
+
+                int time = (int)(ConvertLong.ConvertLongToDateTime(exam_Room_Student.Check_Time) - ConvertLong.ConvertLongToDateTime(exam_Room.End_Time)).TotalSeconds;
+
+                return secondsLeft = time > 0 ? time : 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi đếm thời gian: {ex.Message}");
+                return 0;
+            }
+        }
+
+        #region ko dùng nữa
         public async Task<bool> PostERStudent(int packagecode, string Studentcode)
         {
             try
@@ -135,6 +212,7 @@ namespace Blazor_Server.Services
                     return false;
 
                 var TestReportModel = await TestReport.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>();
+
                 var TestId = TestReportModel.Select(o => o.Id).FirstOrDefault();
 
                 var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
@@ -146,6 +224,7 @@ namespace Blazor_Server.Services
                 var studetId = Students.FirstOrDefault(o => o.Student_Code == Studentcode).Id;
                 
                 DateTime dateTime = DateTime.Now;
+
                 long dataLong = ConvertLong.ConvertDateTimeToLong(dateTime);
 
                 Exam_Room_Student ERStudent = new Exam_Room_Student();
@@ -232,7 +311,7 @@ namespace Blazor_Server.Services
 
             return resultDictionary;
         }
-
+        #endregion
 
     }
 }

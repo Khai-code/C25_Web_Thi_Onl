@@ -480,46 +480,46 @@ namespace Blazor_Server.Services
             return user.Avatar;
         }
 
-        public async Task<Dictionary<string, List<DetailedStudentScore>>> GetStudentDetailedScoresByTermSplit(int userId)
-        {
-            var allScores = await GetAllScore();
-            var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
-            var pointTypes = await GetAllPointTypes();
-            var summaries = await GetAllSummaries();
-            var subjects = await GetAllSubjects();
+        //public async Task<Dictionary<string, List<DetailedStudentScore>>> GetStudentDetailedScoresByTermSplit(int userId)
+        //{
+        //    var allScores = await GetAllScore();
+        //    var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+        //    var pointTypes = await GetAllPointTypes();
+        //    var summaries = await GetAllSummaries();
+        //    var subjects = await GetAllSubjects();
 
-            var student = allStudents.FirstOrDefault(s => s.User_Id == userId);
-            if (student == null) return new();
+        //    var student = allStudents.FirstOrDefault(s => s.User_Id == userId);
+        //    if (student == null) return new();
 
-            var scores = allScores.Where(s => s.Student_Id == student.Id).ToList();
-            var pointTypeDict = pointTypes.ToDictionary(p => p.Id, p => p);
-            var subjectDict = subjects.ToDictionary(s => s.Id, s => s.Subject_Name);
-            var summaryDict = summaries.ToDictionary(s => s.Id, s => s.Summary_Name);
+        //    var scores = allScores.Where(s => s.Student_Id == student.Id).ToList();
+        //    var pointTypeDict = pointTypes.ToDictionary(p => p.Id, p => p);
+        //    var subjectDict = subjects.ToDictionary(s => s.Id, s => s.Subject_Name);
+        //    var summaryDict = summaries.ToDictionary(s => s.Id, s => s.Summary_Name);
 
-            var result = new Dictionary<string, List<DetailedStudentScore>>
-            {
-                ["Kỳ 1"] = new(),
-                ["Kỳ 2"] = new()
-            };
+        //    var result = new Dictionary<string, List<DetailedStudentScore>>
+        //    {
+        //        ["Kỳ 1"] = new(),
+        //        ["Kỳ 2"] = new()
+        //    };
 
-            foreach (var score in scores)
-            {
-                if (!pointTypeDict.ContainsKey(score.Point_Type_Id)) continue;
-                var pt = pointTypeDict[score.Point_Type_Id];
-                var term = summaryDict.GetValueOrDefault(pt.Summary_Id) ?? "Không xác định";
-                var termName = term.Contains("1") ? "Kỳ 1" : "Kỳ 2";
+        //    foreach (var score in scores)
+        //    {
+        //        if (!pointTypeDict.ContainsKey(score.Point_Type_Id)) continue;
+        //        var pt = pointTypeDict[score.Point_Type_Id];
+        //        var term = summaryDict.GetValueOrDefault(pt.Summary_Id) ?? "Không xác định";
+        //        var termName = term.Contains("1") ? "Kỳ 1" : "Kỳ 2";
 
-                result[termName].Add(new DetailedStudentScore
-                {
-                    SubjectName = subjectDict.GetValueOrDefault(score.Subject_Id, "???"),
-                    PointTypeName = pt.Point_Type_Name,
-                    Point = score.Point,
-                    Semester_Name = termName
-                });
-            }
+        //        result[termName].Add(new DetailedStudentScore
+        //        {
+        //            SubjectName = subjectDict.GetValueOrDefault(score.Subject_Id, "???"),
+        //            PointTypeName = pt.Point_Type_Name,
+        //            Point = score.Point,
+        //            Semester_Name = termName
+        //        });
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
 
     }

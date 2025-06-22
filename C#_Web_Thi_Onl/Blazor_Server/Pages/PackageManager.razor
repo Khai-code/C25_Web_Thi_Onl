@@ -208,7 +208,8 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <label for="pointType" class="block font-medium mb-1">Loại bài thi</label>
-                                        <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Point_Type_Id">
+                                        <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2"
+                                        @onchange="OnPointTypeChanged">
                                             <option value="">-- Chọn gói loại --</option>
                                             @foreach (var point in pointTypeViewModels)
                                             {
@@ -259,32 +260,13 @@
                                 </button>
                             </form>
                         </div>
-
-                        <!-- Danh sách câu hỏi bên phải -->
-                        <div class="w-1/3 bg-gray-50 border border-gray-200 rounded-lg p-4 overflow-y-auto max-h-[700px]">
-                            <h3 class="text-lg font-semibold text-green-600 mb-3 text-center">Danh sách câu hỏi</h3>
-                            @* @if (questionListViewModels != null && questionListViewModels.Any())
-                            {
-                                <ul class="space-y-2">
-                                    @foreach (var q in questionListViewModels)
-                                    {
-                                        <li class="bg-white p-3 rounded-lg shadow text-sm border border-gray-200">
-                                            <span class="font-medium">Câu hỏi:</span> @q.Question_Text
-                                        </li>
-                                    }
-                                </ul>
-                            }
-                            else
-                            {
-                                <p class="text-gray-500 text-sm text-center">Chưa có câu hỏi nào.</p>
-                            } *@
-                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
     }
+
 </div>
 
 <!--Model thêm câu hỏi tự luân  -->
@@ -407,6 +389,7 @@
 }
 
 
+<!--Model thêm câu hỏi trắc nghiệm  -->
 @if (IsAddExamModalQuesMultipleChoice)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
@@ -416,16 +399,14 @@
                     <h5 class="modal-title">Thêm Câu Hỏi</h5>
                 </div>
                 <div class="modal-body">
-                    <!-- Nội dung form -->
                     <form>
                         <div class="mb-3">
                             <label for="questionName" class="form-label">Nội dung câu hỏi</label>
-                            <input class="form-control" id="questionName" type="text" placeholder="Số điểm cho câu hỏi" @bind="questionAnswers.question.Question_Name" />
+                            <input class="form-control" id="questionName" type="text" placeholder="Nhập nội dung câu hỏi" />
                         </div>
-
                         <div class="mb-3">
                             <label class="form-label">Loại câu hỏi</label>
-                            <select class="form-control" @bind="questionAnswers.question.Question_Type_Id">
+                            <select class="form-control" @bind="SelectedQuestionTypeId">
                                 <option value="">-- Chọn Loại câu hỏi --</option>
                                 @foreach (var qt in questionTypeViewModels)
                                 {
@@ -444,11 +425,112 @@
                                 }
                             </select>
                         </div>
+                        @if (this.CheckType == 1)
+                        {
+                            <!-- Đáp án Đúng/Sai -->
+                            <div class="mb-3 border rounded p-3">
+                                <label class="form-label"><strong>Đáp án Đúng/Sai (chỉ chọn 1):</strong></label>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="tfanswer" />
+                                    </span>
+                                    <input class="form-control" type="text" value="Đúng" readonly />
+                                </div>
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">
+                                        <input type="radio" name="tfanswer" />
+                                    </span>
+                                    <input class="form-control" type="text" value="Sai" readonly />
+                                </div>
+                            </div>
+                        }
+                        else if (this.CheckType == 2)
+                        {
+                            <!-- Đáp án Một đáp án đúng -->
+                            <div class="mb-3 border rounded p-3">
+                                <label class="form-label"><strong>Đáp án Một đáp án đúng (chỉ chọn 1):</strong></label>
 
+                                <!-- Container chứa các đáp án -->
+                                <div id="single-answer-container">
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="radio" name="singleanswer" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 1" />
+                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="radio" name="singleanswer" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 2" />
+                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="radio" name="singleanswer" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 3" />
+                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="radio" name="singleanswer" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 4" />
+                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
+                                    </div>
+                                </div>
+
+                                <!-- Nút thêm đáp án -->
+                                <button type="button" class="btn btn-primary mt-2" onclick="addSingleAnswer()">Thêm đáp án</button>
+                            </div>
+                        }
+                        else if (this.CheckType == 3)
+                        {
+                            <div class="mb-3 border rounded p-3">
+                                <label class="form-label"><strong>Đáp án Nhiều đáp án đúng (chọn nhiều):</strong></label>
+
+                                <!-- Container chứa các đáp án -->
+                                <div id="answer-container">
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="checkbox" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 1" />
+                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="checkbox" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 2" />
+                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="checkbox" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 3" />
+                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
+                                    </div>
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="checkbox" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 4" />
+                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
+                                    </div>
+                                </div>
+
+                                <!-- Nút thêm đáp án -->
+                                <button type="button" class="btn btn-primary mt-2" onclick="addAnswer()">Thêm đáp án</button>
+                            </div>
+                        }
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-success" >
+                    <button class="btn btn-success">
                         <i class="bi bi-save"></i> Lưu
                     </button>
                     <button class="btn btn-secondary" @onclick="CloseModal">
@@ -460,6 +542,7 @@
     </div>
 }
 
+
 @code {
     private bool IsAddExamModalOpen = false;
     private bool IsAddExamModalQuesEssay = false;
@@ -468,6 +551,8 @@
     public int packageTypeId { get; set; }
     public int ClassId { get; set; }
     public int SubjectId { get; set; }
+    public int CheckType { get; set; }
+    public int time { get; set; } = 0;
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -494,8 +579,26 @@
     public DateTime Create_Time = DateTime.Now;
     private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
 
-    public DateTime Start_Time = DateTime.Now;
-    public DateTime End_Time = DateTime.Now;
+    public DateTime Start_Time { get; set; } = DateTime.Now;
+    public DateTime Start_Times
+    {
+        get => Start_Time;
+        set
+        {
+            Start_Time = value;
+            CheckDuration();
+        }
+    }
+    public DateTime End_Time { get; set; } = DateTime.Now.AddMinutes(15);
+    public DateTime End_Times
+    {
+        get => End_Time;
+        set
+        {
+            End_Time = value;
+            CheckDuration();
+        }
+    }
     public string PackageName = null;
 
     public List<int> selectedQuestionIds = new List<int>();
@@ -514,6 +617,11 @@
         await QuestionlevelViewModel();
     }
 
+    protected override void OnInitialized()
+    {
+        SelectedQuestionTypeId = questionAnswers.question.Question_Type_Id;
+    }
+
     public async Task SaveListQuestions(List<int> quesId)
     {
         try
@@ -526,6 +634,80 @@
         catch (Exception ex)
         {
             toastService.ShowError("Lỗi: " + ex);
+        }
+    }
+
+    private int selectedQuestionTypeId;
+    public int SelectedQuestionTypeId
+    {
+        get => selectedQuestionTypeId;
+        set
+        {
+            if (selectedQuestionTypeId != value)
+            {
+                selectedQuestionTypeId = value;
+                questionAnswers.question.Question_Type_Id = value; // đồng bộ lại model
+                CheckquestionType(value); // Gọi hàm
+            }
+        }
+    }
+
+    private void OnPointTypeChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int selectedPointTypeId))
+        {
+            packageTestADO.Package.Point_Type_Id = selectedPointTypeId;
+
+            if (selectedPointTypeId == 1 && selectedPointTypeId == 2)
+            {
+                this.time = 900;
+            }
+            else if (selectedPointTypeId == 3)
+            {
+                this.time = 2700;
+            }
+            else if (selectedPointTypeId == 4 && selectedPointTypeId == 5)
+            {
+                this.time = 5400;
+            }
+            else
+            {
+                this.time = 0;
+            }
+        }
+        else
+        {
+            packageTestADO.Package.Point_Type_Id = 0; // hoặc giá trị mặc định
+            time = 0;
+        }
+    }
+
+    private void CheckDuration()
+    {
+        int seconds = (int)(End_Time - Start_Time).TotalSeconds;
+
+        if (time > 0 && seconds != time)
+            toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time/60} phút ({time} giây)");
+    }
+
+    private async Task OnQuestionTypeChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        if (int.TryParse(value, out int questionTypeId))
+        {
+            CheckquestionType(questionTypeId);
+        }
+    }
+
+    private void CheckquestionType(int questioTypeId)
+    {
+        try
+        {
+            this.CheckType = questioTypeId;
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowWarning("Không tìm loại câu hỏi");
         }
     }
 
@@ -621,7 +803,7 @@
     {
         try
         {
-            questionAnswers.question.Package_Id = this.packageTypeId;
+            questionAnswers.question.Package_Id = this.packageId;
             var Addquestion = await pm.CreateQuestionTL(questionAnswers);
             if (Addquestion == true)
             {

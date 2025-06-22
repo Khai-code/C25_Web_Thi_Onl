@@ -14,6 +14,7 @@
 @inject ProtectedSessionStorage sessionstorage
 @inject IJSRuntime jsruntime
 @inject ScoreServices ScoreService
+@inject Blazored.Toast.Services.IToastService toastService
 
 <div class="login-wrapper d-flex justify-content-center align-items-center min-vh-100 bg-light">
     <div class="login-container bg-white p-4 rounded-3 shadow-lg" style="max-width: 400px; width: 100%">
@@ -75,19 +76,17 @@
 
                 if (check)
                 {
-                    await loginpackge.PostERStudent(packagecodeint, studentcode);
-                    checktime = await loginpackge.GetRemainingExamTime(studentcode, packagecodeint);
-                    await sessionstorage.SetAsync("thoigian", checktime);
+                    await sessionstorage.SetAsync("thoigian", loginpackge.secondsLeft);
                     navigation.NavigateTo("/Test");
                 }
                 else
                 {
-                    await jsruntime.InvokeVoidAsync("alert", "Mã dự thi không hợp lệ hoặc đã hết hạn.");
+                    toastService.ShowError("Đăng nhập bài thi thất bại"); ;
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Lỗi: {ex.Message}");
+                toastService.ShowError("Lỗi: " + ex);
             }
         }
         else
