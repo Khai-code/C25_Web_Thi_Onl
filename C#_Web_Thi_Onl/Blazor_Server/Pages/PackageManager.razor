@@ -658,7 +658,7 @@
         {
             packageTestADO.Package.Point_Type_Id = selectedPointTypeId;
 
-            if (selectedPointTypeId == 1 && selectedPointTypeId == 2)
+            if (selectedPointTypeId == 1 || selectedPointTypeId == 2)
             {
                 this.time = 900;
             }
@@ -666,7 +666,7 @@
             {
                 this.time = 2700;
             }
-            else if (selectedPointTypeId == 4 && selectedPointTypeId == 5)
+            else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
             {
                 this.time = 5400;
             }
@@ -677,7 +677,7 @@
         }
         else
         {
-            packageTestADO.Package.Point_Type_Id = 0; // hoặc giá trị mặc định
+            packageTestADO.Package.Point_Type_Id = 0;
             time = 0;
         }
     }
