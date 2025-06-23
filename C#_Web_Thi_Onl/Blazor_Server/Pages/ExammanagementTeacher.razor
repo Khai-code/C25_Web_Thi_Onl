@@ -360,6 +360,8 @@
           
             await exammanagement.AddExam(exam);
             toastService.ShowSuccess("Tạo bài thi thành công");
+            NewExamName = string.Empty;
+            subjectId = 0;
             exams = await exammanagement.GetallExam();
             IsAddExamModalOpen = false;
             
