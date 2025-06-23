@@ -17,7 +17,7 @@
                 <h4 class="mb-0">📋 Thông tin tìm kiếm</h4>
             </div>
             <div class="card-body">
-                @* <EditForm Model="@formModel" OnValidSubmit="@HandleSubmit">
+                <EditForm Model="@formModel" OnValidSubmit="@HandleSubmit">
                     <DataAnnotationsValidator />
                     <ValidationSummary class="text-danger mb-3" />
                     <div class="d-flex flex-wrap align-items-end gap-3">
@@ -35,7 +35,7 @@
                             </button>
                         </div>
                     </div>
-                </EditForm> *@
+                </EditForm>
             </div>
         </div>
     </div>
@@ -66,9 +66,9 @@
 
                         @if (isEditing)
                         {
-                            @* <button class="btn btn-primary" @onclick="SaveChanges">
+                            <button class="btn btn-primary" @onclick="SaveChanges">
                                 💾 Lưu chỉnh sửa
-                            </button> *@
+                            </button>
                             <button class="btn btn-danger" @onclick="DisableEdit">
                                 ❌ Thoát
                             </button>
@@ -145,9 +145,9 @@
                                         <div class="col-md-6">
                                             <strong>Câu trả lời:</strong> @ans.Answers_Name
                                         </div>
-                                        @* <div class="col-md-3">
+                                        <div class="col-md-3">
                                             <strong>Điểm:</strong> @ans.Points_Earned
-                                        </div> *@
+                                        </div>
                                         <div class="col-md-3">
                                             <strong>Nhận xét:</strong> @q.Note
                                         </div>
@@ -194,36 +194,36 @@
     private bool isEditing = false;
     private PhucKhaoFormModel formModel = new();
     private List<Review> reviews = new();
-    // private async Task HandleSubmit()
-    // {
-    //     isLoading = true;
-    //     try
-    //     {
-    //         reviews = await review.SeacherReview(formModel.StudentCode, formModel.ExamCode);
-    //         foreach (var item in reviews)
-    //         {
-    //             double scoreDouble = Convert.ToDouble(item.Score);
-    //             TotalScore = (long?)scoreDouble; 
-    //         }
-    //         if (reviews == null || reviews.Count == 0)
-    //         {
-    //             await infor.ShowSweetAlert("Không tìm thấy kết quả cho mã học sinh và mã bài thi này.", "error");
-    //             showResult = false;
-    //         }
-    //         else
-    //         {
-    //             showResult = true;
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         await infor.ShowSweetAlert($"Đã xảy ra lỗi: {ex.Message}");
-    //     }
-    //     finally
-    //     {
-    //         isLoading = false;
-    //     }
-    // }
+    private async Task HandleSubmit()
+    {
+        isLoading = true;
+        try
+        {
+            reviews = await review.SeacherReview(formModel.StudentCode, formModel.ExamCode);
+            foreach (var item in reviews)
+            {
+                double scoreDouble = Convert.ToDouble(item.Score);
+                TotalScore = (long?)scoreDouble; 
+            }
+            if (reviews == null || reviews.Count == 0)
+            {
+                await infor.ShowSweetAlert("Không tìm thấy kết quả cho mã học sinh và mã bài thi này.", "error");
+                showResult = false;
+            }
+            else
+            {
+                showResult = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            await infor.ShowSweetAlert($"Đã xảy ra lỗi: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
 
     private void EnableEdit()
     {
@@ -236,29 +236,29 @@
     }
     private int correct;
     private int idanwer;
-    // private async Task SaveChanges()
-    // {
-    //     try
-    //     {
-    //         foreach (var item in reviews)
-    //         {
-    //             foreach (var sa in item.answers)
-    //             {
-    //                 int status = sa.Right_Answer == 1 ? 1 : 0;
-    //                 await review.UpdateReview(sa.Id, status);
-    //             }
-    //             await historiesExam.updateExamHis(item.idtest,Convert.ToDouble(TotalScore));
-    //         }
+    private async Task SaveChanges()
+    {
+        try
+        {
+            foreach (var item in reviews)
+            {
+                foreach (var sa in item.answers)
+                {
+                    int status = sa.Right_Answer == 1 ? 1 : 0;
+                    await review.UpdateReview(sa.Id, status);
+                }
+                await historiesExam.updateExamHis(item.idtest,Convert.ToDouble(TotalScore));
+            }
 
-    //         await infor.ShowSweetAlert("Đã lưu thay đổi thành công!", "success");
-    //         isEditing = false;
-    //         await HandleSubmit();
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         await infor.ShowSweetAlert($"Lỗi khi lưu: {ex.Message}", "error");
-    //     }
-    // }
+            await infor.ShowSweetAlert("Đã lưu thay đổi thành công!", "success");
+            isEditing = false;
+            await HandleSubmit();
+        }
+        catch (Exception ex)
+        {
+            await infor.ShowSweetAlert($"Lỗi khi lưu: {ex.Message}", "error");
+        }
+    }
 
     private long? TotalScore = 0;
 
