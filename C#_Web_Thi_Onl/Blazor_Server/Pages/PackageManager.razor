@@ -430,18 +430,22 @@
                             <!-- Đáp án Đúng/Sai -->
                             <div class="mb-3 border rounded p-3">
                                 <label class="form-label"><strong>Đáp án Đúng/Sai (chỉ chọn 1):</strong></label>
-                                <div class="input-group mb-2">
+                                @foreach (var ans in lstAns)
+                                {
+                                    <div class="input-group mb-2">
                                     <span class="input-group-text">
-                                        <input type="radio" name="tfanswer" />
+                                        <input type="radio" name="tfanswer" @bind="ans.Right" />
                                     </span>
-                                    <input class="form-control" type="text" value="Đúng" readonly />
+                                    <input class="form-control" type="text" @bind="ans.Name"/>
                                 </div>
-                                <div class="input-group mb-2">
+                                }
+                                
+@*                                 <div class="input-group mb-2">
                                     <span class="input-group-text">
-                                        <input type="radio" name="tfanswer" />
+                                        <input type="radio" name="tfanswer" @bind="ans.Right" />
                                     </span>
-                                    <input class="form-control" type="text" value="Sai" readonly />
-                                </div>
+                                    <input class="form-control" type="text" value="Sai" @bind="ans.Name" />
+                                </div> *@
                             </div>
                         }
                         else if (this.CheckType == 2)
@@ -451,39 +455,49 @@
                                 <label class="form-label"><strong>Đáp án Một đáp án đúng (chỉ chọn 1):</strong></label>
 
                                 <!-- Container chứa các đáp án -->
-                                <div id="single-answer-container">
+                                @foreach (var ans in lstAns)
+                                {
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" />
+                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 1" />
+                                        <input class="form-control" type="text" placeholder="Đáp án 1" @bind="ans.Name" />
+                                        <button class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
+                                    </div>
+                                }
+                                @* <div id="single-answer-container">
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 1" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
                                     </div>
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" />
+                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 2" />
+                                        <input class="form-control" type="text" placeholder="Đáp án 2" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
                                     </div>
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" />
+                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 3" />
+                                        <input class="form-control" type="text" placeholder="Đáp án 3" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
                                     </div>
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" />
+                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 4" />
+                                        <input class="form-control" type="text" placeholder="Đáp án 4" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
                                     </div>
-                                </div>
+                                </div> *@
 
                                 <!-- Nút thêm đáp án -->
-                                <button type="button" class="btn btn-primary mt-2" onclick="addSingleAnswer()">Thêm đáp án</button>
+                                <button type="button" class="btn btn-primary mt-2" @onclick="AddAnswer">Thêm đáp án</button>
                             </div>
                         }
                         else if (this.CheckType == 3)
@@ -492,39 +506,43 @@
                                 <label class="form-label"><strong>Đáp án Nhiều đáp án đúng (chọn nhiều):</strong></label>
 
                                 <!-- Container chứa các đáp án -->
-                                <div id="answer-container">
+                                @foreach (var ans in lstAns)
+                                {
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="checkbox" />
+                                            <input type="checkbox" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 1" />
+                                        <input class="form-control" type="text" placeholder="Đáp án" @bind="ans.Name" />
+                                        <button class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
+                                    </div>
+                                }
+                                @* <div id="answer-container">
+                                    
+                                    <div class="input-group mb-2">
+                                        <span class="input-group-text">
+                                            <input type="checkbox" @bind="ans.Right" />
+                                        </span>
+                                        <input class="form-control" type="text" placeholder="Đáp án 2" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
                                     </div>
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="checkbox" />
+                                            <input type="checkbox" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 2" />
+                                        <input class="form-control" type="text" placeholder="Đáp án 3" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
                                     </div>
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="checkbox" />
+                                            <input type="checkbox" @bind="ans.Right" />
                                         </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 3" />
+                                        <input class="form-control" type="text" placeholder="Đáp án 4" @bind="ans.Name" />
                                         <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
                                     </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="checkbox" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 4" />
-                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
-                                    </div>
-                                </div>
+                                </div> *@
 
                                 <!-- Nút thêm đáp án -->
-                                <button type="button" class="btn btn-primary mt-2" onclick="addAnswer()">Thêm đáp án</button>
+                                <button type="button" class="btn btn-primary mt-2" @onclick="AddAnswer">Thêm đáp án</button>
                             </div>
                         }
                     </form>
@@ -561,7 +579,7 @@
             Package = new Data_Base.Models.P.Package(),
             Exam_Room_Teacher = new Exam_Room_Teacher()
         };
-    QuestionAnswers questionAnswers = new QuestionAnswers
+    QuestionAdo questionAnswers = new QuestionAdo
         {
             question = new Question()
         };
@@ -576,6 +594,8 @@
     List<QuestionlevelViewModel> questionlevelViewModel = new List<QuestionlevelViewModel>();
     List<QuestionTypeViewModel> questionTypeViewModels = new List<QuestionTypeViewModel>();
     List<HistDTO> histDTOs = new List<HistDTO>();
+    List<AnsAdo> lstAns = new List<AnsAdo>();
+    AnsAdo ans = new AnsAdo();
     public DateTime Create_Time = DateTime.Now;
     private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
 
@@ -619,7 +639,58 @@
 
     protected override void OnInitialized()
     {
-        SelectedQuestionTypeId = questionAnswers.question.Question_Type_Id;
+        try
+        {
+            SelectedQuestionTypeId = questionAnswers.question.Question_Type_Id;
+            AddAns();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+
+    }
+
+    public void AddAns()
+    {
+        try
+        {
+            int answerCount = 0;
+            switch (this.CheckType)
+            {
+                case 1:
+                    answerCount = 2;
+                    break;
+                case 2:
+                    answerCount = 4;
+                    break;
+                case 3:
+                    answerCount = 4;
+                    break;
+                default:
+                    answerCount = 0;
+                    break;
+            }
+
+            for (int i = 0; i < answerCount; i++)
+            {
+                lstAns.Add(new AnsAdo());
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
+
+    private void AddAnswer()
+    {
+        lstAns.Add(new AnsAdo());
+    }
+
+    private void RemoveAnswer(AnsAdo answer)
+    {
+        lstAns.Remove(answer);
     }
 
     public async Task SaveListQuestions(List<int> quesId)

@@ -7,6 +7,7 @@ using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
 using static Blazor_Server.Services.ExammanagementService;
+using static Blazor_Server.Services.HistoriesExam;
 using static Blazor_Server.Services.Package_Test_ERP;
 using static Blazor_Server.Services.Test;
 using Question = Data_Base.Models.Q.Question;
@@ -189,7 +190,7 @@ namespace Blazor_Server.Services
                 return null;
             }
         }
-        public async Task<bool> CreateQuestionTL(QuestionAnswers model)
+        public async Task<bool> CreateQuestionTL(QuestionAdo model)
         {
             try
             {
@@ -280,8 +281,50 @@ namespace Blazor_Server.Services
 
                     if (lstquestions != null && lstquestions.Count > 0)
                     {
-                        var questionCreate = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/PostList", lstquestions);
+                        await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/PostList", lstquestions);
                     }
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> CreatequesTN(QuestionAdo quesAdo, List<AnsAdo> ansAdo)
+        {
+            try
+            {
+                List<Data_Base.Models.A.Answers> lstAnswers = new List<Data_Base.Models.A.Answers>();
+                if (quesAdo != null && ansAdo != null)
+                {
+                    var questionCreate = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/Post", quesAdo.question);
+                    if (!questionCreate.IsSuccessStatusCode)
+                    {
+                        var errorContent = await questionCreate.Content.ReadAsStringAsync();
+                        Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                        Console.WriteLine(errorContent);
+                        return false;
+                    }
+
+                    var addQuestion = await questionCreate.Content.ReadFromJsonAsync<Data_Base.Models.Q.Question>();
+
+                    Data_Base.Models.A.Answers answers = new Data_Base.Models.A.Answers();
+                    foreach (var item in ansAdo)
+                    {
+                        answers.Answers_Name = item.Name;
+                        answers.Right_Answer = item.Right;
+                        answers.Question_Id = addQuestion.Id;
+
+                        lstAnswers.Add(answers);
+                    }
+
+                    if (lstAnswers == null && lstAnswers.Count <= 0)
+                        return false;
+
+                    await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/PostList", lstAnswers);
+
                 }
                 return true;
             }
@@ -320,6 +363,13 @@ namespace Blazor_Server.Services
             return questionLevel;
         }
 
+
+        public class AnsAdo
+        {
+            public string Name { get; set; }
+            public int Right { get; set; }
+        }
+
         public class HistDTO
         {
             public int PackageId { get; set; }
@@ -342,7 +392,7 @@ namespace Blazor_Server.Services
             public string AnswersName { get; set; }
             public double? Points_Earned { get; set; }
         }
-        public class QuestionAnswers
+        public class QuestionAdo
         {
             public Data_Base.Models.Q.Question question { get; set; }
         }

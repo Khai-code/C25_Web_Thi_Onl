@@ -25,7 +25,7 @@ builder.Services.AddScoped<Inforservice>();
 builder.Services.AddScoped<ExammanagementService>();
 builder.Services.AddScoped<Package_Test_ERP>();
 builder.Services.AddScoped<LoginPackge>();
-builder.Services.AddScoped<ClassServices>();
+//builder.Services.AddScoped<ClassServices>();
 builder.Services.AddScoped<CreateExam>();
 builder.Services.AddScoped<ExamService>();
 builder.Services.AddScoped<Inforservice>();
