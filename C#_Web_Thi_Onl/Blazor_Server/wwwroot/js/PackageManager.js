@@ -9,9 +9,9 @@ function addAnswer() {
 
     newAnswer.innerHTML = `
             <span class="input-group-text">
-                <input type="checkbox" />
+                <input type="checkbox" @bind="ans.Right"/>
             </span>
-            <input class="form-control" type="text" placeholder="Đáp án ${answerCount}" />
+            <input class="form-control" type="text" placeholder="Đáp án ${answerCount}" @bind="ans.Name/>
             <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
         `;
 
@@ -37,9 +37,9 @@ function addSingleAnswer() {
 
     newAnswer.innerHTML = `
             <span class="input-group-text">
-                <input type="radio" name="singleanswer" />
+                <input type="radio" name="singleanswer" @bind="ans.Right"/>
             </span>
-            <input class="form-control" type="text" placeholder="Đáp án ${singleAnswerCount}" />
+            <input class="form-control" type="text" placeholder="Đáp án ${singleAnswerCount}" @bind="ans.Name/>
             <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
         `;
 
