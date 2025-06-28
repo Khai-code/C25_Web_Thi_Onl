@@ -109,9 +109,9 @@
                             <button class="btn btn-danger btn-sm" @onclick="ConfirmDeleteClass">
                                 <i class="bi bi-trash"></i> Xoá lớp
                             </button>
-                            @* <button class="btn btn-info btn-sm" @onclick="OpenSummaryModal">
+                            <button class="btn btn-info btn-sm" @onclick="OpenSummaryModal">
                                 <i class="bi bi-journal-text"></i> Xem bảng điểm tổng kết
-                            </button> *@
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -169,9 +169,9 @@
                                                 <button class="btn btn-outline-danger btn-sm" title="Xoá" @onclick:stopPropagation="true" @onclick="() => ConfirmDeleteStudent(student)">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
-                                                @* <button class="btn btn-outline-primary btn-sm" title="Xem bảng điểm" @onclick:stopPropagation="true" @onclick="() => ShowStudentSummary(student)">
+                                                <button class="btn btn-outline-primary btn-sm" title="Xem bảng điểm" @onclick:stopPropagation="true" @onclick="() => ShowStudentSummary(student)">
                                                     <i class="bi bi-clipboard-data"></i>
-                                                </button> *@
+                                                </button>
                                             </div>
                                         }
                                     </div>
@@ -207,9 +207,9 @@
                                 }
                                 @if (isAnnualSummary)
                                 {
-                                    @* <button class="btn btn-outline-secondary mt-3" @onclick="OpenStudentDetailScoreModal">
+                                    <button class="btn btn-outline-secondary mt-3" @onclick="OpenStudentDetailScoreModal">
                                         <i class="bi bi-list-ul"></i> Xem chi tiết điểm
-                                    </button> *@
+                                    </button>
                                 }
 
                                 <table class="table table-bordered table-hover table-striped score-table">
@@ -483,10 +483,10 @@
                     <tbody>
                         @if (learningSummaryList != null && learningSummaryList.Any())
                         {
-                            @foreach (var (studentSummary, index) in learningSummaryList.Select((item, idx) => (item, idx)))
+                            @foreach (var (studentSummary, index) in pagedLearningSummaryList.Select((item, idx) => (item, idx)))
                             {
                                 <tr>
-                                    <td class="text-center">@((index + 1))</td>
+                                    <td class="text-center">@((currentPage - 1) * pageSize + index + 1)</td>
                                     <td>@(studentSummary.Student_Name ?? "[Không rõ]")</td>
                                     @foreach (var subject in summarySubjects)
                                     {
@@ -511,6 +511,9 @@
                 </table>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="PreviousPage" disabled="@(currentPage <= 1)">Trang trước</button>
+                <span>Trang @currentPage / @totalPages</span>
+                <button type="button" class="btn btn-secondary" @onclick="NextPage" disabled="@(currentPage >= totalPages)">Trang sau</button>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
@@ -646,8 +649,47 @@
     private bool showStudentDetailModal = false;
     private bool isAnnualSummary = false;
 
+    private int currentPage = 1; // Trang hiện tại
+    private int pageSize = 10;  // Số học sinh mỗi trang
+    private int totalPages;     // Tổng số trang
+    private List<Learning_SummaryView> pagedLearningSummaryList; // Danh sách học sinh đã phân trang
 
+    private void UpdatePagedList()
+    {
+        if (learningSummaryList != null && learningSummaryList.Any())
+        {
+            totalPages = (int)Math.Ceiling(learningSummaryList.Count / (double)pageSize);
+            pagedLearningSummaryList = learningSummaryList
+                .Skip((currentPage - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+        }
+        else
+        {
+            totalPages = 0;
+            pagedLearningSummaryList = new List<Learning_SummaryView>();
+        }
+        StateHasChanged(); // Cập nhật giao diện sau khi thay đổi dữ liệu
+    }
 
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+            UpdatePagedList();
+        }
+    }
+
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+            UpdatePagedList();
+        }
+    }
+    
     private DateTime? ConvertLongToDateTime(long? dateLong)
     {
         if (!dateLong.HasValue || dateLong.Value < 19000101000000 || dateLong.Value > 20991231235959)
@@ -783,17 +825,17 @@
     }
 
 
-    // private async Task OnSummaryChange(ChangeEventArgs e)
-    // {
-    //     if (int.TryParse(e.Value?.ToString(), out var id))
-    //     {
-    //         selectedSummaryId = id;
-    //         if (selectedStudent != null)
-    //         {
-    //             await SelectStudent(selectedStudent); // Reload điểm theo kỳ
-    //         }
-    //     }
-    // }
+    private async Task OnSummaryChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var id))
+        {
+            selectedSummaryId = id;
+            if (selectedStudent != null)
+            {
+                await SelectStudent(selectedStudent); // Reload điểm theo kỳ
+            }
+        }
+    }
 
 
     private void FilterClasses()
@@ -1021,51 +1063,46 @@
         }
     }
 
-    // private async Task SelectStudent(User student)
-    // {
-    //     try
-    //     {
-    //         selectedStudent = student;
+    private async Task SelectStudent(User student)
+    {
+        try
+        {
+            selectedStudent = student;
 
-    //         // Lấy danh sách Student
-    //         var students = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
-    //         var studentEntity = students?.FirstOrDefault(s => s.User_Id == student.Id);
+            // Lấy danh sách Student
+            var students = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+            var studentEntity = students?.FirstOrDefault(s => s.User_Id == student.Id);
 
-    //         if (studentEntity == null)
-    //         {
-    //             errorMessage = "Không tìm thấy thông tin học sinh trong bảng Student.";
-    //             studentScores = new List<Score>();
-    //             return;
-    //         }
+            if (studentEntity == null)
+            {
+                errorMessage = "Không tìm thấy thông tin học sinh trong bảng Student.";
+                studentScores = new List<Score>();
+                return;
+            }
 
-    //         // Lấy danh sách điểm
-    //         var allScores = await ClassService.GetAllScore();
-    //         studentScores = allScores
-    //             .Where(s => s.Student_Id == studentEntity.Id)
-    //             .ToList();
-    //         subjectDict = await ClassService.GetSubjectDictionary();
-    //         pointTypeDict = await ClassService.GetPointTypeDictionary();
-    //         var allPointTypes = await ClassService.GetAllPointTypes();
-    //         var currentSummary = summaries.FirstOrDefault(s => s.Id == selectedSummaryId);
+            // Lấy danh sách điểm
+            var allScores = await ClassService.GetAllScore();
+            studentScores = allScores
+                .Where(s => s.Student_Id == studentEntity.Id)
+                .ToList();
+            subjectDict = await ClassService.GetSubjectDictionary();
+            pointTypeDict = await ClassService.GetPointTypeDictionary();
+            var allPointTypes = await ClassService.GetAllPointTypes();
+            var currentSummary = summaries.FirstOrDefault(s => s.Id == selectedSummaryId);
 
-    //         if (currentSummary != null && allPointTypes != null)
-    //         {
-    //             var filteredPointTypeIds = allPointTypes
-    //                 .Where(pt => pt.Summary_Id == currentSummary.Id)
-    //                 .Select(pt => pt.Id)
-    //                 .ToList();
+            if (currentSummary != null && allPointTypes != null)
+            {
+                studentScores = studentScores
+     .Where(s => s.Summary_Id == selectedSummaryId)
+     .ToList();
+            }
 
-    //             studentScores = studentScores
-    //                 .Where(s => filteredPointTypeIds.Contains(s.Point_Type_Id))
-    //                 .ToList();
-    //         }
-
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         errorMessage = $"Lỗi khi tải bảng điểm: {ex.Message}";
-    //     }
-    // }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi tải bảng điểm: {ex.Message}";
+        }
+    }
 
 
     // Phương thức để lấy đường dẫn ảnh đại diện của học sinh
@@ -1303,197 +1340,199 @@
             return new List<Score>();
         }
     }
-    // private async Task OpenSummaryModal()
-    // {
-    //     try
-    //     {
-    //         if (selectedClass == null)
-    //         {
-    //             errorMessage = "Vui lòng chọn lớp.";
-    //             return;
-    //         }
+    private async Task OpenSummaryModal()
+    {
+        try
+        {
+            if (selectedClass == null)
+            {
+                errorMessage = "Vui lòng chọn lớp.";
+                return;
+            }
 
-    //         var classId = selectedClass.Id;
-    //         classNameForSummary = selectedClass.Class_Name;
+            var classId = selectedClass.Id;
+            classNameForSummary = selectedClass.Class_Name;
 
-    //         var currentSummary = await summaryService.GetCurrentSummary();
-    //         var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
-    //         await summaryService.SaveCalculatedSummariesToDatabase(summaries);
+            var currentSummary = await summaryService.GetCurrentSummary();
+            var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
+            await summaryService.SaveCalculatedSummariesToDatabase(summaries);
 
-    //         if (currentSummary != null)
-    //         {
-    //             // ✅ Có kỳ học hiện tại → lọc theo kỳ đó
-    //             currentSummaryName = currentSummary.Summary_Name;
+            if (currentSummary != null)
+            {
+                // ✅ Có kỳ học hiện tại → lọc theo kỳ đó
+                currentSummaryName = currentSummary.Summary_Name;
 
-    //             summaries = summaries
-    //                 .Where(s => s.Summary_ID == currentSummary.Id)
-    //                 .ToList();
+                summaries = summaries
+                    .Where(s => s.Summary_ID == currentSummary.Id)
+                    .ToList();
 
-    //             if (summaries.Any())
-    //             {
-    //                 learningSummaryList = summaries
-    //                     .GroupBy(s => s.StudentId)
-    //                     .Select(g => new Learning_SummaryView
-    //                         {
-    //                             StudentId = g.Key,
-    //                             Student_Name = g.First().Student_Name,
-    //                             SubjectScores = g
-    //                                         .GroupBy(x => x.Subject_Name)
-    //                                         .ToDictionary(
-    //                                             s => s.Key,
-    //                                             s => s.Average(x => x.Point_Summary)
-    //                                         ),
-    //                             Summary_ID = g.First().Summary_ID,
-    //                             Term_Summary = g
-    //                                         .GroupBy(x => x.Subject_Name)
-    //                                         .Select(x => x.Average(y => y.Point_Summary))
-    //                                         .Average()
-    //                         })
-    //                     .OrderBy(x => x.Student_Name)
-    //                     .ToList();
+                if (summaries.Any())
+                {
+                    learningSummaryList = summaries
+                        .GroupBy(s => s.StudentId)
+                        .Select(g => new Learning_SummaryView
+                            {
+                                StudentId = g.Key,
+                                Student_Name = g.First().Student_Name,
+                                SubjectScores = g
+                                            .GroupBy(x => x.Subject_Name)
+                                            .ToDictionary(
+                                                s => s.Key,
+                                                s => s.Average(x => x.Point_Summary)
+                                            ),
+                                Summary_ID = g.First().Summary_ID,
+                                Term_Summary = g
+                                            .GroupBy(x => x.Subject_Name)
+                                            .Select(x => x.Average(y => y.Point_Summary))
+                                            .Average()
+                            })
+                        .OrderBy(x => x.Student_Name)
+                        .ToList();
 
-    //                 summarySubjects = learningSummaryList
-    //                     .SelectMany(s => s.SubjectScores.Keys)
-    //                     .Distinct()
-    //                     .ToList();
-    //             }
-    //             else
-    //             {
-    //                 learningSummaryList.Clear();
-    //                 summarySubjects.Clear();
-    //                 currentSummaryName = currentSummary.Summary_Name + " (Không có dữ liệu)";
-    //             }
-    //         }
-    //         else
-    //         {
-    //             var fullYear = await summaryService.GetAnnualAverageScores(classId);
-    //             currentSummaryName = "Tổng kết cả năm";
+                    summarySubjects = learningSummaryList
+                        .SelectMany(s => s.SubjectScores.Keys)
+                        .Distinct()
+                        .ToList();
+                }
+                else
+                {
+                    learningSummaryList.Clear();
+                    summarySubjects.Clear();
+                    currentSummaryName = currentSummary.Summary_Name + " (Không có dữ liệu)";
+                }
+            }
+            else
+            {
+                var fullYear = await summaryService.GetAnnualAverageScores(classId);
+                currentSummaryName = "Tổng kết cả năm";
 
-    //             learningSummaryList = fullYear
-    //                 .GroupBy(s => s.StudentId)
-    //                 .Select(g => new Learning_SummaryView
-    //                     {
-    //                         StudentId = g.Key,
-    //                         Student_Name = g.First().Student_Name,
-    //                         SubjectScores = g.ToDictionary(
-    //                                     s => s.Subject_Name,
-    //                                     s => s.Point_Summary
-    //                                 ),
-    //                         Term_Summary = g.Average(s => s.Point_Summary)
-    //                     })
-    //                 .OrderBy(x => x.Student_Name)
-    //                 .ToList();
+                learningSummaryList = fullYear
+                    .GroupBy(s => s.StudentId)
+                    .Select(g => new Learning_SummaryView
+                        {
+                            StudentId = g.Key,
+                            Student_Name = g.First().Student_Name,
+                            SubjectScores = g.ToDictionary(
+                                        s => s.Subject_Name,
+                                        s => s.Point_Summary
+                                    ),
+                            Term_Summary = g.Average(s => s.Point_Summary)
+                        })
+                    .OrderBy(x => x.Student_Name)
+                    .ToList();
 
-    //             summarySubjects = learningSummaryList
-    //                 .SelectMany(s => s.SubjectScores.Keys)
-    //                 .Distinct()
-    //                 .ToList();
-    //         }
+                summarySubjects = learningSummaryList
+                    .SelectMany(s => s.SubjectScores.Keys)
+                    .Distinct()
+                    .ToList();
+            }
 
-    //         await jsRuntime.InvokeVoidAsync("bootstrapModal.show", "#summaryModal");
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         errorMessage = $"Lỗi khi hiển thị tổng kết: {ex.Message}";
-    //     }
-    // }
+            currentPage = 1; // Đặt lại về trang đầu tiên
+            UpdatePagedList();
+            await jsRuntime.InvokeVoidAsync("bootstrapModal.show", "#summaryModal");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi hiển thị tổng kết: {ex.Message}";
+        }
+    }
 
-    // private async Task ShowStudentSummary(User student)
-    // {
-    //     try
-    //     {
-    //         selectedStudent = student;
+    private async Task ShowStudentSummary(User student)
+    {
+        try
+        {
+            selectedStudent = student;
 
-    //         var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
-    //         var studentEntity = allStudents?.FirstOrDefault(s => s.User_Id == student.Id);
+            var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+            var studentEntity = allStudents?.FirstOrDefault(s => s.User_Id == student.Id);
 
-    //         if (studentEntity == null)
-    //         {
-    //             errorMessage = "Không tìm thấy học sinh.";
-    //             return;
-    //         }
+            if (studentEntity == null)
+            {
+                errorMessage = "Không tìm thấy học sinh.";
+                return;
+            }
 
-    //         var summary = await summaryService.GetCurrentSummary();
-    //         var classId = selectedClass?.Id ?? 0;
+            var summary = await summaryService.GetCurrentSummary();
+            var classId = selectedClass?.Id ?? 0;
 
-    //         if (summary != null)
-    //         {
-    //             isAnnualSummary = false;
-    //             currentSummaryName = summary.Summary_Name;
-    //             // ✅ Có kỳ hiện tại → hiển thị bảng điểm theo kỳ
-    //             var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
+            if (summary != null)
+            {
+                isAnnualSummary = false;
+                currentSummaryName = summary.Summary_Name;
+                // ✅ Có kỳ hiện tại → hiển thị bảng điểm theo kỳ
+                var summaries = await summaryService.CalculateLearningSummaryOnly(classId);
 
-    //             var studentSummaries = summaries
-    //                 .Where(s => s.StudentId == studentEntity.Id && s.Summary_ID == summary.Id)
-    //                 .ToList();
+                var studentSummaries = summaries
+                    .Where(s => s.StudentId == studentEntity.Id && s.Summary_ID == summary.Id)
+                    .ToList();
 
-    //             if (studentSummaries.Any())
-    //             {
-    //                 learningSummaryList = new List<Learning_SummaryView>
-    //                 {
-    //                     new Learning_SummaryView
-    //                     {
-    //                         StudentId = studentEntity.Id,
-    //                         Student_Name = student.Full_Name,
-    //                         SubjectScores = studentSummaries.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
-    //                         Summary_ID = summary?.Id ?? 0,
-    //                         Term_Summary = studentSummaries.Average(x => x.Point_Summary)
-    //                     }
-    //                 };
+                if (studentSummaries.Any())
+                {
+                    learningSummaryList = new List<Learning_SummaryView>
+                    {
+                        new Learning_SummaryView
+                        {
+                            StudentId = studentEntity.Id,
+                            Student_Name = student.Full_Name,
+                            SubjectScores = studentSummaries.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
+                            Summary_ID = summary?.Id ?? 0,
+                            Term_Summary = studentSummaries.Average(x => x.Point_Summary)
+                        }
+                    };
 
-    //                 summarySubjects = learningSummaryList
-    //                     .SelectMany(s => s.SubjectScores.Keys)
-    //                     .Distinct()
-    //                     .ToList();
-    //             }
-    //             else
-    //             {
-    //                 learningSummaryList.Clear();
-    //                 summarySubjects.Clear();
-    //                 showStudentScoreMessageBox = true;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             isAnnualSummary = true;
-    //             currentSummaryName = "Tổng kết cả năm";
-    //             // ✅ Không có kỳ hiện tại → hiển thị tổng kết cả năm của học sinh đó
-    //             var all = await summaryService.GetAnnualAverageScores(classId);
+                    summarySubjects = learningSummaryList
+                        .SelectMany(s => s.SubjectScores.Keys)
+                        .Distinct()
+                        .ToList();
+                }
+                else
+                {
+                    learningSummaryList.Clear();
+                    summarySubjects.Clear();
+                    showStudentScoreMessageBox = true;
+                }
+            }
+            else
+            {
+                isAnnualSummary = true;
+                currentSummaryName = "Tổng kết cả năm";
+                // ✅ Không có kỳ hiện tại → hiển thị tổng kết cả năm của học sinh đó
+                var all = await summaryService.GetAnnualAverageScores(classId);
 
-    //             var studentData = all.Where(x => x.StudentId == studentEntity.Id).ToList();
+                var studentData = all.Where(x => x.StudentId == studentEntity.Id).ToList();
 
-    //             if (studentData.Any())
-    //             {
-    //                 learningSummaryList = new List<Learning_SummaryView>
-    //                 {
-    //                     new Learning_SummaryView
-    //                     {
-    //                         StudentId = studentEntity.Id,
-    //                         Student_Name = student.Full_Name,
-    //                         SubjectScores = studentData.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
-    //                         Summary_Name = "Tổng kết cả năm",
-    //                         Term_Summary = studentData.Average(x => x.Point_Summary)
-    //                     }
-    //                 };
+                if (studentData.Any())
+                {
+                    learningSummaryList = new List<Learning_SummaryView>
+                    {
+                        new Learning_SummaryView
+                        {
+                            StudentId = studentEntity.Id,
+                            Student_Name = student.Full_Name,
+                            SubjectScores = studentData.ToDictionary(x => x.Subject_Name, x => x.Point_Summary),
+                            Summary_Name = "Tổng kết cả năm",
+                            Term_Summary = studentData.Average(x => x.Point_Summary)
+                        }
+                    };
 
-    //                 summarySubjects = learningSummaryList
-    //                     .SelectMany(s => s.SubjectScores.Keys)
-    //                     .Distinct()
-    //                     .ToList();
-    //             }
-    //             else
-    //             {
-    //                 learningSummaryList.Clear();
-    //                 summarySubjects.Clear();
-    //                 showStudentScoreMessageBox = true;
-    //             }
-    //         }
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         errorMessage = $"Lỗi khi lấy bảng điểm học sinh: {ex.Message}";
-    //     }
-    // }
+                    summarySubjects = learningSummaryList
+                        .SelectMany(s => s.SubjectScores.Keys)
+                        .Distinct()
+                        .ToList();
+                }
+                else
+                {
+                    learningSummaryList.Clear();
+                    summarySubjects.Clear();
+                    showStudentScoreMessageBox = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi lấy bảng điểm học sinh: {ex.Message}";
+        }
+    }
 
     private async Task CloseStudentSummary()
     {
@@ -1512,13 +1551,13 @@
         await LoadClassStudents(); // Reload lại danh sách cho sạch
     }
 
-    // private async Task OpenStudentDetailScoreModal()
-    // {
-    //     if (selectedStudent == null) return;
+    private async Task OpenStudentDetailScoreModal()
+    {
+        if (selectedStudent == null) return;
 
-    //     splitTermScores = await ClassService.GetStudentDetailedScoresByTermSplit(selectedStudent.Id);
-    //     showStudentDetailModal = true;
-    // }
+        splitTermScores = await ClassService.GetStudentDetailedScoresByTermSplit(selectedStudent.Id);
+        showStudentDetailModal = true;
+    }
 
 
     private void CloseStudentDetailScoreModal()

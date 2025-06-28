@@ -125,73 +125,75 @@ namespace Blazor_Server.Services
             }
         }
 
-        //public async Task<List<Learning_SummaryView>> CalculateLearningSummaryOnly(int classId)
-        //{
-        //    var studentClass = await GetStudent_Classes(classId);
-        //    var studentIds = studentClass.Select(sc => sc.Student_Id).Distinct().ToList();
+        public async Task<List<Learning_SummaryView>> CalculateLearningSummaryOnly(int classId)
+        {
+            var studentClass = await GetStudent_Classes(classId);
+            var studentIds = studentClass.Select(sc => sc.Student_Id).Distinct().ToList();
 
-        //    var scores = await GetScoresByStudent(studentIds);
-        //    var pointTypes = await GetPoint_Types();
-        //    var students = await GetStudents();
-        //    var subjects = await GetSubjects();
-        //    var users = await GetUsers();
+            var scores = await GetScoresByStudent(studentIds); // Lấy toàn bộ điểm các học sinh trong lớp
+            var pointTypes = await GetPoint_Types(); // Lấy 5 loại điểm
+            var students = await GetStudents();
+            var subjects = await GetSubjects();
+            var users = await GetUsers();
 
-        //    var allPointTypes = await GetPoint_Types();
-        //    var currentSummary = await GetCurrentSummary();
+            var currentSummary = await GetCurrentSummary();
 
-        //    var pointTypess = allPointTypes
-        //        .Where(p => p.Summary_Id == currentSummary?.Id)
-        //        .ToList();
+            if (currentSummary == null)
+                return new List<Learning_SummaryView>();
 
-        //    var pointTypeMap = pointTypess.ToDictionary(p => p.Point_Type_Name, p => p.Id);
-        //    var result = new List<Learning_SummaryView>();
+            // 5 loại điểm
+            var pointTypeMap = pointTypes.ToDictionary(p => p.Point_Type_Name, p => p.Id);
 
-        //    foreach (var studentId in studentIds)
-        //    {
-        //        var studentScore = scores.Where(s => s.Student_Id == studentId).ToList();
-        //        var groupBySubject = studentScore.GroupBy(s => s.Subject_Id);
+            var result = new List<Learning_SummaryView>();
 
-        //        foreach (var group in groupBySubject)
-        //        {
-        //            var subjectId = group.Key;
-        //            var scoreBySubject = group.ToList();
+            foreach (var studentId in studentIds)
+            {
+                // Chỉ lấy điểm thuộc đúng kỳ hiện tại
+                var studentScore = scores.Where(s => s.Student_Id == studentId && s.Summary_Id == currentSummary.Id).ToList();
+                var groupBySubject = studentScore.GroupBy(s => s.Subject_Id);
 
-        //            double avg(string name) =>
-        //                pointTypeMap.ContainsKey(name) ?
-        //                scoreBySubject.Where(s => s.Point_Type_Id == pointTypeMap[name]).Select(s => s.Point).DefaultIfEmpty(0).Average() : 0;
+                foreach (var group in groupBySubject)
+                {
+                    var subjectId = group.Key;
+                    var scoreBySubject = group.ToList();
 
-        //            double attendance = avg("Attendance");
-        //            double p15 = avg("Point_15");
-        //            double p45 = avg("Point_45");
-        //            double mid = avg("Point_Midterm");
-        //            double final = avg("Point_Final");
-        //            double summary = (attendance + p15 + p45 + mid + final) / 10;
+                    double avg(string name) =>
+                        pointTypeMap.ContainsKey(name) ?
+                        scoreBySubject.Where(s => s.Point_Type_Id == pointTypeMap[name]).Select(s => s.Point).DefaultIfEmpty(0).Average() : 0;
 
-        //            var student = students.FirstOrDefault(s => s.Id == studentId);
-        //            var user = users.FirstOrDefault(u => u.Id == student?.User_Id);
-        //            var subject = subjects.FirstOrDefault(s => s.Id == subjectId);
+                    double attendance = avg("Attendance");
+                    double p15 = avg("Point_15");
+                    double p45 = avg("Point_45");
+                    double mid = avg("Point_Midterm");
+                    double final = avg("Point_Final");
+                    double summary = (attendance + p15 + p45 + mid + final) / 10;
 
-        //            result.Add(new Learning_SummaryView
-        //            {
-        //                StudentId = studentId,
-        //                SubjectId = subjectId,
-        //                ClassId = classId,
-        //                Student_Name = user?.Full_Name ?? "[Không rõ]",
-        //                Subject_Name = subject?.Subject_Name,
-        //                Attendance = attendance,
-        //                Point_15 = p15,
-        //                Point_45 = p45,
-        //                Point_Midterm = mid,
-        //                Point_Final = final,
-        //                Point_Summary = summary,
-        //                Summary_ID = currentSummary?.Id ?? 0,
-        //                Summary_Name = currentSummary?.Summary_Name ?? ""
-        //            });
-        //        }
-        //    }
+                    var student = students.FirstOrDefault(s => s.Id == studentId);
+                    var user = users.FirstOrDefault(u => u.Id == student?.User_Id);
+                    var subject = subjects.FirstOrDefault(s => s.Id == subjectId);
 
-        //    return result;
-        //}
+                    result.Add(new Learning_SummaryView
+                    {
+                        StudentId = studentId,
+                        SubjectId = subjectId,
+                        ClassId = classId,
+                        Student_Name = user?.Full_Name ?? "[Không rõ]",
+                        Subject_Name = subject?.Subject_Name,
+                        Attendance = attendance,
+                        Point_15 = p15,
+                        Point_45 = p45,
+                        Point_Midterm = mid,
+                        Point_Final = final,
+                        Point_Summary = summary,
+                        Summary_ID = currentSummary.Id,
+                        Summary_Name = currentSummary.Summary_Name
+                    });
+                }
+            }
+
+            return result;
+        }
+
 
         // ✅ Hàm lưu vào DB nếu chưa có, cập nhật nếu đã tồn tại
         public async Task SaveCalculatedSummariesToDatabase(List<Learning_SummaryView> summaries)

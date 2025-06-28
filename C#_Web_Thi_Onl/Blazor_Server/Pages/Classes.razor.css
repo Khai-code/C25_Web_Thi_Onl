@@ -225,3 +225,10 @@ input:disabled {
     overflow: hidden;
     transition: all 0.4s ease-in-out;
 }
+.modal {
+    position: fixed; /* Giữ modal cố định trên màn hình */
+    top: 50%; /* Đặt đỉnh của modal ở giữa theo chiều dọc */
+    left: 50%; /* Đặt cạnh trái của modal ở giữa theo chiều ngang */
+    transform: translate(-50%, -50%); /* Dịch chuyển modal để căn giữa chính xác */
+    height: auto; /* Hoặc giá trị cụ thể tùy thiết kế */
+}
