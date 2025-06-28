@@ -36,7 +36,7 @@ namespace Blazor_Server.Services
             if (studentResponse.IsSuccessStatusCode)
                 return false;
 
-            var studentId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).FirstOrDefault().Id; 
+            var student = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault(); 
             #endregion
 
             #region Student_Class
@@ -44,7 +44,7 @@ namespace Blazor_Server.Services
             {
                 Filters = new Dictionary<string, string>
                     {
-                        { "Student_Id", studentId.ToString() }
+                        { "Student_Id", student.Id.ToString() }
                     },
             };
 
@@ -53,7 +53,7 @@ namespace Blazor_Server.Services
             if (lstStudentClass.IsSuccessStatusCode)
                 return false;
 
-            var studentClass_ClassId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).FirstOrDefault().Class_Id;
+            var studentClass_ClassId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).SingleOrDefault().Class_Id;
             #endregion
 
             #region Package
@@ -66,12 +66,12 @@ namespace Blazor_Server.Services
                     },
             };
 
-            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student_Class/common/get", filterPackage);
+            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/common/get", filterPackage);
 
             if (lstPackages.IsSuccessStatusCode)
                 return false;
 
-            var packagesId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).FirstOrDefault().Id;
+            var packages = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).SingleOrDefault();
 
             #endregion
 
@@ -80,7 +80,7 @@ namespace Blazor_Server.Services
             {
                 Filters = new Dictionary<string, string>
                     {
-                        { "Package_Id", packagesId.ToString() }
+                        { "Package_Id", packages.Id.ToString() }
                     },
             };
 
@@ -133,9 +133,25 @@ namespace Blazor_Server.Services
             #endregion
 
             #region Create Test vs Exam_Room_Student
+            var filterEXS = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Exam_Room_Package_Id", ExamRoomPackage.Id.ToString() },
+                        { "Student_Id", student.Id.ToString() }
+                    },
+            };
+
+            var exsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterEXS);
+
+            var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).SingleOrDefault();
+            if (exs != null)
+                return false;
 
             Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
-            test.Package_Id = packagesId;
+            test.Package_Id = packages.Id;
+            test.Student_Id = student.Id;
+            test.Status = 0;
 
             var testReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/Post", test);
 
@@ -147,7 +163,7 @@ namespace Blazor_Server.Services
             Exam_Room_Student ERStudent = new Exam_Room_Student();
 
             ERStudent.Exam_Room_Package_Id = ExamRoomPackage.Id;
-            ERStudent.Student_Id = studentId;
+            ERStudent.Student_Id = student.Id;
             ERStudent.Check_Time = time;
             ERStudent.Test_Id = testId;
 
@@ -163,6 +179,9 @@ namespace Blazor_Server.Services
 
             CountingTime(Exam_Room_Student, examroom);
 
+            if ((packages.Point_Type_Id == 1 || packages.Point_Type_Id == 2) && secondsLeft > 900) secondsLeft = 900;
+            else if (packages.Point_Type_Id == 3 && secondsLeft > 2700) secondsLeft = 2700;
+            else if ((packages.Point_Type_Id == 4 || packages.Point_Type_Id == 5) && secondsLeft > 5400) secondsLeft = 5400;
             #endregion
             return true;
         }
@@ -172,9 +191,9 @@ namespace Blazor_Server.Services
             try
             {
                 if (exam_Room_Student == null || exam_Room == null)
-                    return 0;
+                    return 0; 
 
-                int time = (int)(ConvertLong.ConvertLongToDateTime(exam_Room_Student.Check_Time) - ConvertLong.ConvertLongToDateTime(exam_Room.End_Time)).TotalSeconds;
+                int time = (int)(ConvertLong.ConvertLongToDateTime(exam_Room.End_Time) - ConvertLong.ConvertLongToDateTime(exam_Room_Student.Check_Time)).TotalSeconds;
 
                 return secondsLeft = time > 0 ? time : 0;
             }

@@ -3,6 +3,7 @@ using Data_Base.Models.E;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.U;
+using Microsoft.Data.SqlClient.DataClassification;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -25,6 +26,8 @@ namespace Data_Base.Models.P
         [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
         [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
         public long Create_Time { get; set; }
+        public int Number_Of_Questions { get; set; }
+        public int ExecutionTime { get; set; }
         public int Status { get; set; } = 0;
         [ForeignKey("Subject_Id")]
         [JsonIgnore]

@@ -13,61 +13,110 @@
 @inject ProtectedSessionStorage SessionStorage
 @inject IJSRuntime JSRuntime
 @inject Blazor_Server.Services.Test TestService
+@inject Blazored.Toast.Services.IToastService toastService
 
-<h3>📝 Bài thi trắc nghiệm</h3>
-
-@if (!isLoaded)
-{
-    <div>Đang tải bài thi...</div>
-}
-else if (histDTO == null)
-{
-    @* <div>Không tìm thấy dữ liệu bài thi.<br /><button class="btn btn-danger" @onclick="GoToLogin">Quay lại đăng nhập</button></div> *@
-}
-else if (isFinished)
-{
+@* <div>
     <div>
-        <h4>🎉 Đã hoàn thành bài thi!</h4>
+        <div class="header">
+            <div>BÀI KIỂM TRA</div>
+            <div>MÔN @histDTO.SubjectName – @histDTO.ClassName</div>
+        </div>
+        <div class="sub-header">
+            (Thời gian làm bài: @poi phút)
+        </div>
+        <div> Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
     </div>
-}
-else
-{
-    <div class="quiz-container">
-        <div style="font-size: 22px; font-weight: bold; text-align: center; margin-bottom: 20px;">
-            Thời gian: @GetFormattedTime()
+    <div>
+        <div>
+            <div>Mã gói đề: @histDTO.PackageId</div>
+            <div>Gói đề: @histDTO.PackageName</div>
+            <div>Mã bài thi: @histDTO.TestCode</div>
         </div>
         <div>
-            <b>Câu @(currentQuestionIndex + 1)/@histDTO.Questions.Count:</b>
-            <span>@histDTO.Questions[currentQuestionIndex].QuestionName</span>
-        </div>
-        <div>
-            @foreach (var ans in histDTO.Questions[currentQuestionIndex].Answers)
+            @foreach (var Que in histDTO.Questions)
             {
-                <div>
-                    <input type="checkbox"
-                           checked="@IsAnswerSelected(histDTO.Questions[currentQuestionIndex].QuestionId, ans.AnswerId)"
-                           @onchange="e => OnAnswerSelected(histDTO.Questions[currentQuestionIndex].QuestionId, ans.AnswerId, e.Value)" />
-                    <span>@ans.AnswersName</span>
-                </div>
+                <label class="form-label"><strong>@Que.QuestionName</strong></label>
+                if (Que.Type == 1 || Que.Type == 2)
+                {
+                    @foreach (var a in Que.Answers)
+                    {
+                        <span class="input-group-text">
+                            <input type="radio" name="tfanswer" />
+                        </span>
+                        <input class="form-control" type="text"/>
+                    }
+                }
+                else if (Que.Type == 3)
+                {
+                    <span class="input-group-text">
+                        <input type="checkbox" name="tfanswer" />
+                    </span>
+                    <input class="form-control" type="text" />
+                }
             }
         </div>
-        <div class="navigation" style="margin-top: 12px;">
-            <button class="btn btn-secondary" @onclick="PrevQuestion" disabled="@(currentQuestionIndex == 0)">⬅ Lùi</button>
-            <button class="btn btn-secondary" @onclick="NextQuestion" disabled="@(currentQuestionIndex == histDTO.Questions.Count - 1)">Tiếp ➡</button>
-        </div>
-        <button class="btn btn-danger mt-3" @onclick="FinishTest">✅ Kết thúc bài thi</button>
     </div>
-}
+</div> *@
 
-<ChildComponent OnStopTest="StopTest" />
+
+<div class="container p-4 border rounded shadow-sm bg-light">
+    <!-- Header -->
+    <div class="text-center mb-3">
+        <h3 class="fw-bold text-uppercase">BÀI KIỂM TRA</h3>
+        <h5 class="text-muted">Môn: @histDTO.SubjectName – Lớp: @histDTO.ClassName</h5>
+        <div class="fst-italic">(Thời gian làm bài: @poi phút)</div>
+        <div class="text-danger fw-semibold">Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
+    </div>
+
+    <!-- Test Info -->
+    <div class="row mb-4 text-dark">
+        <div class="col-md-4"><strong>Mã gói đề:</strong> @histDTO.PackageId</div>
+        <div class="col-md-4"><strong>Tên gói đề:</strong> @histDTO.PackageName</div>
+        <div class="col-md-4"><strong>Loại đề:</strong> @histDTO.PackageType</div>
+        <div class="col-md-4"><strong>Mã bài thi:</strong> @histDTO.TestCode</div>
+    </div>
+
+    <!-- Questions -->
+    @foreach (var Que in histDTO.Questions)
+    {
+        <div class="mb-4 p-3 border rounded bg-white">
+            <div class="mb-2 fw-bold">Câu hỏi @Que.QuestionId: @Que.QuestionName</div>
+
+            @if (Que.Type == 1 || Que.Type == 2)
+            {
+                @foreach (var a in Que.Answers)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" disabled />
+                        <label class="form-check-label">@a.AnswersName</label>
+                    </div>
+                }
+            }
+            else if (Que.Type == 3)
+            {
+                @foreach (var a in Que.Answers)
+                {
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" disabled />
+                        <label class="form-check-label">@a.AnswersName</label>
+                    </div>
+                }
+            }
+        </div>
+    }
+</div>
+
+
 @code {
     private int minutes;
     private int seconds;
     private bool isTimeUp;
     private Timer countdownTimer;
-
+    int timeInSecondsMinute;
+    int poi;
     private int packageCode;
-    private HistDTO histDTO;
+    private string studentCode;
+    private HistDTO histDTO;                  
     private int currentQuestionIndex = 0;
     private Dictionary<int, List<int>> selectedAnswers = new();
     private bool isLoaded = false;
@@ -86,123 +135,65 @@ else
             }
             packageCode = codeResult.Value;
 
-            // Lấy thời gian từ SessionStorage nếu có
-            var timeResult = await SessionStorage.GetAsync<Dictionary<int, int>>("thoigian");
-            if (timeResult.Success && timeResult.Value != null && timeResult.Value.Count >= 2)
+            var studentcodeResult = await SessionStorage.GetAsync<string>("studentcode");
+            if (!studentcodeResult.Success)
             {
-                // Định dạng: [số phút, số giây]
-                minutes = timeResult.Value.ElementAt(0).Key;
-                seconds = timeResult.Value.ElementAt(0).Value;
+                await JSRuntime.InvokeVoidAsync("alert", "Không tìm thấy mã thí sinh dự thi. Vui lòng đăng nhập lại.");
+                Navigation.NavigateTo("/login-package");
+                return;
             }
-            else
+            studentCode = studentcodeResult.ToString();
+
+            var timeResult = await SessionStorage.GetAsync<int>("thoigian");
+            if (!timeResult.Success)
             {
-                minutes = 15; // default nếu không có
-                seconds = 0;
+                await JSRuntime.InvokeVoidAsync("alert", "Không tìm thấy mã thí sinh dự thi. Vui lòng đăng nhập lại.");
+                Navigation.NavigateTo("/login-package");
+                return;
             }
-            StartCountdown();
+            timeInSecondsMinute = timeResult.Value;
 
-            histDTO = await TestService.GetQuestionAnswers(packageCode);
+            _ = StartCountdown();
 
-            if (histDTO != null)
-            {
-                // Khởi tạo selectedAnswers cho từng câu hỏi
-                foreach (var q in histDTO.Questions)
-                    selectedAnswers[q.QuestionId] = new List<int>();
-            }
-
-            isLoaded = true;
+            await PackageType();
         }
-        catch
+        catch (Exception ex)
         {
-            isLoaded = true;
-            histDTO = null;
+            toastService.ShowError("Lỗi: " + ex); ;
         }
     }
 
-    private void StartCountdown()
+    public async Task PackageType()
     {
-        countdownTimer = new Timer(UpdateCountdown, null, 0, 1000); 
+        try
+        {
+            histDTO = await TestService.GetQuestionAnswers(packageCode, studentCode);
+            poi = histDTO.ExecutionTime / 60;
+        }
+        catch (Exception ex)
+        {
+            histDTO = new HistDTO();
+            toastService.ShowError("Lỗi: " + ex);
+        }
     }
 
-    private void UpdateCountdown(object? state)
+    private async Task StartCountdown()
     {
-        if (seconds == 0 && minutes == 0)
+        while (timeInSecondsMinute > 0)
         {
-            isTimeUp = true;
-            countdownTimer?.Dispose(); 
-            InvokeAsync(StateHasChanged); 
-            return;
+            await Task.Delay(1000);
+            timeInSecondsMinute--;
+            StateHasChanged();
         }
 
-        if (seconds == 0)
-        {
-            if (minutes > 0)
-            {
-                minutes--;
-                seconds = 59;
-            }
-        }
-        else
-        {
-            seconds--;
-        }
-
-        InvokeAsync(StateHasChanged); 
+        toastService.ShowError("Hết giờ làm bài");
     }
 
-    private string GetFormattedTime() => $"{minutes:D2}:{seconds:D2}";
-
-    private void PrevQuestion() { if (currentQuestionIndex > 0) currentQuestionIndex--; }
-    private void NextQuestion() { if (currentQuestionIndex < histDTO.Questions.Count - 1) currentQuestionIndex++; }
-
-    private void OnAnswerSelected(int questionId, int answerId, object checkedValue)
+    private string FormatTime(int seconds)
     {
-        var checkedBool = checkedValue is bool b && b;
-        if (checkedBool)
-        {
-            if (!selectedAnswers[questionId].Contains(answerId))
-                selectedAnswers[questionId].Add(answerId);
-        }
-        else
-        {
-            selectedAnswers[questionId].Remove(answerId);
-        }
-        StateHasChanged();
-    }
-    private bool IsAnswerSelected(int questionId, int answerId)
-        => selectedAnswers.TryGetValue(questionId, out var ansList) && ansList.Contains(answerId);
-
-
-    // Kết thúc bài thi
-    private async Task FinishTest()
-    {
-        isFinished = true;
-        countdownTimer?.Dispose();
-        StateHasChanged();
-        // Optional: gửi đáp án lên server tại đây nếu muốn
-        await JSRuntime.InvokeVoidAsync("alert", "Đã hoàn thành bài thi!");
+        int minutes = seconds / 60;
+        int secs = seconds % 60;
+        return $"{minutes:D2}:{secs:D2}";
     }
 
-    private void ResetCountdown()
-    {
-        var checktimeResult = SessionStorage.GetAsync<Dictionary<int, int>>("thoigian").Result;
-
-        if (checktimeResult.Success)
-        {
-            var checktime = checktimeResult.Value;
-            minutes = checktime.ContainsKey(0) ? checktime[0] : 0;
-            seconds = checktime.ContainsKey(1) ? checktime[1] : 0;
-        }
-
-        isTimeUp = false; // Reset trạng thái hết thời gian
-        countdownTimer?.Dispose(); // Dừng đồng hồ hiện tại
-        StartCountdown(); // Bắt đầu lại đồng hồ đếm ngược
-    }
-    public void StopTest()
-    {
-        isTimeUp = true; // Đánh dấu hết thời 
-        ResetCountdown();
-        countdownTimer?.Dispose(); // Dừng đồng hồ
-        InvokeAsync(StateHasChanged); // Cập nhật UI
-    }
 }
