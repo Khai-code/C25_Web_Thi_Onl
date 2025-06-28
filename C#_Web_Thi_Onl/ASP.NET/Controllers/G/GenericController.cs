@@ -9,6 +9,7 @@ using Data_Base.Models.P;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.U;
+using Data_Base.V_Model;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -49,6 +50,12 @@ namespace ASP.NET.Controllers.G
                     return await HandleExamRoomPackageFilter(request.Filters);
                 case "Exam_Room":
                     return await HandleExamRoomFilter(request.Filters);
+                case "Test":
+                    return await HandleTestFilter(request.Filters);
+                case "V_Package":
+                    return await HandleVPackageFilter(request.Filters);
+                case "V_Student":
+                    return await HandleVStudentFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -445,5 +452,38 @@ namespace ASP.NET.Controllers.G
             return Ok(result);
         }
 
+        private async Task<IActionResult> HandleTestFilter(Dictionary<string, string> filters)
+        {
+            int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
+            int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.T.Test>(a =>
+                (!packageId.HasValue || a.Package_Id == packageId) &&
+                (!studentId.HasValue || a.Student_Id == studentId)
+            );
+
+            return Ok(result);
+        }
+
+        private async Task<IActionResult> HandleVPackageFilter(Dictionary<string, string> filters)
+        {
+            int? packageCode = filters.ContainsKey("Package_Code") ? int.Parse(filters["Package_Code"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<V_Package>(a => 
+                (!packageCode.HasValue || a.Package_Code == packageCode)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleVStudentFilter(Dictionary<string, string> filters)
+        {
+            string? studentCode = filters.ContainsKey("Student_Code") ? filters["Student_Code"] : null;
+
+            var result = await _repository.GetWithFilterAsync<V_Student>(a =>
+                (!studentCode.Any() || a.Student_Code == studentCode)
+            );
+
+            return Ok(result);
+        }
     }
 }
