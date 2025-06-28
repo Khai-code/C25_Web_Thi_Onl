@@ -9,6 +9,7 @@ using static System.Net.Mime.MediaTypeNames;
 using System.Text.Json.Serialization;
 using Data_Base.Models.P;
 using Data_Base.Models.E;
+using Data_Base.Models.S;
 
 namespace Data_Base.Models.T
 {
@@ -23,6 +24,10 @@ namespace Data_Base.Models.T
         [JsonIgnore]
         public Package? Packages { get; set; }
         public int Package_Id { get; set; }
+        [ForeignKey("Student_Id")]
+        [JsonIgnore]
+        public Student? Student { get; set; }
+        public int Student_Id { get; set; }
         [JsonIgnore]
         public ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
         [JsonIgnore]

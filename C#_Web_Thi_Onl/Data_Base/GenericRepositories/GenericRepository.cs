@@ -1,4 +1,5 @@
 ﻿using Data_Base.App_DbContext;
+using Data_Base.Models.A;
 using Data_Base.Models.C;
 using Data_Base.Models.G;
 using Data_Base.Models.P;
@@ -14,6 +15,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using static Data_Base.DTO_Import_Excel.QuestionImportDto;
 
 namespace Data_Base.GenericRepositories
 {
