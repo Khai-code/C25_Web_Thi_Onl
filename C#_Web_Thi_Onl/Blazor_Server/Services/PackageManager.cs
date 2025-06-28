@@ -10,6 +10,7 @@ using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.HistoriesExam;
 using static Blazor_Server.Services.Package_Test_ERP;
 using static Blazor_Server.Services.Test;
+using static System.Net.WebRequestMethods;
 using Question = Data_Base.Models.Q.Question;
 
 namespace Blazor_Server.Services
@@ -291,7 +292,6 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
-
         public async Task<bool> CreatequesTN(QuestionAdo quesAdo, List<AnsAdo> ansAdo)
         {
             try
@@ -348,7 +348,6 @@ namespace Blazor_Server.Services
 
             return questionType;
         }
-
         public async Task<List<QuestionlevelViewModel>> GetQuestionLevel()
         {
             var lstquestionType = await _httpClient.GetFromJsonAsync<List<Question_Level>>("https://localhost:7187/api/Question_Level/Get");
@@ -363,7 +362,30 @@ namespace Blazor_Server.Services
             return questionLevel;
         }
 
+        public async Task<bool> CreateExcel(MultipartFormDataContent content, int packageId)
+        {
+            try
+            {//https://localhost:7187/api/Excel_/excel?packageId=1
+                var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Excel_/excel?packageId={packageId}", content);
 
+                if (response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("✅ Thành công: " + msg);
+                    return true;
+                }
+                else
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("❌ Thất bại: " + err);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public class AnsAdo
         {
             public string Name { get; set; }

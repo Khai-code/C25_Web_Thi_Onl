@@ -1,4 +1,5 @@
-﻿using Data_Base.Models.E;
+﻿using Data_Base.Filters;
+using Data_Base.Models.E;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
@@ -6,6 +7,7 @@ using Data_Base.Models.T;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
 using System.Linq;
+using static Blazor_Server.Services.HistoriesExam;
 
 namespace Blazor_Server.Services
 {
@@ -17,7 +19,7 @@ namespace Blazor_Server.Services
             _httpClient = httpClient;
         }
 
-        public async Task<HistDTO> GetQuestionAnswers(int Package_Code)
+        public async Task<HistDTO> GetQuestionAnswers(int Package_Code, string Student_Code)
         {
             if (Package_Code == null)
             {
@@ -25,61 +27,128 @@ namespace Blazor_Server.Services
             }
 
             #region vế 1: lấy test
-            var packages = await _httpClient.GetFromJsonAsync<List<Package>>("https://localhost:7187/api/Package/Get");
-
-            var packageId = packages.FirstOrDefault(o => o.Package_Code == Package_Code)?.Id;
-
-            if (packageId == null)
+            var filterRequestPackage = new CommonFilterRequest
             {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Code", Package_Code.ToString() }
+                    },
+            };
+            var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package_/common/get", filterRequestPackage);
+
+            if (packageGetResponse.IsSuccessStatusCode)
                 return null;
-            }
 
-            var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("https://localhost:7187/api/Test/Get");
+            var Vpackage = (await packageGetResponse.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Package>>()).SingleOrDefault();
 
-            var test = tests.Where(o => o.Package_Id == packageId && o.Status == 0).ToList();
+            if (Vpackage == null)
+                return null;
 
-            if (tests == null)
+            var filterRequestStudent = new CommonFilterRequest
             {
-                return null;
-            }
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Student_Code", Student_Code.ToString() }
+                    },
+            };
+            var studentGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Student_/common/get", filterRequestPackage);
 
-            var random = new Random();
-            var randomTest = test[random.Next(test.Count)];
+            if (studentGetResponse.IsSuccessStatusCode)
+                return null;
+
+            var student = (await packageGetResponse.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Student>>()).SingleOrDefault();
+
+            if (student == null)
+                return null;
+
+            var filterRequestTest = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", Vpackage.Id.ToString() },
+                        { "Student_Id", student.Id.ToString() }
+                    },
+            };
+            var lstTestsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/common/get", filterRequestTest);
+
+            var test = (await lstTestsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>()).SingleOrDefault();
+
             #endregion
 
             #region vế 2: lấy Questions và Answers
-            var Questions_Pack = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.Q.Question>>("https://localhost:7187/api/Package/Get");
+            var filterRequestQuestion = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", Vpackage.Id.ToString() }
+                    },
+            };
 
-            var Questions = Questions_Pack.Where(o => o.Package_Id == packageId).ToList();
+            var questionsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQuestion);
 
-            if (Questions == null)
+            var lstQuestions = await questionsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
+
+            if (lstQuestions == null)
             {
                 return null;
             }
 
-            var QuestionId = Questions.Select(o => o.Id).ToList();
+            var randomQuestionIds = lstQuestions.OrderBy(id => Guid.NewGuid()) // trộn ngẫu nhiên danh sách ID
+                                    .Take(Vpackage.Number_Of_Questions) // lấy đúng số lượng mong muốn
+                                    .ToList();
 
-            var Answers_Questions = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.A.Answers>>("https://localhost:7187/api/Answers/Get");
-
-            var Answers = Answers_Questions.Where(o => QuestionId.Contains(o.Question_Id)).ToList();
-
-            if (Answers == null)
+            List<Data_Base.Models.T.Test_Question> lstTq = new List<Test_Question>();
+            
+            foreach (var question in randomQuestionIds)
             {
-                return null;
+                Test_Question tq = new Test_Question();
+                tq.Question_Id = question.Id;
+                tq.Test_Id = test.Id;
+
+                lstTq.Add(tq);
             }
+
+            if (lstTq != null && lstTq.Count > 0)
+            {
+                await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/PostList", lstTq);
+            }
+
+            var filterRequestAnswers = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Question_Id", string.Join(",", randomQuestionIds.Select(o => o.Id)) }
+                    },
+            };
+
+            var answersReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAnswers);
+
+            if (answersReq == null)
+                return null;
+
+            var lstAnswers = await answersReq.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
+
             #endregion
 
             #region vế 3: lấy ra bài thì câu hỏi và đáp án tương ứng
-            var hist = new HistDTO
+            var hist = new HistDTO // package
             {
-                TestId = randomTest.Id,
-                Code = randomTest.Test_Code,
-                Status = randomTest.Status,
-                Questions = Questions.Select(Que => new Question
+                PackageId = Vpackage.Id,
+                PackageName = Vpackage.Package_Name,
+                PackageType = Vpackage.Package_Type_Name,
+                ExecutionTime = Vpackage.ExecutionTime,
+                SubjectName = Vpackage.Subject_Name,
+                ClassName = Vpackage.Class_Name,
+                PointTypeId = Vpackage.Point_Type_Id,
+                TestId = test.Id,
+                TestCode = test.Test_Code,
+                Status = test.Status,
+                Questions = randomQuestionIds.Select(Que => new Question
                 {
                     QuestionId = Que.Id,
                     Type = Que.Question_Type_Id,
-                    Answers = Answers.Select(Ans => new Answer
+                    Level = Que.Question_Level_Id,
+                    Answers = lstAnswers.Select(Ans => new Answer
                     {
                         AnswerId = Ans.Id,
                         AnswersName = Ans.Answers_Name
@@ -169,24 +238,33 @@ namespace Blazor_Server.Services
 
         public class HistDTO
         {
+            public int PackageId { get; set; }
+            public string PackageName { get; set; }
+            public string PackageType { get; set; }
+            public int ExecutionTime { get; set; }
             public int TestId { get; set; }
-            public string Code { get; set; }
+            public string TestCode { get; set; }
+            public string SubjectName { get; set; }
+            public string ClassName { get; set; }
+            public int PointTypeId { get; set; }
             public int Status { get; set; }
             public List<Question> Questions { get; set; }
         }
 
         public class Question
         {
-            public int QuestionId { get; set; }
-            public int Type { get; set; }
+            public int? QuestionId { get; set; }
             public string QuestionName { get; set; }
+            public int Type { get; set; }
+            public int Level { get; set; }
             public List<Answer> Answers { get; set; }
         }
 
         public class Answer
         {
-            public int AnswerId { get; set; }
+            public int? AnswerId { get; set; }
             public string AnswersName { get; set; }
+            public int IsCorrect { get; set; }
         }
     }
 }

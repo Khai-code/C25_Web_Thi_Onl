@@ -166,8 +166,14 @@
                                 </div>
 
                                 <div>
-                                    <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
-                                    <input type="text" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
+                                    <div>
+                                        <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
+                                        <input type="text" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
+                                    </div>
+                                    <div>
+                                        <label for="numberOfQuestions" class="block font-medium mb-1">Số lượng câu hỏi</label>
+                                        <input type="text" id="numberOfQuestions" name="numberOfQuestions" class="w-full border rounded-lg px-3 py-2" value="@packageTestADO.Package.Number_Of_Questions" readonly>
+                                    </div>
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -397,6 +403,13 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Thêm Câu Hỏi</h5>
+                    <label class="btn btn-primary">
+                        Tải Excel lên
+                        <inputfile onchange="handlefileselected" class="d-none" accept=".xlsx,.xls" />
+                    </label>
+                    <a href="files/Book1.xlsm" download>
+                        <button class="btn btn-primary">Tải file mẫu</button>
+                    </a>
                 </div>
                 <div class="modal-body">
                     <form>
@@ -439,13 +452,6 @@
                                         <input class="form-control" type="text" @bind="ans.Name"/>
                                     </div>
                                 }
-
-                                @*                                 <div class="input-group mb-2">
-                                    <span class="input-group-text">
-                                        <input type="radio" name="tfanswer" @bind="ans.Right" />
-                                    </span>
-                                    <input class="form-control" type="text" value="Sai" @bind="ans.Name" />
-                                </div> *@
                             </div>
                         }
                         else if (this.CheckType == 2)
@@ -545,6 +551,7 @@
                                 <button type="button" class="btn btn-primary mt-2" @onclick="AddAnswer">Thêm đáp án</button>
                             </div>
                         }
+
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -731,15 +738,18 @@
 
             if (selectedPointTypeId == 1 || selectedPointTypeId == 2)
             {
-                this.time = 900;
+                packageTestADO.Package.ExecutionTime = 900;
+                this.time = 1200;
             }
             else if (selectedPointTypeId == 3)
             {
-                this.time = 2700;
+                packageTestADO.Package.ExecutionTime = 2700;
+                this.time = 3000;
             }
             else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
             {
-                this.time = 5400;
+                packageTestADO.Package.ExecutionTime = 5400;
+                this.time = 5700;
             }
             else
             {
@@ -895,7 +905,7 @@
         }
         catch (Exception ex)
         {
-            
+
         }
     }
 
@@ -916,7 +926,7 @@
     {
         try
         {
-            
+
         }
         catch (Exception ex)
         {
@@ -1049,7 +1059,7 @@
             {
                 packageTestADO.Package.Package_Name = PackageName;
             }
-            
+
             var packageTestViewModel = await PTERP.AddPackageTestERP(packageTestADO);
             if (packageTestViewModel != null)
             {
@@ -1069,5 +1079,28 @@
         }
     }
 
-    
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            if (file == null) return;
+
+            var content = new MultipartFormDataContent();
+            var fileContent = new StreamContent(file.OpenReadStream(1024 * 1024 * 15)); // 15MB max
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+
+            content.Add(fileContent, "file", file.Name);
+
+            bool check = await pm.CreateExcel(content, packageId);
+            if (check)
+                toastService.ShowSuccess("Thêm dữ liệu thành công!");
+            else
+                toastService.ShowError("Thêm thất bại");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
 }
