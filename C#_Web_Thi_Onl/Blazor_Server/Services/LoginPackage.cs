@@ -33,7 +33,7 @@ namespace Blazor_Server.Services
 
             var studentResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
 
-            if (studentResponse.IsSuccessStatusCode)
+            if (!studentResponse.IsSuccessStatusCode)
                 return false;
 
             var student = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault(); 
@@ -50,7 +50,7 @@ namespace Blazor_Server.Services
 
             var lstStudentClass = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student_Class/common/get", filterStudentClass);
 
-            if (lstStudentClass.IsSuccessStatusCode)
+            if (!lstStudentClass.IsSuccessStatusCode)
                 return false;
 
             var studentClass_ClassId = (await lstStudentClass.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).SingleOrDefault().Class_Id;
@@ -68,7 +68,7 @@ namespace Blazor_Server.Services
 
             var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/common/get", filterPackage);
 
-            if (lstPackages.IsSuccessStatusCode)
+            if (!lstPackages.IsSuccessStatusCode)
                 return false;
 
             var packages = (await lstPackages.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).SingleOrDefault();
@@ -86,7 +86,7 @@ namespace Blazor_Server.Services
 
             var ExamRoomPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/common/get", filterERP);
 
-            if (ExamRoomPackages.IsSuccessStatusCode)
+            if (!ExamRoomPackages.IsSuccessStatusCode)
                 return false;
 
             var ExamRoomPackage = (await ExamRoomPackages.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Package>>()).FirstOrDefault();
@@ -104,7 +104,7 @@ namespace Blazor_Server.Services
 
             var examrooms = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterExamRoom);
 
-            if (examrooms.IsSuccessStatusCode)
+            if (!examrooms.IsSuccessStatusCode)
                 return false;
 
             var examroom = (await examrooms.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).FirstOrDefault();

@@ -366,7 +366,7 @@ namespace Blazor_Server.Services
         {
             try
             {
-                var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Excel_/excel?packageId={packageId}", content);
+                var response = await _httpClient.PostAsync($"https://localhost:7187/api/Excel_/excel?packageId={packageId}", content);
 
                 if (response.IsSuccessStatusCode)
                 {
