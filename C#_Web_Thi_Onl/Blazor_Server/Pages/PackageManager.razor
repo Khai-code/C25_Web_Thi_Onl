@@ -468,7 +468,7 @@
                                             <input type="radio" name="singleanswer" @bind="ans.Right" />
                                         </span>
                                         <input class="form-control" type="text" placeholder="Đáp án 1" @bind="ans.Name" />
-                                        <button class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
+                                        <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
                                     </div>
                                 }
                                 @* <div id="single-answer-container">
@@ -519,7 +519,7 @@
                                             <input type="checkbox" @bind="ans.Right" />
                                         </span>
                                         <input class="form-control" type="text" placeholder="Đáp án" @bind="ans.Name" />
-                                        <button class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
+                                        <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
                                     </div>
                                 }
                                 @* <div id="answer-container">
@@ -649,7 +649,6 @@
         try
         {
             SelectedQuestionTypeId = questionAnswers.question.Question_Type_Id;
-            AddAns();
         }
         catch (Exception ex)
         {
@@ -679,6 +678,7 @@
                     break;
             }
 
+            lstAns.Clear();
             for (int i = 0; i < answerCount; i++)
             {
                 lstAns.Add(new AnsAdo());
@@ -725,7 +725,8 @@
             {
                 selectedQuestionTypeId = value;
                 questionAnswers.question.Question_Type_Id = value; // đồng bộ lại model
-                CheckquestionType(value); // Gọi hàm
+                CheckquestionType(value);
+                AddAns();
             }
         }
     }
@@ -739,32 +740,32 @@
             if (selectedPointTypeId == 1 || selectedPointTypeId == 2)
             {
                 packageTestADO.Package.ExecutionTime = 900;
-                this.time = 1200;
+                this.time = 900;
 
                 TimeSpan duration = End_Time - Start_Time;
-                if (duration.TotalSeconds != this.time)
+                if (duration.TotalSeconds < this.time)
                 {
-                    toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+                    toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
                 }
             }
             else if (selectedPointTypeId == 3)
             {
                 packageTestADO.Package.ExecutionTime = 2700;
-                this.time = 3000;
+                this.time = 2700;
                 TimeSpan duration = End_Time - Start_Time;
-                if (duration.TotalSeconds != this.time)
+                if (duration.TotalSeconds < this.time)
                 {
-                    toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+                    toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
                 }
             }
             else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
             {
                 packageTestADO.Package.ExecutionTime = 5400;
-                this.time = 5700;
+                this.time = 5400;
                 TimeSpan duration = End_Time - Start_Time;
                 if (duration.TotalSeconds != this.time)
                 {
-                    toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+                    toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
                 }
             }
             else
@@ -902,8 +903,19 @@
         {
             bool Addquestion = false;
             questionAnswers.question.Package_Id = this.packageId;
+            if (questionAnswers.question.Question_Name == null)
+            {
+                toastService.ShowSuccess("Không có nội dung câu hỏi!");
+            }
             if (IsAddExamModalQuesMultipleChoice)
             {
+                foreach (var item in lstAns)
+                {
+                    if (item.Name.Trim() == null)
+                    {
+                        toastService.ShowSuccess($"Đáp án " + item + " chưa có nội dung");
+                    }
+                }
                 Addquestion = await pm.CreatequesTN(questionAnswers, lstAns);
             }
             else if (IsAddExamModalQuesEssay)
@@ -921,7 +933,7 @@
         }
         catch (Exception ex)
         {
-
+            toastService.ShowError("Lỗi: " + ex);
         }
     }
 

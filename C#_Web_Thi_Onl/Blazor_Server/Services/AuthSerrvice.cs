@@ -5,7 +5,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.IdentityModel.Tokens.Jwt;
-
+ 
 namespace Blazor_Server.Services
 {
     public class AuthSerrvice
@@ -19,6 +19,7 @@ namespace Blazor_Server.Services
 
         public async Task<LoginResult> Login(string username, string password)
         {
+
             var loginRequest = new { User_Name = username, User_Pass = password };
 
             var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Auth/login", loginRequest);

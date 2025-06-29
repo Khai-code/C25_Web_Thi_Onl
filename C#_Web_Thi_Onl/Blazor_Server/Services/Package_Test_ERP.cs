@@ -1,4 +1,5 @@
-﻿using Data_Base.Models.C;
+﻿using Data_Base.Filters;
+using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
@@ -17,8 +18,52 @@ namespace Blazor_Server.Services
             _httpClient = httpClient;
         }
 
+        public async Task<bool> CheckPackage(PackageTestADO model)
+        {
+            try
+            {
+                var filterRequest = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Room_ID", model.Exam_Room.Room_Id.ToString() },
+                        { "Start_Time",  model.Package.Create_Time.ToString()}
+                    },
+                };
+                   
+                var ExamRoomResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterRequest);
+                if (ExamRoomResponse.IsSuccessStatusCode)
+                    return false;
+
+                var lstExamRoom = await ExamRoomResponse.Content.ReadFromJsonAsync<List<Exam_Room>>();
+
+                if(lstExamRoom == null && lstExamRoom.Count <= 0)
+                    return false;
+
+                foreach (var item in lstExamRoom)
+                {
+                    if ((model.Exam_Room.Start_Time < item.Start_Time && model.Exam_Room.End_Time < item.Start_Time)
+                        || model.Exam_Room.Start_Time > item.Start_Time && model.Exam_Room.End_Time > item.Start_Time)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public async Task<PackageTestADO> AddPackageTestERP(PackageTestADO model)
         {
+
+            bool check = await CheckPackage(model);
+
+            if (!check)
+                return null;
+
             var model_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/Post", model.Package);
             if (!model_Package.IsSuccessStatusCode)
             {

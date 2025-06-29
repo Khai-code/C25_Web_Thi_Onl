@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +56,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

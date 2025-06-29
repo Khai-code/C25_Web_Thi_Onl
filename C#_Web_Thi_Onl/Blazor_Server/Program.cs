@@ -4,6 +4,7 @@ using Blazored.Toast;using Blazored.Toast;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Components.Web;
+using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -36,6 +37,7 @@ builder.Services.AddScoped<ScoreServices>();
 builder.Services.AddScoped<TeacherManagerService>();
 builder.Services.AddScoped<Test>();
 builder.Services.AddScoped<PackageManager>();
+ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 var app = builder.Build();
 
 
