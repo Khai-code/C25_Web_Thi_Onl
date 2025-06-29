@@ -144,7 +144,7 @@ namespace Blazor_Server.Services
 
             var exsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filterEXS);
 
-            var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).SingleOrDefault();
+            var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
             if (exs == null)
                 return false;
 
