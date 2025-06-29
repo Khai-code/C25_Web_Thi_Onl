@@ -9,6 +9,7 @@ using Data_Base.Models.R;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using Data_Base.V_Model;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -59,5 +60,18 @@ namespace Data_Base.App_DbContext
         public DbSet<Package_Type> Package_Types { get; set; }
         public DbSet<Question_Type> Question_Types { get; set; }
         public DbSet<Question_Level> Question_Levels { get; set; }
+        public DbSet<V_Package> V_Packages { get; set; }
+        public DbSet<V_Student> V_Students { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<V_Package>()
+                .HasNoKey()
+                .ToView("v_Packages");
+
+            modelBuilder.Entity<V_Student>()
+                .HasNoKey()
+                .ToView("v_Student");
+        }
     }
 }

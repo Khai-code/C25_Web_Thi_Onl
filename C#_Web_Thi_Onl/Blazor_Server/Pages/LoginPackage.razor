@@ -77,11 +77,14 @@
                 if (check)
                 {
                     await sessionstorage.SetAsync("thoigian", loginpackge.secondsLeft);
+                    await sessionstorage.SetAsync("packagecode", packagecode);
+                    await sessionstorage.SetAsync("studentcode", studentcode);
+
                     navigation.NavigateTo("/Test");
                 }
                 else
                 {
-                    toastService.ShowError("Đăng nhập bài thi thất bại"); ;
+                    toastService.ShowError("Đăng nhập bài thi thất bại");
                 }
             }
             catch (Exception ex)
