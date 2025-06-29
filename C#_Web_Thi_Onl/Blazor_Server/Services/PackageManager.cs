@@ -365,7 +365,7 @@ namespace Blazor_Server.Services
         public async Task<bool> CreateExcel(MultipartFormDataContent content, int packageId)
         {
             try
-            {//https://localhost:7187/api/Excel_/excel?packageId=1
+            {
                 var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Excel_/excel?packageId={packageId}", content);
 
                 if (response.IsSuccessStatusCode)

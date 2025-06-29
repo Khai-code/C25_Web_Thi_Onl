@@ -53,7 +53,7 @@ namespace Blazor_Server.Services
             if (lstStudentClass.IsSuccessStatusCode)
                 return false;
 
-            var studentClass_ClassId = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).SingleOrDefault().Class_Id;
+            var studentClass_ClassId = (await lstStudentClass.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).SingleOrDefault().Class_Id;
             #endregion
 
             #region Package
@@ -71,7 +71,7 @@ namespace Blazor_Server.Services
             if (lstPackages.IsSuccessStatusCode)
                 return false;
 
-            var packages = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).SingleOrDefault();
+            var packages = (await lstPackages.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).SingleOrDefault();
 
             #endregion
 
@@ -89,7 +89,7 @@ namespace Blazor_Server.Services
             if (ExamRoomPackages.IsSuccessStatusCode)
                 return false;
 
-            var ExamRoomPackage = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Package>>()).FirstOrDefault();
+            var ExamRoomPackage = (await ExamRoomPackages.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Package>>()).FirstOrDefault();
 
             #endregion
 
@@ -107,7 +107,7 @@ namespace Blazor_Server.Services
             if (examrooms.IsSuccessStatusCode)
                 return false;
 
-            var examroom = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).FirstOrDefault();
+            var examroom = (await examrooms.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).FirstOrDefault();
 
             #endregion
 
@@ -171,7 +171,7 @@ namespace Blazor_Server.Services
             if (!Exam_Room_Student_Post.IsSuccessStatusCode)
                 return false;
 
-            var Exam_Room_Student = (await testReport.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).FirstOrDefault();
+            var Exam_Room_Student = (await Exam_Room_Student_Post.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).FirstOrDefault();
 
             #endregion
 

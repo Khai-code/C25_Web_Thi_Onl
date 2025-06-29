@@ -405,7 +405,7 @@
                     <h5 class="modal-title">Thêm Câu Hỏi</h5>
                     <label class="btn btn-primary">
                         Tải Excel lên
-                        <inputfile onchange="handlefileselected" class="d-none" accept=".xlsx,.xls" />
+                        <InputFile OnChange="HandleFileSelected" class="d-none" accept=".xlsx,.xls" />
                     </label>
                     <a href="files/Book1.xlsm" download>
                         <button class="btn btn-primary">Tải file mẫu</button>
@@ -1080,15 +1080,19 @@
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
+       {
         try
         {
+            System.Diagnostics.Debugger.Break();
             var file = e.File;
             if (file == null) return;
 
             var content = new MultipartFormDataContent();
+            System.Diagnostics.Debugger.Break();
             var fileContent = new StreamContent(file.OpenReadStream(1024 * 1024 * 15)); // 15MB max
+            System.Diagnostics.Debugger.Break();
             fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            System.Diagnostics.Debugger.Break();
 
             content.Add(fileContent, "file", file.Name);
 
