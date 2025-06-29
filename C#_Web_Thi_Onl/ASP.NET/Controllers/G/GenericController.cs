@@ -56,6 +56,8 @@ namespace ASP.NET.Controllers.G
                     return await HandleVPackageFilter(request.Filters);
                 case "V_Student":
                     return await HandleVStudentFilter(request.Filters);
+                case "Exam_Room_Student":
+                    return await HandleExamRoomStudentFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -481,6 +483,19 @@ namespace ASP.NET.Controllers.G
 
             var result = await _repository.GetWithFilterAsync<V_Student>(a =>
                 (!studentCode.Any() || a.Student_Code == studentCode)
+            );
+
+            return Ok(result);
+        }
+
+        public async Task<IActionResult> HandleExamRoomStudentFilter(Dictionary<string, string> filters)
+        {
+            int? ExamRoomPackageId = filters.ContainsKey("Exam_Room_Package_Id") ? int.Parse(filters["Exam_Room_Package_Id"]) : null;
+            int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Student>(a =>
+                (!ExamRoomPackageId.HasValue || a.Exam_Room_Package_Id == ExamRoomPackageId) &&
+                (!studentId.HasValue || a.Student_Id == studentId)
             );
 
             return Ok(result);
