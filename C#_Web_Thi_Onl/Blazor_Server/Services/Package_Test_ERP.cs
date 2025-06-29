@@ -32,7 +32,7 @@ namespace Blazor_Server.Services
                 };
                    
                 var ExamRoomResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterRequest);
-                if (ExamRoomResponse.IsSuccessStatusCode)
+                if (!ExamRoomResponse.IsSuccessStatusCode)
                     return false;
 
                 var lstExamRoom = await ExamRoomResponse.Content.ReadFromJsonAsync<List<Exam_Room>>();
