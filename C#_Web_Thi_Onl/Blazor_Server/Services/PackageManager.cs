@@ -314,7 +314,7 @@ namespace Blazor_Server.Services
                     foreach (var item in ansAdo)
                     {
                         answers.Answers_Name = item.Name;
-                        answers.Right_Answer = item.Right;
+                        answers.Right_Answer = item.Right ? 1 : 0;
                         answers.Question_Id = addQuestion.Id;
 
                         lstAnswers.Add(answers);
@@ -389,7 +389,7 @@ namespace Blazor_Server.Services
         public class AnsAdo
         {
             public string Name { get; set; }
-            public int Right { get; set; }
+            public bool Right { get; set; }
         }
 
         public class HistDTO

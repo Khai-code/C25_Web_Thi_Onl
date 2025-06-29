@@ -415,7 +415,7 @@
                     <form>
                         <div class="mb-3">
                             <label for="questionName" class="form-label">Nội dung câu hỏi</label>
-                            <input class="form-control" id="questionName" type="text" placeholder="Nhập nội dung câu hỏi" />
+                            <input class="form-control" id="questionName" type="text" placeholder="Nhập nội dung câu hỏi" @bind="questionAnswers.question.Question_Name" />
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Loại câu hỏi</label>
@@ -605,7 +605,7 @@
     AnsAdo ans = new AnsAdo();
     public DateTime Create_Time = DateTime.Now;
     private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
-
+    long timeLong;
     public DateTime Start_Time { get; set; } = DateTime.Now;
     public DateTime Start_Times
     {
@@ -740,16 +740,32 @@
             {
                 packageTestADO.Package.ExecutionTime = 900;
                 this.time = 1200;
+
+                TimeSpan duration = End_Time - Start_Time;
+                if (duration.TotalSeconds != this.time)
+                {
+                    toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+                }
             }
             else if (selectedPointTypeId == 3)
             {
                 packageTestADO.Package.ExecutionTime = 2700;
                 this.time = 3000;
+                TimeSpan duration = End_Time - Start_Time;
+                if (duration.TotalSeconds != this.time)
+                {
+                    toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+                }
             }
             else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
             {
                 packageTestADO.Package.ExecutionTime = 5400;
                 this.time = 5700;
+                TimeSpan duration = End_Time - Start_Time;
+                if (duration.TotalSeconds != this.time)
+                {
+                    toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+                }
             }
             else
             {
@@ -767,7 +783,7 @@
     {
         int seconds = (int)(End_Time - Start_Time).TotalSeconds;
 
-        if (time > 0 && seconds != time)
+        if (time > 0 && seconds != time)   
             toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time/60} phút ({time} giây)");
     }
 
