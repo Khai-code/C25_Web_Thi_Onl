@@ -60,18 +60,18 @@ namespace Data_Base.App_DbContext
         public DbSet<Package_Type> Package_Types { get; set; }
         public DbSet<Question_Type> Question_Types { get; set; }
         public DbSet<Question_Level> Question_Levels { get; set; }
-        public DbSet<V_Package> V_Packages { get; set; }
-        public DbSet<V_Student> V_Students { get; set; }
+        public DbSet<V_Package> V_Package { get; set; }
+        public DbSet<V_Student> V_Student { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<V_Package>()
                 .HasNoKey()
-                .ToView("v_Packages");
+                .ToView("V_Package");
 
             modelBuilder.Entity<V_Student>()
                 .HasNoKey()
-                .ToView("v_Student");
+                .ToView("V_Student");
         }
     }
 }

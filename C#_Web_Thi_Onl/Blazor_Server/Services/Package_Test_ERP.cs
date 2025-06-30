@@ -20,6 +20,7 @@ namespace Blazor_Server.Services
 
         public async Task<bool> CheckPackage(PackageTestADO model)
         {
+            bool success = true;
             try
             {
                 var filterRequest = new CommonFilterRequest
@@ -40,16 +41,24 @@ namespace Blazor_Server.Services
                 if(lstExamRoom == null && lstExamRoom.Count <= 0)
                     return false;
 
-                foreach (var item in lstExamRoom)
+                if (lstExamRoom != null && lstExamRoom.Count > 0)
                 {
-                    if ((model.Exam_Room.Start_Time < item.Start_Time && model.Exam_Room.End_Time < item.Start_Time)
-                        || model.Exam_Room.Start_Time > item.Start_Time && model.Exam_Room.End_Time > item.Start_Time)
+                    foreach (var item in lstExamRoom)
                     {
-                        return true;
+                        if ((model.Exam_Room.Start_Time < item.Start_Time && model.Exam_Room.End_Time < item.Start_Time)
+                            || model.Exam_Room.Start_Time > item.Start_Time && model.Exam_Room.End_Time > item.Start_Time)
+                        {
+                            success = true;
+
+                        }
+                        else
+                        {
+                            return success = false;
+
+                        }
                     }
                 }
-
-                return false;
+                return success;
             }
             catch (Exception ex)
             {

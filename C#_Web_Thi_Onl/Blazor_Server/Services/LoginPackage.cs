@@ -114,7 +114,7 @@ namespace Blazor_Server.Services
             #region Check thời gian ko hợp lệ
             DateTime currentTime = DateTime.Now;
             long time = ConvertLong.ConvertDateTimeToLong(currentTime);
-
+            TimeSpan duration = currentTime - ConvertLong.ConvertLongToDateTime(examroom.Start_Time);
             if (examroom.Start_Time > time)
             {
                 Console.WriteLine("Chưa đến thời gian làm bài thi1.");
@@ -125,7 +125,7 @@ namespace Blazor_Server.Services
                 Console.WriteLine("Đã hết thời gian thi.");
                 return false;
             }
-            else if (examroom.Start_Time <= time && (time - examroom.Start_Time) > 1500 && examroom.End_Time > time)
+            else if (examroom.Start_Time <= time && duration.TotalSeconds > 1500 && examroom.End_Time > time)
             {
                 Console.WriteLine("Đã quá thời gian vào thi.");
                 return false;
@@ -145,10 +145,11 @@ namespace Blazor_Server.Services
             var exsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filterEXS);
 
             var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
-            if (exs == null)
+            if (exs != null)
                 return false;
 
             Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
+            test.Test_Code = string.Empty;
             test.Package_Id = packages.Id;
             test.Student_Id = student.Id;
             test.Status = 0;
@@ -158,7 +159,7 @@ namespace Blazor_Server.Services
             if (!testReport.IsSuccessStatusCode)
                 return false;
 
-            var testId = (await testReport.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>()).FirstOrDefault().Id;
+            var testId = (await testReport.Content.ReadFromJsonAsync<Data_Base.Models.T.Test>()).Id;
 
             Exam_Room_Student ERStudent = new Exam_Room_Student();
 
@@ -171,7 +172,7 @@ namespace Blazor_Server.Services
             if (!Exam_Room_Student_Post.IsSuccessStatusCode)
                 return false;
 
-            var Exam_Room_Student = (await Exam_Room_Student_Post.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).FirstOrDefault();
+            var Exam_Room_Student = (await Exam_Room_Student_Post.Content.ReadFromJsonAsync<Data_Base.Models.E.Exam_Room_Student>());
 
             #endregion
 

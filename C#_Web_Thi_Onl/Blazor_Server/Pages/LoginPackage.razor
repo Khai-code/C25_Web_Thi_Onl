@@ -77,7 +77,7 @@
                 if (check)
                 {
                     await sessionstorage.SetAsync("thoigian", loginpackge.secondsLeft);
-                    await sessionstorage.SetAsync("packagecode", packagecode);
+                    await sessionstorage.SetAsync("packagecode", int.Parse(packagecode));
                     await sessionstorage.SetAsync("studentcode", studentcode);
 
                     navigation.NavigateTo("/Test");
