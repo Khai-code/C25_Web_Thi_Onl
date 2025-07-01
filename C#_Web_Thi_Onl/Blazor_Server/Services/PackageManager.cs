@@ -361,7 +361,30 @@ namespace Blazor_Server.Services
 
             return questionLevel;
         }
+        public async Task<bool> CreateExcelEssay(MultipartFormDataContent content, int packageId)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync($"/api/Excel_/exceltuluan?packageId={packageId}", content);
 
+                if (response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("✅ Thành công: " + msg);
+                    return true;
+                }
+                else
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("❌ Thất bại: " + err);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public async Task<bool> CreateExcel(MultipartFormDataContent content, int packageId)
         {
             try

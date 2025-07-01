@@ -279,6 +279,13 @@
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Thêm Câu Hỏi</h5>
+                    <label class="btn btn-primary">
+                        Tải Excel lên
+                        <InputFile OnChange="HandleFileSelectedessay" class="d-none" accept=".xlsx,.xls" />
+                    </label>
+                    <a href="files/Book2.xlsm" download>
+                        <button class="btn btn-primary">Tải file mẫu</button>
+                    </a>
                 </div>
                 <div class="modal-body">
                     <div class="row">
@@ -1130,7 +1137,34 @@
             Console.WriteLine($"Lỗi: {ex.Message}");
         }
     }
+    private async Task HandleFileSelectedessay(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debugger.Break();
+            var file = e.File;
+            if (file == null) return;
 
+            var content = new MultipartFormDataContent();
+            System.Diagnostics.Debugger.Break();
+            var fileContent = new StreamContent(file.OpenReadStream(1024 * 1024 * 15)); // 15MB max
+            System.Diagnostics.Debugger.Break();
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            System.Diagnostics.Debugger.Break();
+
+            content.Add(fileContent, "file", file.Name);
+
+            bool check = await pm.CreateExcelEssay(content, packageId);
+            if (check)
+                toastService.ShowSuccess("Thêm dữ liệu thành công!");
+            else
+                toastService.ShowError("Thêm thất bại");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
        {
         try
