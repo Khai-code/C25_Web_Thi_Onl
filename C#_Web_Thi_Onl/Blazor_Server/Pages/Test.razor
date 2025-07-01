@@ -15,54 +15,8 @@
 @inject Blazor_Server.Services.Test TestService
 @inject Blazored.Toast.Services.IToastService toastService
 
-@* <div>
-    <div>
-        <div class="header">
-            <div>BÀI KIỂM TRA</div>
-            <div>MÔN @histDTO.SubjectName – @histDTO.ClassName</div>
-        </div>
-        <div class="sub-header">
-            (Thời gian làm bài: @poi phút)
-        </div>
-        <div> Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
-    </div>
-    <div>
-        <div>
-            <div>Mã gói đề: @histDTO.PackageId</div>
-            <div>Gói đề: @histDTO.PackageName</div>
-            <div>Mã bài thi: @histDTO.TestCode</div>
-        </div>
-        <div>
-            @foreach (var Que in histDTO.Questions)
-            {
-                <label class="form-label"><strong>@Que.QuestionName</strong></label>
-                if (Que.Type == 1 || Que.Type == 2)
-                {
-                    @foreach (var a in Que.Answers)
-                    {
-                        <span class="input-group-text">
-                            <input type="radio" name="tfanswer" />
-                        </span>
-                        <input class="form-control" type="text"/>
-                    }
-                }
-                else if (Que.Type == 3)
-                {
-                    <span class="input-group-text">
-                        <input type="checkbox" name="tfanswer" />
-                    </span>
-                    <input class="form-control" type="text" />
-                }
-            }
-        </div>
-    </div>
-</div> *@
-
-
 <div class="container p-4 border rounded shadow-sm bg-light">
-    
 
-    <!-- Questions -->
     @if (histDTO.Questions != null)
     {
         <!-- Header -->
@@ -91,7 +45,7 @@
                     {
                         <div class="input-group mb-2">
                             <span class="input-group-text">
-                                <input type="radio" name="tfanswer" />
+                                <input type="radio" name="tfanswer" value="@a.AnswerId" @onchange="OnAnswerChanged" />
                             </span>
                             <label class="form-control">@a.AnswersName</label>
                         </div>
@@ -103,12 +57,16 @@
                     {
                         <div class="input-group mb-2">
                             <span class="input-group-text">
-                                <input type="checkbox" name="tfanswer" />
+                                <input type="checkbox" name="tfanswer" value="@a.AnswerId" @onchange="OnAnswerChanged" />
                             </span>
                             <label class="form-control">@a.AnswersName</label>
                         </div>
                     }
                 }
+
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success" @onclick="() =>CreateStudentAns(selectedAnsIds)">Kết thúc bài thi</button>
+                </div>
             </div>
         }
     }
@@ -129,6 +87,7 @@
     private Dictionary<int, List<int>> selectedAnswers = new();
     private bool isLoaded = false;
     private bool isFinished = false;
+    public List<int> selectedAnsIds = new List<int>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -173,7 +132,36 @@
         }
         catch (Exception ex)
         {
-            toastService.ShowError("Lỗi: " + ex); ;
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
+
+    private void OnAnswerChanged(ChangeEventArgs e)
+    {
+        int answerId = int.Parse(e.Value.ToString());
+
+        if (selectedAnsIds.Contains(answerId))
+        {
+            selectedAnsIds.Remove(answerId);
+        }
+        else
+        {
+            selectedAnsIds.Add(answerId);
+        }
+    }
+
+    public  async Task CreateStudentAns(List<int> lstAnsId)
+    {
+        try
+        {
+            if (lstAnsId != null && lstAnsId.Count > 0)
+            {
+                bool checkAns = await TestService.CreateStudentAnswer(lstAnsId, studentCode, histDTO.TestId);
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
         }
     }
 

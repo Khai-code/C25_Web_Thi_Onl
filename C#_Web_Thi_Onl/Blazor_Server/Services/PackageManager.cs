@@ -147,22 +147,6 @@ namespace Blazor_Server.Services
 
                 var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
 
-                //var lstQuestionId = questionList.Select(o => o.Id).ToList();
-
-                //var filterRequestAns = new CommonFilterRequest
-                //{
-                //    Filters = new Dictionary<string, string>
-                //    {
-                //        { "Question_Id", string.Join(",", lstQuestionId) },
-                //    },
-                //};
-
-                //var questionGetResponseAns = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAns);
-                //if (questionGetResponseAns.IsSuccessStatusCode)
-                //    return null;
-
-                //var AnsList = await questionGetResponseAns.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
-
                 var result = new List<HistDTO>();
 
                 foreach (var item in lstpackage)
