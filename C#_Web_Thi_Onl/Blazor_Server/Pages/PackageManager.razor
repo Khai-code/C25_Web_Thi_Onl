@@ -212,7 +212,7 @@
                                 <div>
                                     <label for="pointType" class="block font-medium mb-1">Loại bài thi</label>
                                     <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2"
-                                            @onchange="OnPointTypeChanged">
+                                    @onchange="OnPointTypeChanged">
                                         <option value="">-- Chọn gói loại --</option>
                                         @foreach (var point in pointTypeViewModels)
                                         {
@@ -258,7 +258,7 @@
                             </div>
 
                             <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold"
-                                    @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
+                            @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
                                 thêm package
                             </button>
                         </form>
@@ -710,7 +710,17 @@
         {
             if (quesId != null && quesId.Count > 0 && this.packageId > 0)
             {
-                var Addlstquestion = await pm.CreateListQuestionTL(quesId, this.packageId);
+                bool checkLstQue = await pm.CreateListQuestionTL(quesId, this.packageId);
+
+                if (!checkLstQue)
+                {
+                    toastService.ShowSuccess("Thêm câu hỏi thất bại");
+                    return;
+                }
+                else
+                {
+                    toastService.ShowSuccess("Thêm câu thành công");
+                }
             }
         }
         catch (Exception ex)

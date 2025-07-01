@@ -238,6 +238,56 @@ namespace Blazor_Server.Services
             return AnsHislst;
         }
 
+        public async Task<bool> CreateStudentAnswer(List<int> lstAns, string studentId, int testId)
+        {
+            try
+            {
+                if (lstAns == null && lstAns.Count <= 0 && studentId != null & testId > 0)
+                {
+                    return false;
+                }
+
+                List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory> lstExamRoomStudentAnsHt = new List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory>();
+
+                var filter = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                        {
+                             { "Student_Id", studentId },
+                             { "Test_Id", testId.ToString()}
+                        }
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filter);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                var ersId = (await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault().Id;
+
+                foreach (var item in lstAns)
+                {
+                    Data_Base.Models.E.Exam_Room_Student_Answer_HisTory examRoomStudentAnsHt = new Data_Base.Models.E.Exam_Room_Student_Answer_HisTory();
+                    examRoomStudentAnsHt.Answer_Id = item;
+                    examRoomStudentAnsHt.Exam_Room_Student_Id = ersId;
+
+                    lstExamRoomStudentAnsHt.Add(examRoomStudentAnsHt);
+                }
+
+                if (lstExamRoomStudentAnsHt != null && lstExamRoomStudentAnsHt.Count > 0)
+                {
+                    await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/PostList", lstExamRoomStudentAnsHt);
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public class HistDTO
         {
             public int PackageId { get; set; }

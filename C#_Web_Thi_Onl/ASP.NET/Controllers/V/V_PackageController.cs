@@ -9,9 +9,9 @@ namespace ASP.NET.Controllers.V
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class V_Package_Controller : GenericController<V_Package>
+    public class V_PackageController : GenericController<V_Package>
     {
-        public V_Package_Controller(GenericRepository<V_Package> repository) : base(repository)
+        public V_PackageController(GenericRepository<V_Package> repository) : base(repository)
         {
         }
     }
