@@ -141,131 +141,127 @@
                         ×
                     </button>
 
-                    <!-- Nội dung chia 2 phần -->
-                    <div class="bg-white shadow-lg rounded-xl p-6 w-full max-w-7xl mx-auto flex gap-6">
-                        <!-- Form bên trái -->
-                        <div class="w-2/3 space-y-4">
-                            <h2 class="text-xl md:text-2xl font-bold mb-2 text-center text-green-600">Thêm Gói Đề Thi</h2>
-                            <form class="space-y-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="packageName" class="block font-medium mb-1">Tên Package</label>
-                                        <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
-                                    </div>
-
-                                    <div>
-                                        <label for="subject" class="block font-medium mb-1">Bài thi</label>
-                                        <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Package_Type_Id">
-                                            <option value="">-- Chọn bài thi --</option>
-                                            @foreach (var pt in packageTypeViewModels)
-                                            {
-                                                <option value="@pt.Package_Type_Id">@pt.Package_Type_Name</option>
-                                            }
-                                        </select>
-                                    </div>
+                    <div class="space-y-4">
+                        <h2 class="text-xl md:text-2xl font-bold mb-2 text-center text-green-600">Thêm Gói Đề Thi</h2>
+                        <form class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="packageName" class="block font-medium mb-1">Tên Package</label>
+                                    <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
                                 </div>
 
                                 <div>
-                                    <div>
-                                        <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
-                                        <input type="text" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
-                                    </div>
-                                    <div>
-                                        <label for="numberOfQuestions" class="block font-medium mb-1">Số lượng câu hỏi</label>
-                                        <input type="text" id="numberOfQuestions" name="numberOfQuestions" class="w-full border rounded-lg px-3 py-2" value="@packageTestADO.Package.Number_Of_Questions">
-                                    </div>
+                                    <label for="subject" class="block font-medium mb-1">Bài thi</label>
+                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Package_Type_Id">
+                                        <option value="">-- Chọn bài thi --</option>
+                                        @foreach (var pt in packageTypeViewModels)
+                                        {
+                                            <option value="@pt.Package_Type_Id">@pt.Package_Type_Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div>
+                                    <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
+                                    <input type="text" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
+                                </div>
+                                <div>
+                                    <label for="CountQuestion" class="block font-medium mb-1">Số lượng câu hỏi</label>
+                                    <input type="text" id="CountQuestion" name="CountQuestion" class="w-full border rounded-lg px-3 py-2" @bind="CountQuestion">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="startTime" class="block font-medium mb-1">Bắt đầu</label>
+                                    <input type="datetime-local" id="startTime" name="startTime" required class="w-full border rounded-lg px-3 py-2" @bind="Start_Time" />
+                                </div>
+                                <div>
+                                    <label for="endTime" class="block font-medium mb-1">Kết thúc</label>
+                                    <input type="datetime-local" id="endTime" name="endTime" required class="w-full border rounded-lg px-3 py-2" @bind="End_Time">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="subject" class="block font-medium mb-1">Môn học</label>
+                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Subject_Id">
+                                        <option value="">-- Chọn gói môn --</option>
+                                        @foreach (var subj in subjectViewModel)
+                                        {
+                                            <option value="@subj.Subject_Id">@subj.Subject_Name</option>
+                                        }
+                                    </select>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="startTime" class="block font-medium mb-1">Bắt đầu</label>
-                                        <input type="datetime-local" id="startTime" name="startTime" required class="w-full border rounded-lg px-3 py-2" @bind="Start_Time" />
-                                    </div>
-                                    <div>
-                                        <label for="endTime" class="block font-medium mb-1">Kết thúc</label>
-                                        <input type="datetime-local" id="endTime" name="endTime" required class="w-full border rounded-lg px-3 py-2" @bind="End_Time">
-                                    </div>
+                                <div>
+                                    <label for="class" class="block font-medium mb-1">Lớp</label>
+                                    <select id="class" name="class" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Class_Id">
+                                        <option value="">-- Chọn gói lớp --</option>
+                                        @foreach (var classes in classViewModels)
+                                        {
+                                            <option value="@classes.Class_Id">@classes.Class_Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="pointType" class="block font-medium mb-1">Loại bài thi</label>
+                                    <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2"
+                                            @onchange="OnPointTypeChanged">
+                                        <option value="">-- Chọn gói loại --</option>
+                                        @foreach (var point in pointTypeViewModels)
+                                        {
+                                            <option value="@point.PointType_Id">@point.PointType_Name</option>
+                                        }
+                                    </select>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="subject" class="block font-medium mb-1">Môn học</label>
-                                        <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Subject_Id">
-                                            <option value="">-- Chọn gói môn --</option>
-                                            @foreach (var subj in subjectViewModel)
-                                            {
-                                                <option value="@subj.Subject_Id">@subj.Subject_Name</option>
-                                            }
-                                        </select>
-                                    </div>
+                                <div>
+                                    <label for="room" class="block font-medium mb-1">Phòng thi</label>
+                                    <select id="room" name="room" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Room_Id">
+                                        <option value="">-- Chọn gói phòng --</option>
+                                        @foreach (var room in roomViewModels)
+                                        {
+                                            <option value="@room.Room_Id">@room.Room_Name</option>
+                                        }
+                                    </select>
+                                </div>
+                            </div>
 
-                                    <div>
-                                        <label for="class" class="block font-medium mb-1">Lớp</label>
-                                        <select id="class" name="class" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Class_Id">
-                                            <option value="">-- Chọn gói lớp --</option>
-                                            @foreach (var classes in classViewModels)
-                                            {
-                                                <option value="@classes.Class_Id">@classes.Class_Name</option>
-                                            }
-                                        </select>
-                                    </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="exam" class="block font-medium mb-1">Đề thi</label>
+                                    <select id="exam" name="exam" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Exam_Id">
+                                        <option value="">-- Chọn gói Exam --</option>
+                                        @foreach (var exam in examsViewModels)
+                                        {
+                                            <option value="@exam.Exams_Id">@exam.Exams_Name</option>
+                                        }
+                                    </select>
                                 </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="pointType" class="block font-medium mb-1">Loại bài thi</label>
-                                        <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2"
-                                        @onchange="OnPointTypeChanged">
-                                            <option value="">-- Chọn gói loại --</option>
-                                            @foreach (var point in pointTypeViewModels)
-                                            {
-                                                <option value="@point.PointType_Id">@point.PointType_Name</option>
-                                            }
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label for="room" class="block font-medium mb-1">Phòng thi</label>
-                                        <select id="room" name="room" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Room_Id">
-                                            <option value="">-- Chọn gói phòng --</option>
-                                            @foreach (var room in roomViewModels)
-                                            {
-                                                <option value="@room.Room_Id">@room.Room_Name</option>
-                                            }
-                                        </select>
-                                    </div>
+                                <div>
+                                    <label for="teacher" class="block font-medium mb-1">Giáo viên coi thi</label>
+                                    <select id="teacher" name="teacher" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
+                                        <option value="">-- Chọn giáo viên coi thi --</option>
+                                        @foreach (var tea in teacherViewModels)
+                                        {
+                                            <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                        }
+                                    </select>
                                 </div>
+                            </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label for="exam" class="block font-medium mb-1">Đề thi</label>
-                                        <select id="exam" name="exam" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Exam_Id">
-                                            <option value="">-- Chọn gói Exam --</option>
-                                            @foreach (var exam in examsViewModels)
-                                            {
-                                                <option value="@exam.Exams_Id">@exam.Exams_Name</option>
-                                            }
-                                        </select>
-                                    </div>
-
-                                    <div>
-                                        <label for="teacher" class="block font-medium mb-1">Giáo viên coi thi</label>
-                                        <select id="teacher" name="teacher" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
-                                            <option value="">-- Chọn giáo viên coi thi --</option>
-                                            @foreach (var tea in teacherViewModels)
-                                            {
-                                                <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
-                                            }
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold"
-                                @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
-                                    thêm package
-                                </button>
-                            </form>
-                        </div>
+                            <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold"
+                                    @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
+                                thêm package
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -626,6 +622,7 @@
             CheckDuration();
         }
     }
+    public int CountQuestion { get; set; }
     public string PackageName = null;
 
     public List<int> selectedQuestionIds = new List<int>();
@@ -746,6 +743,7 @@
                 if (duration.TotalSeconds < this.time)
                 {
                     toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                    return;
                 }
             }
             else if (selectedPointTypeId == 3)
@@ -756,6 +754,7 @@
                 if (duration.TotalSeconds < this.time)
                 {
                     toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                    return;
                 }
             }
             else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
@@ -766,6 +765,7 @@
                 if (duration.TotalSeconds != this.time)
                 {
                     toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                    return;
                 }
             }
             else
@@ -784,8 +784,12 @@
     {
         int seconds = (int)(End_Time - Start_Time).TotalSeconds;
 
-        if (time > 0 && seconds != time)   
-            toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time/60} phút ({time} giây)");
+        if (time > 0 && seconds != time)
+        {
+            toastService.ShowWarning($"Thời gian nhập không đúng! Phải đúng {time / 60} phút ({time} giây)");
+            return;
+        }
+
     }
 
     private async Task OnQuestionTypeChanged(ChangeEventArgs e)
@@ -857,10 +861,16 @@
         try
         {
             if (Classid == 0)
+            {
                 toastService.ShowWarning("Không xác định được lớp tham gia thi");
+                return;
+            }
 
             if (SubjectId == 0)
+            {
                 toastService.ShowWarning("Không xác định được môn thi");
+                return;
+            }
             if (packageId != null && packageTypeId != null)
             {
                 this.packageId = packageId;
@@ -881,11 +891,13 @@
             {
                 if (packageId == null)
                 {
-                    toastService.ShowWarning("Không tìm thấy gói đề");  
+                    toastService.ShowWarning("Không tìm thấy gói đề");
+                    return;
                 }
                 if (packageTypeId == null)
                 {
                     toastService.ShowWarning("Không tìm thấyloại bài thi");
+                    return;
                 }
             }
             questionTypeViewModels = await pm.GetQuestionType(packageTypeId);
@@ -906,6 +918,7 @@
             if (questionAnswers.question.Question_Name == null)
             {
                 toastService.ShowSuccess("Không có nội dung câu hỏi!");
+                return;
             }
             if (IsAddExamModalQuesMultipleChoice)
             {
@@ -914,6 +927,7 @@
                     if (item.Name.Trim() == null)
                     {
                         toastService.ShowSuccess($"Đáp án " + item + " chưa có nội dung");
+                        return;
                     }
                 }
                 Addquestion = await pm.CreatequesTN(questionAnswers, lstAns);
@@ -927,9 +941,14 @@
             {
                 toastService.ShowSuccess("Thêm dữ liệu thành công!");
                 this.IsAddExamModalQuesEssay = false;
+                return;
             }
             else
+            {
                 toastService.ShowError("Thêm thất bại");
+                return;
+            }
+
         }
         catch (Exception ex)
         {
@@ -950,18 +969,6 @@
         }
     }
 
-    public async Task QuestionTypeViewModels()
-    {
-        try
-        {
-
-        }
-        catch (Exception ex)
-        {
-            questionTypeViewModels = new List<QuestionTypeViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
-        }
-    }
 
     public async Task PackageInactive()
     {
@@ -1082,11 +1089,28 @@
             else
             {
                 toastService.ShowError("Thời gian bắt đầu và kết thúc không hợp lệ");
+                return;
             }
+
             if (PackageName.Trim() != null)
-            {
                 packageTestADO.Package.Package_Name = PackageName;
+            else
+            {
+                toastService.ShowError("Chưa nhập tên gói đề");
+                return;
             }
+            
+
+            if (CountQuestion > 0)
+            {
+                packageTestADO.Package.Number_Of_Questions = CountQuestion;
+            }
+            else
+            {
+                toastService.ShowError("Chưa nhập số lượng câu hỏi cho bài thi");
+                return;
+            }
+                
 
             var packageTestViewModel = await PTERP.AddPackageTestERP(packageTestADO);
             if (packageTestViewModel != null)

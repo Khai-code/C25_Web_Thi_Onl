@@ -34,9 +34,9 @@ namespace Blazor_Server.Services
                         { "Package_Code", Package_Code.ToString() }
                     },
             };
-            var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package_/common/get", filterRequestPackage);
+            var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterRequestPackage);
 
-            if (packageGetResponse.IsSuccessStatusCode)
+            if (!packageGetResponse.IsSuccessStatusCode)
                 return null;
 
             var Vpackage = (await packageGetResponse.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Package>>()).SingleOrDefault();
@@ -51,12 +51,12 @@ namespace Blazor_Server.Services
                         { "Student_Code", Student_Code.ToString() }
                     },
             };
-            var studentGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Student_/common/get", filterRequestPackage);
+            var studentGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Student/common/get", filterRequestStudent);
 
-            if (studentGetResponse.IsSuccessStatusCode)
+            if (!studentGetResponse.IsSuccessStatusCode)
                 return null;
 
-            var student = (await packageGetResponse.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Student>>()).SingleOrDefault();
+            var student = (await studentGetResponse.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Student>>()).SingleOrDefault();
 
             if (student == null)
                 return null;
@@ -146,12 +146,14 @@ namespace Blazor_Server.Services
                 Questions = randomQuestionIds.Select(Que => new Question
                 {
                     QuestionId = Que.Id,
+                    QuestionName = Que.Question_Name,
                     Type = Que.Question_Type_Id,
                     Level = Que.Question_Level_Id,
-                    Answers = lstAnswers.Select(Ans => new Answer
+                    Answers = lstAnswers.Where(r => r.Question_Id == Que.Id).Select(Ans => new Answer
                     {
                         AnswerId = Ans.Id,
-                        AnswersName = Ans.Answers_Name
+                        AnswersName = Ans.Answers_Name,
+                        QuestionId = Que.Id
                     }).ToList(),
                 }).ToList()
             };
@@ -213,7 +215,7 @@ namespace Blazor_Server.Services
                     await _httpClient.DeleteAsync($"https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/Delete/{item.ID}");
                 }
             }
-            else
+            else   
             {
                 foreach (var answerId in AnswerIds)
                 {
@@ -265,6 +267,7 @@ namespace Blazor_Server.Services
             public int? AnswerId { get; set; }
             public string AnswersName { get; set; }
             public int IsCorrect { get; set; }
+            public int? QuestionId { get; set; }
         }
     }
 }
