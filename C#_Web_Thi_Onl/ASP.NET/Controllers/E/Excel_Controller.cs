@@ -7,6 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using Data_Base.DTO_Import_Excel;
 using OfficeOpenXml;
 using System.Collections.Immutable;
+using Data_Base.GenericRepositories;
+using Data_Base.Models.S;
+using Data_Base.Models.U;
 
 namespace ASP.NET.Controllers.E
 {
@@ -15,10 +18,147 @@ namespace ASP.NET.Controllers.E
     public class Excel_Controller : ControllerBase
     {
         private readonly Db_Context db_Context;
-        public Excel_Controller(Db_Context _Context)
+        private readonly HttpClient httpClient;
+        private readonly IWebHostEnvironment _env;
+        public Excel_Controller(Db_Context _Context,HttpClient _Client,IWebHostEnvironment webHostEnvironment)
         {
              db_Context = _Context;
+            httpClient = _Client;
+            _env = webHostEnvironment;
         }
+        [HttpPost("import-student-excel")]
+        public async Task<IActionResult> ImportStudentExcel(IFormFile file, [FromQuery] int classId)
+        {
+            if (file == null || file.Length == 0)
+                return BadRequest("File rỗng");
+
+            var studentsDto = new List<UserStudentImportDTO>();
+            string wwwRootPath = _env.WebRootPath; // _env là biến IWebHostEnvironment
+            string saveDir = Path.Combine(wwwRootPath, "image", "avatars");
+            if (!Directory.Exists(saveDir))
+                Directory.CreateDirectory(saveDir);
+
+            // 1. Đọc Excel và xử lý Avatar
+            using (var stream = file.OpenReadStream())
+            using (var package = new ExcelPackage(stream))
+            {
+                var sheet = package.Workbook.Worksheets[0];
+
+                for (int row = 2; row <= sheet.Dimension.End.Row; row++)
+                {
+                    object dobObj = sheet.Cells[row, 8].Value;
+                    long dobLong = 0;
+                    if (dobObj is DateTime dt)
+                        dobLong = ConvertLong.ConvertDateTimeToLong(dt);
+                    else if (dobObj != null && DateTime.TryParse(dobObj.ToString(), out var dt2))
+                        dobLong = ConvertLong.ConvertDateTimeToLong(dt2);
+
+                    long nowLong = ConvertLong.ConvertDateTimeToLong(DateTime.Now);
+
+                    // Xử lý Avatar
+                    string avatarPath = sheet.Cells[row, 9].Text?.Trim();
+                    string avatarDbPath = null;
+                    if (!string.IsNullOrEmpty(avatarPath) && System.IO.File.Exists(avatarPath))
+                    {
+                        try
+                        {
+                            string ext = Path.GetExtension(avatarPath);
+                            string fileName = $"{Guid.NewGuid()}{ext}";
+                            string destPath = Path.Combine(saveDir, fileName);
+                            System.IO.File.Copy(avatarPath, destPath, true);
+                            avatarDbPath = $"/image/avatars/{fileName}";
+                        }
+                        catch
+                        {
+                            avatarDbPath = null;
+                        }
+                    }
+
+                    studentsDto.Add(new UserStudentImportDTO
+                    {
+                        Full_Name = sheet.Cells[row, 2].Text?.Trim(),
+                        User_Name = sheet.Cells[row, 3].Text?.Trim(),
+                        User_Pass = sheet.Cells[row, 4].Text?.Trim(),
+                        Email = sheet.Cells[row, 5].Text?.Trim(),
+                        Address = sheet.Cells[row, 6].Text?.Trim(),
+                        Phone_Number = sheet.Cells[row, 7].Text?.Trim(),
+                        Data_Of_Birth = dobLong,
+                        Create_Time = nowLong,
+                        Last_Mordification_Time = nowLong,
+                        Avatar = avatarDbPath,
+                        Status = 1,
+                        Role_Id = 1
+                    });
+                }
+            }
+
+            // 2. Thêm Users vào DB, lấy đúng Id
+            var addedUsers = new List<User>();
+            foreach (var dto in studentsDto)
+            {
+                if (await db_Context.Users.AnyAsync(u => u.User_Name == dto.User_Name))
+                    continue;
+
+                var user = new User
+                {
+                    Full_Name = dto.Full_Name,
+                    User_Name = dto.User_Name,
+                    User_Pass = dto.User_Pass,
+                    Email = dto.Email,
+                    Address = dto.Address,
+                    Phone_Number = dto.Phone_Number,
+                    Data_Of_Birth = dto.Data_Of_Birth,
+                    Create_Time = dto.Create_Time,
+                    Last_Mordification_Time = dto.Last_Mordification_Time,
+                    Avatar = dto.Avatar,
+                    Status = dto.Status,
+                    Role_Id = dto.Role_Id
+                };
+                db_Context.Users.Add(user);
+                addedUsers.Add(user);
+            }
+            await db_Context.SaveChangesAsync(); // Phải save để lấy đúng Id
+
+            // 3. Tạo list Student mapping đúng User_Id vừa tạo
+            var students = new List<Student>();
+            foreach (var user in addedUsers)
+            {
+                var student = new Student
+                {
+                    Student_Code = string.Empty,
+                    User_Id = user.Id,
+                };
+                students.Add(student);
+            }
+
+            // 4. Gửi lên API PostList cho Student
+            var response = await httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/PostList", students);
+            List<Student> createdStudents = null;
+            if (response.IsSuccessStatusCode)
+            {
+                createdStudents = await response.Content.ReadFromJsonAsync<List<Student>>();
+            }
+            else
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                return BadRequest("Không import được student: " + err);
+            }
+
+            // 5. Tạo Student_Class với danh sách Student vừa nhận về (đã có Id)
+            foreach (var student in createdStudents)
+            {
+                var studentClass = new Student_Class
+                {
+                    Student_Id = student.Id,
+                    Class_Id = classId
+                };
+                db_Context.Student_Classes.Add(studentClass);
+            }
+            await db_Context.SaveChangesAsync();
+
+            return Ok("Import học sinh thành công!");
+        }
+
         [HttpPost("exceltuluan")]
         public async Task<IActionResult> ImportExcelTuLuan(IFormFile file, [FromQuery] int packageId)
         {
