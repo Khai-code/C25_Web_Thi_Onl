@@ -14,6 +14,7 @@
     @inject Learning_SummaryService summaryService
     @inject IJSRuntime jsRuntime
     @layout TeacherLayout
+    @inject Blazored.Toast.Services.IToastService toastService
 
 @if (errorMessage != null)
 {
@@ -288,6 +289,13 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">@(isEditMode ? "Cập nhật thông tin học sinh" : "Thêm học sinh mới")</h5>
+                        <label class="btn btn-primary">
+                            Tải Excel lên
+                            <InputFile OnChange="HandleFileSelectedExcel" class="d-none" accept=".xlsx,.xls" />
+                        </label>
+                        <a href="files/Book1.xlsm" download>
+                            <button class="btn btn-primary">Tải file mẫu</button>
+                        </a>
                         <button type="button" class="btn-close" @onclick="CloseStudentModal"></button>
                     </div>
                     <div class="modal-body">
@@ -1563,5 +1571,41 @@
     private void CloseStudentDetailScoreModal()
     {
         showStudentDetailModal = false;
+    }
+
+    private async Task HandleFileSelectedExcel(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            System.Diagnostics.Debugger.Break();
+            var file = e.File;
+            if (file == null) return;
+
+            var content = new MultipartFormDataContent();
+            System.Diagnostics.Debugger.Break();
+            var fileContent = new StreamContent(file.OpenReadStream(1024 * 1024 * 15)); // 15MB max
+            System.Diagnostics.Debugger.Break();
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+            System.Diagnostics.Debugger.Break();
+
+            content.Add(fileContent, "file", file.Name);
+
+            var classIdToSend = selectedClass?.Id ?? 0;
+            if (classIdToSend == 0)
+            {
+                toastService.ShowError("Bạn chưa chọn lớp để import học sinh!");
+                return;
+            }
+
+            bool check = await ClassService.CreateExcel(content, classIdToSend);
+            if (check)
+                toastService.ShowSuccess("Thêm dữ liệu thành công!");
+            else
+                toastService.ShowError("Thêm thất bại");
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
     }
 }  
