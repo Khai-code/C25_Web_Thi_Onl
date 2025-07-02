@@ -147,22 +147,6 @@ namespace Blazor_Server.Services
 
                 var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
 
-                //var lstQuestionId = questionList.Select(o => o.Id).ToList();
-
-                //var filterRequestAns = new CommonFilterRequest
-                //{
-                //    Filters = new Dictionary<string, string>
-                //    {
-                //        { "Question_Id", string.Join(",", lstQuestionId) },
-                //    },
-                //};
-
-                //var questionGetResponseAns = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAns);
-                //if (questionGetResponseAns.IsSuccessStatusCode)
-                //    return null;
-
-                //var AnsList = await questionGetResponseAns.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
-
                 var result = new List<HistDTO>();
 
                 foreach (var item in lstpackage)
@@ -361,7 +345,30 @@ namespace Blazor_Server.Services
 
             return questionLevel;
         }
+        public async Task<bool> CreateExcelEssay(MultipartFormDataContent content, int packageId)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsync($"/api/Excel_/exceltuluan?packageId={packageId}", content);
 
+                if (response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("✅ Thành công: " + msg);
+                    return true;
+                }
+                else
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("❌ Thất bại: " + err);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public async Task<bool> CreateExcel(MultipartFormDataContent content, int packageId)
         {
             try
