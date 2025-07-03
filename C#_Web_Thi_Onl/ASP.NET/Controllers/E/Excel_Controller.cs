@@ -25,6 +25,7 @@ namespace ASP.NET.Controllers.E
              db_Context = _Context;
             httpClient = _Client;
             _env = webHostEnvironment;
+          
         }
         [HttpPost("import-student-excel")]
         public async Task<IActionResult> ImportStudentExcel(IFormFile file, [FromQuery] int classId)
@@ -33,8 +34,11 @@ namespace ASP.NET.Controllers.E
                 return BadRequest("File rỗng");
 
             var studentsDto = new List<UserStudentImportDTO>();
-            string wwwRootPath = _env.WebRootPath; // _env là biến IWebHostEnvironment
-            string saveDir = Path.Combine(wwwRootPath, "image", "avatars");
+            var relative = @"..\Blazor_Server\wwwroot";
+
+            // Map sang đường dẫn tuyệt đối
+            var blazorWwwroot = Path.GetFullPath(Path.Combine(_env.ContentRootPath, relative));
+            var saveDir = Path.Combine(blazorWwwroot, "images");
             if (!Directory.Exists(saveDir))
                 Directory.CreateDirectory(saveDir);
 
@@ -66,7 +70,7 @@ namespace ASP.NET.Controllers.E
                             string fileName = $"{Guid.NewGuid()}{ext}";
                             string destPath = Path.Combine(saveDir, fileName);
                             System.IO.File.Copy(avatarPath, destPath, true);
-                            avatarDbPath = $"/image/avatars/{fileName}";
+                            avatarDbPath = $"/images/{fileName}";
                         }
                         catch
                         {

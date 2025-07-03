@@ -74,8 +74,22 @@
             </nav>
         </aside>
 
-        <main class="content p-4 shadow flex-grow-1 page-transition">
-            @Body
+        <main class="content hadow flex-grow-1 page-transition">
+            <div class="d-flex justify-content-start align-items-center  ps-2 mb-3">
+                <div class="fs-5 fw-semibold text-dark">
+                    @PageTitle
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="ps-3 me-2">|</span>
+                    <a href="/" class="text-decoration-none text-secondary fs-5">
+                        <i class="@PageIcon"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="p-2">
+                @Body
+            </div>
+           
         </main>
     </div>
 </div>
@@ -84,7 +98,47 @@
     private string username;
     private string avatar;
     private bool isSidebarVisible = true;
+    private string PageTitle { get; set; }
+    private string PageIcon { get; set; }
+    private void SetPageTitle()
+    {
+        var uri = navigation.ToBaseRelativePath(navigation.Uri);
+        if (!uri.StartsWith("/"))
+            uri = "/" + uri;
 
+        if (PageTitles.TryGetValue(uri, out var pageInfo))
+        {
+            PageTitle = pageInfo.Title;
+            PageIcon = pageInfo.Icon;
+        }
+        else
+        {
+            PageTitle = "Trang chủ";
+            PageIcon = "bi-house-fill";
+        }
+    }
+
+
+    private readonly Dictionary<string, PageInfo> PageTitles = new()
+{
+    { "/", new PageInfo { Title = "Trang chủ", Icon = "bi-house-fill" } },
+    { "/teacher-managements", new PageInfo { Title = "Danh sách giáo viên", Icon = "bi-person-lines-fill" } },
+    { "/classs", new PageInfo { Title = "Quản lý lớp học", Icon = "bi-building" } },
+    { "/exammanagement", new PageInfo { Title = "Quản lý ca thi", Icon = "bi-calendar-event-fill" } },
+    { "/Package-Manager", new PageInfo { Title = "Quản lý bài thi", Icon = "bi-file-text-fill" } },
+    { "/exam-history", new PageInfo { Title = "Lịch sử thi", Icon = "bi-clock-history" } },
+    { "/ReviewExam", new PageInfo { Title = "Phúc khảo", Icon = "bi-pencil-square" } }
+};
+
+    protected override void OnInitialized()
+    {
+        SetPageTitle();
+        navigation.LocationChanged += (_, __) =>
+        {
+            SetPageTitle();
+            StateHasChanged();
+        };
+    }
     private void ToggleSidebar()
     {
         isSidebarVisible = !isSidebarVisible;
@@ -130,5 +184,10 @@
         }
         return "?";
     }
-   
+    private class PageInfo
+    {
+        public string Title { get; set; }
+        public string Icon { get; set; }
+    }
+
 }

@@ -474,7 +474,7 @@ namespace Blazor_Server.Services
             if (string.IsNullOrEmpty(user.Avatar))
             {
                 // Trả về avatar mặc định nếu không có
-                return "/image/avatars/default-avatar.png";
+                return "/images/default-avatar.png";
             }
 
             return user.Avatar;
