@@ -45,9 +45,9 @@
 
             <div class="d-flex align-items-center gap-2">
                 <input type="text" class="form-control form-control-sm" placeholder="Tìm tên lớp hoặc giáo viên"
-                       style="min-width: 220px;" @bind="searchTerm" @bind:event="oninput" />
+                style="min-width: 220px;" @bind="searchTerm" @bind:event="oninput" />
                 <button class="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-1"
-                        style="min-width: 120px;" @onclick="SearchClass">
+                style="min-width: 120px;" @onclick="SearchClass">
                     <i class="bi bi-search"></i> <span>Tìm kiếm</span>
                 </button>
 
@@ -289,14 +289,19 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">@(isEditMode ? "Cập nhật thông tin học sinh" : "Thêm học sinh mới")</h5>
-                        <label class="btn btn-primary">
-                            Tải Excel lên
-                            <InputFile OnChange="HandleFileSelectedExcel" class="d-none" accept=".xlsx,.xls" />
-                        </label>
-                        <a href="files/Book1.xlsm" download>
-                            <button class="btn btn-primary">Tải file mẫu</button>
-                        </a>
-                        <button type="button" class="btn-close" @onclick="CloseStudentModal"></button>
+                        <div class="d-flex gap-2 modal-buttons">
+                            <!-- Tải Excel lên -->
+                            <label class="btn btn-outline-primary btn-xs">
+                                <i class="bi bi-file-earmark-excel"></i> Tải Excel lên
+                                <InputFile OnChange="HandleFileSelectedExcel" class="d-none" accept=".xlsx,.xls" />
+                            </label>
+                            <!-- Tải file mẫu -->
+                            <a href="files/Book1.xlsm" download>
+                                <button class="btn btn-outline-secondary btn-xs">
+                                    <i class="bi bi-file-earmark"></i> Tải file mẫu
+                                </button>
+                            </a>
+                        </div>
                     </div>
                     <div class="modal-body">
                         <EditForm Model="@currentStudent" OnValidSubmit="SaveStudent">
@@ -308,7 +313,7 @@
                                 <div class="col-md-4 mb-3 text-center">
                                     <div class="mb-3">
                                         <img src="@previewImageUrl" class="rounded-circle border"
-                                             style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
+                                        style="width: 150px; height: 150px; object-fit: cover;" alt="Avatar" />
                                     </div>
                                     <div class="mb-3">
                                         <InputFile OnChange="HandleFileSelected" class="form-control" accept="image/*" />
@@ -342,10 +347,10 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
                                             <InputDate @bind-Value="birthDate"
-                                                       class="form-control"
-                                                       format="yyyy-MM-dd"
-                                                       max="@MaxBirthDate.ToString("yyyy-MM-dd")"
-                                                       min="@MinBirthDate.ToString("yyyy-MM-dd")" />
+                                            class="form-control"
+                                            format="yyyy-MM-dd"
+                                            max="@MaxBirthDate.ToString("yyyy-MM-dd")"
+                                            min="@MinBirthDate.ToString("yyyy-MM-dd")" />
                                             <ValidationMessage For="@(() => birthDate)" />
                                             @if (birthDate > MaxBirthDate)
                                             {
@@ -500,9 +505,9 @@
                                     {
                                         <td class="text-center">
                                             @(studentSummary.SubjectScores != null &&
-                                                studentSummary.SubjectScores.TryGetValue(subject, out var score)
-                                                ? score.ToString("0.00")
-                                                : "-")
+                                                    studentSummary.SubjectScores.TryGetValue(subject, out var score)
+                                                    ? score.ToString("0.00")
+                                                    : "-")
                                         </td>
                                     }
                                     <td class="text-center">@studentSummary.Term_Summary.ToString("0.00")</td>
@@ -581,19 +586,19 @@
                                                         var p = group.Where(x => x.PointTypeName == "Point_45").ElementAtOrDefault(i)?.Point ?? 0;
                                                         <td class="@(p < 5 ? "score-low" : "score-good")">@p</td>
                                                     }
- 
+
                                                     @* Giữa kỳ *@
-                                                   @{
+                                                    @{
                                                         var mid = group.FirstOrDefault(x => x.PointTypeName == "Point_Midterm")?.Point ?? 0;
                                                     }
                                                     <td class="@(mid < 5 ? "score-low" : "score-good")">@mid</td>
- 
+
                                                     @* Cuối kỳ *@
                                                     @{
                                                         var final = group.FirstOrDefault(x => x.PointTypeName == "Point_Final")?.Point ?? 0;
                                                     }
                                                     <td class="@(final < 5 ? "score-low" : "score-good")">@final</td>
-                                                 </tr>
+                                                </tr>
                                             }
                                         </tbody>
                                     </table>
@@ -697,7 +702,7 @@
             UpdatePagedList();
         }
     }
-    
+
     private DateTime? ConvertLongToDateTime(long? dateLong)
     {
         if (!dateLong.HasValue || dateLong.Value < 19000101000000 || dateLong.Value > 20991231235959)
@@ -1599,7 +1604,12 @@
 
             bool check = await ClassService.CreateExcel(content, classIdToSend);
             if (check)
+            {
                 toastService.ShowSuccess("Thêm dữ liệu thành công!");
+                showStudentModal = false;
+                await LoadClassStudents();
+                StateHasChanged();
+            }
             else
                 toastService.ShowError("Thêm thất bại");
         }
