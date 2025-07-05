@@ -18,7 +18,7 @@ namespace Data_Base.Models.E
         [Required(ErrorMessage = "Ngày tháng năm không được để trống")]
         [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
         public long Create_Time { get; set; }
-        public long Actual_Execution_Time { get; set; }
+        public int Actual_Execution_Time { get; set; }
         [ForeignKey("Exam_Room_Student_Id")]
         [JsonIgnore]
         public Exam_Room_Student? Exam_Room_Students { get; set; }

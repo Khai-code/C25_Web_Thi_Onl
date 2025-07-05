@@ -1,6 +1,8 @@
 ﻿@page "/Test"
 @using Blazor_Server.Services
+@using Blazored.TextEditor
 @using Data_Base.Models.A
+@using Data_Base.Models.E
 @using Data_Base.Models.Q
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @using System.IdentityModel.Tokens.Jwt
@@ -15,33 +17,49 @@
 @inject Blazor_Server.Services.Test TestService
 @inject Blazored.Toast.Services.IToastService toastService
 
-<div class="container p-4 border rounded shadow-sm bg-light">
 
-    @if (histDTO.Questions != null)
+@if (histDTO != null && histDTO.Questions != null)
+{
+    <div class="text-center mb-3">
+        <h3 class="fw-bold text-uppercase">BÀI KIỂM TRA</h3>
+        <h5 class="text-muted">Môn: @histDTO.SubjectName – Lớp: @histDTO.ClassName</h5>
+        <div class="fst-italic">(Thời gian làm bài: @poi phút)</div>
+        <div class="text-danger fw-semibold">Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
+    </div>
+
+    <!-- Test Info -->
+    <div class="row mb-4 text-dark">
+        <div class="col-md-4"><strong>Mã gói đề:</strong> @histDTO.PackageId</div>
+        <div class="col-md-4"><strong>Tên gói đề:</strong> @histDTO.PackageName</div>
+        <div class="col-md-4"><strong>Loại đề:</strong> @histDTO.PackageType</div>
+        <div class="col-md-4"><strong>Mã bài thi:</strong> @histDTO.TestCode</div>
+    </div>
+
+    if (histDTO.PackageTypeId == 1)
     {
-        <!-- Header -->
-        <div class="text-center mb-3">
-            <h3 class="fw-bold text-uppercase">BÀI KIỂM TRA</h3>
-            <h5 class="text-muted">Môn: @histDTO.SubjectName – Lớp: @histDTO.ClassName</h5>
-            <div class="fst-italic">(Thời gian làm bài: @poi phút)</div>
-            <div class="text-danger fw-semibold">Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
-        </div>
-
-        <!-- Test Info -->
-        <div class="row mb-4 text-dark">
-            <div class="col-md-4"><strong>Mã gói đề:</strong> @histDTO.PackageId</div>
-            <div class="col-md-4"><strong>Tên gói đề:</strong> @histDTO.PackageName</div>
-            <div class="col-md-4"><strong>Loại đề:</strong> @histDTO.PackageType</div>
-            <div class="col-md-4"><strong>Mã bài thi:</strong> @histDTO.TestCode</div>
-        </div>
-        @foreach (var Que in histDTO.Questions)
+        foreach (var Que in histDTO.Questions)
         {
             <div class="mb-4 p-3 border rounded bg-white">
-                <div class="mb-2 fw-bold">Câu hỏi @Que.QuestionId: @Que.QuestionName</div>
+                <div class="mb-2 fw-bold">Câu hỏi @Que.QuestionId: @Que.QuestionName (@Que.MaximumScore)</div>
+                <BlazoredTextEditor @ref="textEditor" @oninitialized="() => OnEditorInitialized(Que.QuestionId)" />
+            </div>
 
-                @if (Que.Type == 1 || Que.Type == 2)
+        }
+        <div class="mt-3">
+            <button type="submit" class="btn btn-success" @onclick="() =>SaveAllAnswers()">Kết thúc bài thi</button>
+        </div>
+    }
+    else
+    {
+
+        @foreach (var QueTN in histDTO.Questions)
+        {
+            <div class="mb-4 p-3 border rounded bg-white">
+                <div class="mb-2 fw-bold">Câu hỏi @QueTN.QuestionId: @QueTN.QuestionName</div>
+
+                @if (QueTN.Type == 1 || QueTN.Type == 2)
                 {
-                    @foreach (var a in Que.Answers)
+                    @foreach (var a in QueTN.Answers)
                     {
                         <div class="input-group mb-2">
                             <span class="input-group-text">
@@ -51,9 +69,9 @@
                         </div>
                     }
                 }
-                else if (Que.Type == 3)
+                else if (QueTN.Type == 3)
                 {
-                    @foreach (var a in Que.Answers)
+                    @foreach (var a in QueTN.Answers)
                     {
                         <div class="input-group mb-2">
                             <span class="input-group-text">
@@ -63,15 +81,14 @@
                         </div>
                     }
                 }
-
-                <div class="mt-3">
-                    <button type="submit" class="btn btn-success" @onclick="() =>CreateStudentAns(selectedAnsIds)">Kết thúc bài thi</button>
-                </div>
             </div>
         }
+        <div class="mt-3">
+            <button type="submit" class="btn btn-success" @onclick="() =>CreateStudentAns(selectedAnsIds)">Kết thúc bài thi</button>
+        </div>
     }
-</div>
 
+}
 
 @code {
     private int minutes;
@@ -87,8 +104,20 @@
     private Dictionary<int, List<int>> selectedAnswers = new();
     private bool isLoaded = false;
     private bool isFinished = false;
+    private bool isSubmitted = false;
     public List<int> selectedAnsIds = new List<int>();
+    public List<Exam_Room_Student_Answer_HisTory> his = new List<Exam_Room_Student_Answer_HisTory>();
+    private BlazoredTextEditor textEditor;
+    private List<Ans> listAnswers = new();
+    private Dictionary<int, BlazoredTextEditor> editorsByQuesId = new Dictionary<int, BlazoredTextEditor>();
 
+    private void OnEditorInitialized(int questionId)
+    {
+        if (textEditor != null)
+        {
+            editorsByQuesId[questionId] = textEditor;
+        }
+    }
     protected override async Task OnInitializedAsync()
     {
         try
@@ -150,13 +179,61 @@
         }
     }
 
-    public  async Task CreateStudentAns(List<int> lstAnsId)
+    private async Task SaveAllAnswers()// lưu tự luận
+    {
+        listAnswers.Clear();
+
+        try
+        {
+            foreach (var entry in editorsByQuesId)
+            {
+                int quesId = entry.Key;
+                string content = await entry.Value.GetHTML();
+
+                listAnswers.Add(new Ans
+                    {
+                        QuesId = quesId,
+                        Name = content
+                    });
+            }
+
+            if (listAnswers != null && !isSubmitted)
+            {
+                bool checkAns = await TestService.CreateAnswerStudentAns(listAnswers, studentCode, histDTO.TestId);
+                if (checkAns)
+                {
+                    isSubmitted = true;
+                    toastService.ShowSuccess("Lưu bài thành công");
+
+                    await SessionStorage.SetAsync("TestId", histDTO.TestId);
+
+                    Navigation.NavigateTo("/His");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+
+    }
+
+    public  async Task CreateStudentAns(List<int> lstAnsId) // lưu trắc nghiệm
     {
         try
         {
-            if (lstAnsId != null && lstAnsId.Count > 0)
+            if (lstAnsId != null && lstAnsId.Count > 0 && !isSubmitted)
             {
                 bool checkAns = await TestService.CreateStudentAnswer(lstAnsId, studentCode, histDTO.TestId);
+                if (checkAns)
+                {
+                    isSubmitted = true;
+                    toastService.ShowSuccess("Đã lưu bài thi");
+
+                    await SessionStorage.SetAsync("TestId", histDTO.TestId);
+
+                    Navigation.NavigateTo("/His");
+                }
             }
         }
         catch (Exception ex)
@@ -186,14 +263,18 @@
 
     private async Task StartCountdown()
     {
-        while (timeInSecondsMinute > 0)
+        while (timeInSecondsMinute > 0 && !isSubmitted)
         {
             await Task.Delay(1000);
             timeInSecondsMinute--;
             StateHasChanged();
         }
 
-        toastService.ShowError("Hết giờ làm bài");
+        if (!isSubmitted)
+        {
+            toastService.ShowError("Hết giờ làm bài");
+            await CreateStudentAns(selectedAnsIds);
+        }
     }
 
     private string FormatTime(int seconds)

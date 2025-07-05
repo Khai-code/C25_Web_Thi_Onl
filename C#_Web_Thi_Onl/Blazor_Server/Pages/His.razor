@@ -1,0 +1,67 @@
+﻿@page "/His"
+@using Blazor_Server.Services
+@using Blazored.TextEditor
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IdentityModel.Tokens.Jwt
+@using static Blazor_Server.Services.Test
+@using static Blazor_Server.Services.Package_Test_ERP
+@inject NavigationManager Navigation
+@inject Notification notification
+@layout StudentLayout
+@inject ProtectedSessionStorage SessionStorage
+@inject IJSRuntime JSRuntime
+@inject Blazor_Server.Services.Test TestService
+@inject Blazored.Toast.Services.IToastService toastService
+
+
+<h2>KẾT QUẢ BÀI THI</h2>
+
+<div class="info">
+    <label>Họ tên học sinh:</label>
+    <span>Nguyễn Văn A</span>
+</div>
+
+<div class="info">
+    <label>Lớp:</label>
+    <span>12A1</span>
+</div>
+
+<div class="info">
+    <label>Môn:</label>
+    <span>Toán</span>
+</div>
+
+<div class="info">
+    <label>Mã bài thi:</label>
+    <span>TEST123</span>
+</div>
+
+<div class="info">
+    <label>Mã gói đề:</label>
+    <span>PKG456</span>
+</div>
+
+<div class="info">
+    <label>Điểm số:</label>
+    <span>8.0</span>
+</div>
+
+<div class="info">
+    <label>Số câu đúng:</label>
+    <span>8</span>
+</div>
+
+<div class="info">
+    <label>Số câu sai:</label>
+    <span>2</span>
+</div>
+
+<div class="info">
+    <label>Thời gian làm bài:</label>
+    <span>12 phút 35 giây</span>
+</div>
+
+
+@code {
+
+}

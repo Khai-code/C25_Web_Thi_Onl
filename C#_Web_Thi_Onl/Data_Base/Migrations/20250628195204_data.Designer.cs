@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data_Base.Migrations
 {
     [DbContext(typeof(Db_Context))]
-    [Migration("20250323085320_data_base")]
-    partial class data_base
+    [Migration("20250628195204_data")]
+    partial class data
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -33,14 +33,15 @@ namespace Data_Base.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<string>("Answers_Name")
-                        .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Points_Earned")
+                        .HasColumnType("float");
 
                     b.Property<int>("Question_Id")
                         .HasColumnType("int");
 
-                    b.Property<int>("Right_Answer")
+                    b.Property<int?>("Right_Answer")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -60,8 +61,7 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Class_Code")
                         .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("nvarchar(12)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Class_Name")
                         .IsRequired()
@@ -72,6 +72,9 @@ namespace Data_Base.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Max_Student")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Number")
                         .HasColumnType("int");
 
                     b.Property<int>("Teacher_Id")
@@ -93,11 +96,6 @@ namespace Data_Base.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<string>("Exam_Code")
-                        .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Exam_Name")
                         .IsRequired()
@@ -121,6 +119,9 @@ namespace Data_Base.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<long>("Actual_Execution_Time")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("Create_Time")
                         .HasColumnType("bigint");
@@ -207,11 +208,16 @@ namespace Data_Base.Migrations
                     b.Property<int>("Student_Id")
                         .HasColumnType("int");
 
+                    b.Property<int>("Test_Id")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Exam_Room_Package_Id");
 
                     b.HasIndex("Student_Id");
+
+                    b.HasIndex("Test_Id");
 
                     b.ToTable("Exam_Room_Students");
                 });
@@ -247,7 +253,7 @@ namespace Data_Base.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Exam_Room")
+                    b.Property<int>("Exam_Room_Id")
                         .HasColumnType("int");
 
                     b.Property<int>("Teacher_Id")
@@ -255,7 +261,7 @@ namespace Data_Base.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Exam_Room");
+                    b.HasIndex("Exam_Room_Id");
 
                     b.HasIndex("Teacher_Id");
 
@@ -269,11 +275,6 @@ namespace Data_Base.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
-
-                    b.Property<string>("Grade_Code")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Grade_Name")
                         .IsRequired()
@@ -350,6 +351,12 @@ namespace Data_Base.Migrations
                     b.Property<long>("Create_Time")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("ExecutionTime")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Number_Of_Questions")
+                        .HasColumnType("int");
+
                     b.Property<int>("Package_Code")
                         .HasColumnType("int");
 
@@ -357,6 +364,9 @@ namespace Data_Base.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("Package_Type_Id")
+                        .HasColumnType("int");
 
                     b.Property<int>("Point_Type_Id")
                         .HasColumnType("int");
@@ -371,11 +381,31 @@ namespace Data_Base.Migrations
 
                     b.HasIndex("Class_Id");
 
+                    b.HasIndex("Package_Type_Id");
+
                     b.HasIndex("Point_Type_Id");
 
                     b.HasIndex("Subject_Id");
 
                     b.ToTable("Packages");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.P.Package_Type", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Package_Type_Name")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Package_Types");
                 });
 
             modelBuilder.Entity("Data_Base.Models.P.Point_Type", b =>
@@ -391,12 +421,7 @@ namespace Data_Base.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
-                    b.Property<int>("Summary_Id")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("Summary_Id");
 
                     b.ToTable("Point_Types");
                 });
@@ -435,30 +460,74 @@ namespace Data_Base.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Level")
-                        .HasColumnType("int");
+                    b.Property<long?>("Maximum_Score")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("Package_Id")
                         .HasColumnType("int");
 
-                    b.Property<string>("Question_Code")
-                        .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
+                    b.Property<int>("Question_Level_Id")
+                        .HasColumnType("int");
 
                     b.Property<string>("Question_Name")
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("nvarchar(4000)");
 
-                    b.Property<int>("Type")
+                    b.Property<int>("Question_Type_Id")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Package_Id");
 
+                    b.HasIndex("Question_Level_Id");
+
+                    b.HasIndex("Question_Type_Id");
+
                     b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.Q.Question_Level", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<string>("Question_Level_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Question_Levels");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.Q.Question_Type", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
+
+                    b.Property<int>("Package_Type_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Question_Type_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Package_Type_Id");
+
+                    b.ToTable("Question_Types");
                 });
 
             modelBuilder.Entity("Data_Base.Models.R.Role", b =>
@@ -490,11 +559,6 @@ namespace Data_Base.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
 
-                    b.Property<string>("Room_Code")
-                        .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
-
                     b.Property<string>("Room_Name")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -525,6 +589,9 @@ namespace Data_Base.Migrations
                     b.Property<int>("Subject_Id")
                         .HasColumnType("int");
 
+                    b.Property<int>("Summary_Id")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Point_Type_Id");
@@ -532,6 +599,8 @@ namespace Data_Base.Migrations
                     b.HasIndex("Student_Id");
 
                     b.HasIndex("Subject_Id");
+
+                    b.HasIndex("Summary_Id");
 
                     b.ToTable("Scores");
                 });
@@ -546,8 +615,7 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Student_Code")
                         .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("User_Id")
                         .HasColumnType("int");
@@ -590,11 +658,6 @@ namespace Data_Base.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<string>("Subject_Code")
-                        .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
-
                     b.Property<string>("Subject_Name")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -603,29 +666,6 @@ namespace Data_Base.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Subjects");
-                });
-
-            modelBuilder.Entity("Data_Base.Models.S.Subject_Grade", b =>
-                {
-                    b.Property<int>("ID")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ID"), 1L, 1);
-
-                    b.Property<int>("Grade_Id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Subject_Id")
-                        .HasColumnType("int");
-
-                    b.HasKey("ID");
-
-                    b.HasIndex("Grade_Id");
-
-                    b.HasIndex("Subject_Id");
-
-                    b.ToTable("Subject_Grades");
                 });
 
             modelBuilder.Entity("Data_Base.Models.S.Summary", b =>
@@ -641,11 +681,6 @@ namespace Data_Base.Migrations
 
                     b.Property<long>("Start_Time")
                         .HasColumnType("bigint");
-
-                    b.Property<string>("Summary_Code")
-                        .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
 
                     b.Property<string>("Summary_Name")
                         .IsRequired()
@@ -667,8 +702,7 @@ namespace Data_Base.Migrations
 
                     b.Property<string>("Teacher_Code")
                         .IsRequired()
-                        .HasMaxLength(14)
-                        .HasColumnType("nvarchar(14)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("User_Id")
                         .HasColumnType("int");
@@ -678,29 +712,6 @@ namespace Data_Base.Migrations
                     b.HasIndex("User_Id");
 
                     b.ToTable("Teachers");
-                });
-
-            modelBuilder.Entity("Data_Base.Models.T.Teacher_Class", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
-
-                    b.Property<int>("Class_Id")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Teacher_Id")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Class_Id");
-
-                    b.HasIndex("Teacher_Id");
-
-                    b.ToTable("Teacher_Classes");
                 });
 
             modelBuilder.Entity("Data_Base.Models.T.Teacher_Subject", b =>
@@ -740,14 +751,18 @@ namespace Data_Base.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
+                    b.Property<int>("Student_Id")
+                        .HasColumnType("int");
+
                     b.Property<string>("Test_Code")
                         .IsRequired()
-                        .HasMaxLength(8)
-                        .HasColumnType("nvarchar(8)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("Package_Id");
+
+                    b.HasIndex("Student_Id");
 
                     b.ToTable("Tests");
                 });
@@ -835,6 +850,162 @@ namespace Data_Base.Migrations
                     b.HasIndex("Role_Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Data_Base.V_Model.V_Package", b =>
+                {
+                    b.Property<string>("Class_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Class_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("Create_Time")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("End_Time")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Exam_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Exam_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Exam_Room_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Number_Of_Questions")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Package_Code")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Package_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Package_Type_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Package_Type_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Point_Type_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Point_Type_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Room_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Room_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("Start_Time")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Subject_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Subject_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Teaacher_Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Teacher_Avatar")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Teacher_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("Teacher_Data_Of_Birth")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Teacher_Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Teacher_Full_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Teacher_Phone_Number")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.ToView("v_Packages");
+                });
+
+            modelBuilder.Entity("Data_Base.V_Model.V_Student", b =>
+                {
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Avatar")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Class_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Class_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("Create_Time")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("Data_Of_Birth")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Full_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Phone_Number")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Role_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Role_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Student_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("User_Id")
+                        .HasColumnType("int");
+
+                    b.ToView("v_Student");
                 });
 
             modelBuilder.Entity("Data_Base.Models.A.Answers", b =>
@@ -941,9 +1112,17 @@ namespace Data_Base.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Data_Base.Models.T.Test", "Tests")
+                        .WithMany("Exam_Room_Students")
+                        .HasForeignKey("Test_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Exam_Room_Packages");
 
                     b.Navigation("Students");
+
+                    b.Navigation("Tests");
                 });
 
             modelBuilder.Entity("Data_Base.Models.E.Exam_Room_Student_Answer_HisTory", b =>
@@ -969,7 +1148,7 @@ namespace Data_Base.Migrations
                 {
                     b.HasOne("Data_Base.Models.E.Exam_Room", "Exam_Rooms")
                         .WithMany("Exam_Room_Teachers")
-                        .HasForeignKey("Exam_Room")
+                        .HasForeignKey("Exam_Room_Id")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -1023,6 +1202,12 @@ namespace Data_Base.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Data_Base.Models.P.Package_Type", "Package_Types")
+                        .WithMany("Packages")
+                        .HasForeignKey("Package_Type_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Data_Base.Models.P.Point_Type", "Point_Types")
                         .WithMany("Packages")
                         .HasForeignKey("Point_Type_Id")
@@ -1037,20 +1222,11 @@ namespace Data_Base.Migrations
 
                     b.Navigation("Classes");
 
+                    b.Navigation("Package_Types");
+
                     b.Navigation("Point_Types");
 
                     b.Navigation("Subjects");
-                });
-
-            modelBuilder.Entity("Data_Base.Models.P.Point_Type", b =>
-                {
-                    b.HasOne("Data_Base.Models.S.Summary", "Summaries")
-                        .WithMany("Point_Types")
-                        .HasForeignKey("Summary_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Summaries");
                 });
 
             modelBuilder.Entity("Data_Base.Models.P.Point_Type_Subject", b =>
@@ -1080,7 +1256,34 @@ namespace Data_Base.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Data_Base.Models.Q.Question_Level", "Question_Levels")
+                        .WithMany("Questions")
+                        .HasForeignKey("Question_Level_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Data_Base.Models.Q.Question_Type", "Question_Types")
+                        .WithMany("Questions")
+                        .HasForeignKey("Question_Type_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Packages");
+
+                    b.Navigation("Question_Levels");
+
+                    b.Navigation("Question_Types");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.Q.Question_Type", b =>
+                {
+                    b.HasOne("Data_Base.Models.P.Package_Type", "Package_Types")
+                        .WithMany()
+                        .HasForeignKey("Package_Type_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Package_Types");
                 });
 
             modelBuilder.Entity("Data_Base.Models.S.Score", b =>
@@ -1103,11 +1306,19 @@ namespace Data_Base.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Data_Base.Models.S.Summary", "Summaries")
+                        .WithMany("Scores")
+                        .HasForeignKey("Summary_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Point_Types");
 
                     b.Navigation("Students");
 
                     b.Navigation("Subjects");
+
+                    b.Navigation("Summaries");
                 });
 
             modelBuilder.Entity("Data_Base.Models.S.Student", b =>
@@ -1140,25 +1351,6 @@ namespace Data_Base.Migrations
                     b.Navigation("Students");
                 });
 
-            modelBuilder.Entity("Data_Base.Models.S.Subject_Grade", b =>
-                {
-                    b.HasOne("Data_Base.Models.G.Grade", "Grades")
-                        .WithMany("Subject_Grades")
-                        .HasForeignKey("Grade_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Data_Base.Models.S.Subject", "Subjects")
-                        .WithMany("Subject_Grade")
-                        .HasForeignKey("Subject_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Grades");
-
-                    b.Navigation("Subjects");
-                });
-
             modelBuilder.Entity("Data_Base.Models.T.Teacher", b =>
                 {
                     b.HasOne("Data_Base.Models.U.User", "User")
@@ -1168,25 +1360,6 @@ namespace Data_Base.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Data_Base.Models.T.Teacher_Class", b =>
-                {
-                    b.HasOne("Data_Base.Models.C.Class", "Classes")
-                        .WithMany("Teacher_Classes")
-                        .HasForeignKey("Class_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Data_Base.Models.T.Teacher", "Teachers")
-                        .WithMany("Teacher_Classes")
-                        .HasForeignKey("Teacher_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Classes");
-
-                    b.Navigation("Teachers");
                 });
 
             modelBuilder.Entity("Data_Base.Models.T.Teacher_Subject", b =>
@@ -1216,7 +1389,15 @@ namespace Data_Base.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Data_Base.Models.S.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("Student_Id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Packages");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("Data_Base.Models.T.Test_Question", b =>
@@ -1257,8 +1438,6 @@ namespace Data_Base.Migrations
             modelBuilder.Entity("Data_Base.Models.C.Class", b =>
                 {
                     b.Navigation("Student_Classes");
-
-                    b.Navigation("Teacher_Classes");
                 });
 
             modelBuilder.Entity("Data_Base.Models.E.Exam", b =>
@@ -1283,8 +1462,6 @@ namespace Data_Base.Migrations
             modelBuilder.Entity("Data_Base.Models.G.Grade", b =>
                 {
                     b.Navigation("Classes");
-
-                    b.Navigation("Subject_Grades");
                 });
 
             modelBuilder.Entity("Data_Base.Models.P.Package", b =>
@@ -1292,6 +1469,11 @@ namespace Data_Base.Migrations
                     b.Navigation("Exam_Room_Packages");
 
                     b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.P.Package_Type", b =>
+                {
+                    b.Navigation("Packages");
                 });
 
             modelBuilder.Entity("Data_Base.Models.P.Point_Type", b =>
@@ -1310,6 +1492,16 @@ namespace Data_Base.Migrations
                     b.Navigation("Answerses");
 
                     b.Navigation("Test_Questions");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.Q.Question_Level", b =>
+                {
+                    b.Navigation("Questions");
+                });
+
+            modelBuilder.Entity("Data_Base.Models.Q.Question_Type", b =>
+                {
+                    b.Navigation("Questions");
                 });
 
             modelBuilder.Entity("Data_Base.Models.R.Role", b =>
@@ -1345,8 +1537,6 @@ namespace Data_Base.Migrations
 
                     b.Navigation("Scores");
 
-                    b.Navigation("Subject_Grade");
-
                     b.Navigation("Teacher_Subject");
                 });
 
@@ -1354,20 +1544,20 @@ namespace Data_Base.Migrations
                 {
                     b.Navigation("Learning_Summaries");
 
-                    b.Navigation("Point_Types");
+                    b.Navigation("Scores");
                 });
 
             modelBuilder.Entity("Data_Base.Models.T.Teacher", b =>
                 {
                     b.Navigation("Exam_Room_Teachers");
 
-                    b.Navigation("Teacher_Classes");
-
                     b.Navigation("Teacher_Subject");
                 });
 
             modelBuilder.Entity("Data_Base.Models.T.Test", b =>
                 {
+                    b.Navigation("Exam_Room_Students");
+
                     b.Navigation("Test_Questions");
                 });
 
