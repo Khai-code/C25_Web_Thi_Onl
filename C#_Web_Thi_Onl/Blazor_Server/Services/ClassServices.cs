@@ -474,7 +474,7 @@ namespace Blazor_Server.Services
             if (string.IsNullOrEmpty(user.Avatar))
             {
                 // Trả về avatar mặc định nếu không có
-                return "/image/avatars/default-avatar.png";
+                return "/images/default-avatar.png";
             }
 
             return user.Avatar;
@@ -520,7 +520,33 @@ namespace Blazor_Server.Services
         }
 
 
+        public async Task<bool> CreateExcel(MultipartFormDataContent content, int classId)
+        {
+            try
+            {
+                var response = await _client.PostAsync($"https://localhost:7187/api/Excel_/import-student-excel?classId={classId}", content);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var msg = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("✅ Thành công: " + msg);
+                    return true;
+                }
+                else
+                {
+                    var err = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine("❌ Thất bại: " + err);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
     }
+
 
     public class ClassWithTeacherModel
     {

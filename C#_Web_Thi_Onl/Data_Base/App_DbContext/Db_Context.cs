@@ -72,6 +72,10 @@ namespace Data_Base.App_DbContext
             modelBuilder.Entity<V_Student>()
                 .HasNoKey()
                 .ToView("V_Student");
+
+            modelBuilder.Entity<V_Test>()
+                .HasNoKey()
+                .ToView("V_Test");
         }
     }
 }
