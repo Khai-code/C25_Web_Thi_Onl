@@ -493,10 +493,12 @@ namespace ASP.NET.Controllers.G
         {
             int? ExamRoomPackageId = filters.ContainsKey("Exam_Room_Package_Id") ? int.Parse(filters["Exam_Room_Package_Id"]) : null;
             int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
+            int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Student>(a =>
                 (!ExamRoomPackageId.HasValue || a.Exam_Room_Package_Id == ExamRoomPackageId) &&
-                (!studentId.HasValue || a.Student_Id == studentId)
+                (!studentId.HasValue || a.Student_Id == studentId) &&
+                (!testId.HasValue || a.Test_Id == testId)
             );
 
             return Ok(result);
