@@ -225,10 +225,94 @@ input:disabled {
     overflow: hidden;
     transition: all 0.4s ease-in-out;
 }
-.modal {
-    position: fixed; /* Giữ modal cố định trên màn hình */
-    top: 50%; /* Đặt đỉnh của modal ở giữa theo chiều dọc */
-    left: 50%; /* Đặt cạnh trái của modal ở giữa theo chiều ngang */
-    transform: translate(-50%, -50%); /* Dịch chuyển modal để căn giữa chính xác */
-    height: auto; /* Hoặc giá trị cụ thể tùy thiết kế */
+
+/* Điều chỉnh modal-header để tạo không gian cho các nút */
+.modal-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 100px; /* Thêm padding bên phải để đảm bảo không gian cho các nút */
 }
+
+/* Đảm bảo các nút sẽ không bị đè lên nút X */
+.modal-buttons {
+    position: absolute;
+    right: 10px; /* Đặt các nút gần cạnh phải, tránh đè lên nút X */
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 10px;
+}
+
+/* Giảm kích thước nút */
+.modal-header .btn-xs {
+    font-size: 0.8rem; /* Giảm kích thước font */
+    padding: 0.35rem 0.75rem; /* Giảm padding */
+    border-radius: 0.5rem;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Các nút khác vẫn giữ nguyên */
+.modal-header .btn-outline-primary,
+.modal-header .btn-outline-secondary {
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.5rem;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+/* Biểu tượng trong các nút */
+.modal-header .btn i {
+    font-size: 1rem; /* Giảm kích thước biểu tượng */
+}
+
+
+/* Điều chỉnh chiều cao của modal và cho phép cuộn nội dung */
+.modal-dialog {
+    max-height: 80vh;
+    overflow-y: auto; /* Thêm cuộn dọc khi nội dung vượt quá chiều cao */
+}
+
+/* Điều chỉnh card bên trong modal để tránh bị tràn */
+.card.score-summary-card {
+    max-height: 60vh; /* Hạn chế chiều cao của bảng điểm */
+    padding: 1rem 1.5rem;
+    background-color: #ffffff;
+    transition: all 0.3s ease-in-out;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.card-body {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+/* Điều chỉnh bảng điểm để không bị tràn */
+.table.score-table {
+    max-height: 50vh; /* Điều chỉnh chiều cao của bảng */
+    overflow-y: auto; /* Cho phép cuộn bảng khi có quá nhiều dữ liệu */
+    table-layout: fixed; /* Cố định kích thước của bảng */
+}
+
+    /* Điều chỉnh các header của bảng */
+    .table.score-table th,
+    .table.score-table td {
+        text-align: center;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        padding: 0.5rem; /* Tăng khoảng cách giữa các cột */
+    }
+
+    /* Điều chỉnh chiều cao của các dòng bảng */
+    .table.score-table tbody tr {
+        height: 40px; /* Đảm bảo mỗi dòng có chiều cao nhất định */
+    }
