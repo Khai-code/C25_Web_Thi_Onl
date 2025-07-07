@@ -1,5 +1,6 @@
 ﻿using Data_Base.Models.E;
 using Data_Base.Models.L;
+using Data_Base.Models.R;
 using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
@@ -31,5 +32,7 @@ namespace Data_Base.Models.S
         public ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
         [JsonIgnore]
         public ICollection<Score> Scores { get; set; } = new List<Score>();
+        [JsonIgnore]
+        public ICollection<Review_Test> Review_Tests { get; set; } = new List<Review_Test>();
     }
 }

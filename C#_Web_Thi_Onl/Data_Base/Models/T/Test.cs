@@ -10,6 +10,7 @@ using System.Text.Json.Serialization;
 using Data_Base.Models.P;
 using Data_Base.Models.E;
 using Data_Base.Models.S;
+using Data_Base.Models.R;
 
 namespace Data_Base.Models.T
 {
@@ -32,5 +33,7 @@ namespace Data_Base.Models.T
         public ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
         [JsonIgnore]
         public ICollection<Exam_Room_Student> Exam_Room_Students { get; set; } = new List<Exam_Room_Student>();
+        [JsonIgnore]
+        public ICollection<Review_Test> Review_Tests { get; set; } = new List<Review_Test>();
     }
 }
