@@ -1,4 +1,5 @@
-﻿using Data_Base.Filters;
+﻿using Blazor_Server.Pages;
+using Data_Base.Filters;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.E;
@@ -8,6 +9,8 @@ using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging.Abstractions;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Engineering;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http.Json;
 using static Blazor_Server.Services.HistoriesExam;
@@ -17,6 +20,7 @@ namespace Blazor_Server.Services
     public class Test
     {
         private readonly HttpClient _httpClient;
+
         public Test(HttpClient httpClient)
         {
             _httpClient = httpClient;
@@ -49,7 +53,7 @@ namespace Blazor_Server.Services
 
                 var Vpackage = (await packageGetResponse.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Package>>()).SingleOrDefault();
 
-                if (Vpackage.Package_Type_Id == 1)
+                if (Vpackage.Package_Type_Id == 2)
                 {
                     IsCheckType = true;
                 }
@@ -104,9 +108,23 @@ namespace Blazor_Server.Services
                 var questionsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQuestion);
 
                 var lstQuestions = await questionsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
-
+                Exam_Room_Student ers = new Exam_Room_Student();
                 if (lstQuestions == null)
                 {
+                    var filter = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
+                        {
+                            { "Test_Id", test.Id.ToString() },
+                            { "Student_Id", student.Id.ToString() }
+                        },
+                    };
+
+                    var rep = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filter);
+
+                    ers = (await rep.Content.ReadFromJsonAsync<List<Exam_Room_Student>>()).SingleOrDefault();
+                    await _httpClient.DeleteAsync($"https://localhost:7187/api/Exam_Room_Student/Delete/{ers.Id}");
+                    await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{test.Id}");
                     return null;
                 }
 
@@ -125,9 +143,12 @@ namespace Blazor_Server.Services
                     lstTq.Add(tq);
                 }
 
+                List<Test_Question> newLstTq = new List<Test_Question>();
                 if (lstTq != null && lstTq.Count > 0)
                 {
-                    await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/PostList", lstTq);
+                     var post = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/PostList", lstTq);
+
+                    newLstTq = await post.Content.ReadFromJsonAsync<List<Test_Question>>();
                 }
 
                 #endregion
@@ -138,15 +159,21 @@ namespace Blazor_Server.Services
                     var filterRequestAnswers = new CommonFilterRequest
                     {
                         Filters = new Dictionary<string, string>
-                    {
-                        { "Question_Id", string.Join(",", randomQuestionIds.Select(o => o.Id)) }
-                    },
+                        {
+                            { "Question_Id", string.Join(",", randomQuestionIds.Select(o => o.Id)) }
+                        },
                     };
 
                     var answersReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterRequestAnswers);
 
                     if (answersReq == null)
+                    {
+                        await _httpClient.DeleteAsync($"https://localhost:7187/api/Test_Question/DeleteLst?{newLstTq.Select(o => o.Id).ToList()}");
+                        await _httpClient.DeleteAsync($"https://localhost:7187/api/Exam_Room_Student/Delete/{ers.Id}");
+                        await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{test.Id}");
                         return null;
+                    }
+                        
 
                     var lstAnswers = await answersReq.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
 
@@ -197,7 +224,7 @@ namespace Blazor_Server.Services
                         {
                             QuestionId = Que.Id,
                             QuestionName = Que.Question_Name,
-                            MaximumScore = Que.Maximum_Score,
+                           // MaximumScore = Que.Maximum_Score,
                             Type = Que.Question_Type_Id,
                             Level = Que.Question_Level_Id,
                         }).ToList()
@@ -213,7 +240,7 @@ namespace Blazor_Server.Services
             }
 
         }
-
+        //tạo ko dùng
         public async Task<List<Exam_Room_Student_Answer_HisTory>> CreateHis(int Package_Code, int StudentId, int QuestIonId, List<int> AnswerIds)
         {
             if (Package_Code == 0 || AnswerIds == null || AnswerIds.Count == 0)
@@ -222,7 +249,7 @@ namespace Blazor_Server.Services
             }
 
             #region vế 1: lấy ExamRoomPackages và ExamRoomStudent
-            var packages = await _httpClient.GetFromJsonAsync<List<Package>>("https://localhost:7187/api/Package/Get");
+            var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
 
             var packageId = packages.FirstOrDefault(o => o.Package_Code == Package_Code)?.Id;
 
@@ -290,7 +317,7 @@ namespace Blazor_Server.Services
             return AnsHislst;
         }
 
-        public async Task<bool> CreateStudentAnswer(List<int> lstAns, string studentId, int testId)
+        public async Task<bool> CreateStudentAnswer(List<int> lstAns, string studentId, int testId) // trắc nghiệm
         {
             try
             {
@@ -412,7 +439,7 @@ namespace Blazor_Server.Services
             }
         }
 
-        public async Task<bool> CreateAnswerStudentAns(List<Ans> lstAns, string studentId, int testId)
+        public async Task<bool> CreateAnswerStudentAns(List<Ans> lstAns, string studentId, int testId) /// tự luận
         {
             bool s = true;
             try

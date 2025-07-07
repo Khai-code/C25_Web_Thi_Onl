@@ -450,7 +450,7 @@
                                 {
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="radio" name="tfanswer" @bind="ans.Right" />
+                                            <input type="radio" name="tfanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
                                         </span>
                                         <input class="form-control" type="text" @bind="ans.Name"/>
                                     </div>
@@ -468,7 +468,7 @@
                                 {
                                     <div class="input-group mb-2">
                                         <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
+                                            <input type="radio" name="singleanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
                                         </span>
                                         <input class="form-control" type="text" placeholder="Đáp án 1" @bind="ans.Name" />
                                         <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
@@ -558,8 +558,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-success">
-                        <i class="bi bi-save" @onclick="CreateQues"></i> Lưu
+                    <button class="btn btn-success" @onclick="CreateQues">
+                        <i class="bi bi-save" ></i> Lưu
                     </button>
                     <button class="btn btn-secondary" @onclick="CloseModal">
                         Hủy
@@ -631,6 +631,7 @@
     }
     public int CountQuestion { get; set; }
     public string PackageName = null;
+    private AnsAdo selectedAnswer;
 
     public List<int> selectedQuestionIds = new List<int>();
 
@@ -687,6 +688,8 @@
             {
                 lstAns.Add(new AnsAdo());
             }
+
+           // selectedAnswer = lstAns.FirstOrDefault();
         }
         catch (Exception ex)
         {
@@ -941,6 +944,11 @@
             {
                 foreach (var item in lstAns)
                 {
+                    if (CheckType == 1)
+                    {
+                        item.Right = (item == selectedAnswer);
+                    }
+                    
                     if (item.Name.Trim() == null)
                     {
                         toastService.ShowSuccess($"Đáp án " + item + " chưa có nội dung");

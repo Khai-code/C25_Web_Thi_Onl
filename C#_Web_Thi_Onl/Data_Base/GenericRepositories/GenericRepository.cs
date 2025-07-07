@@ -137,5 +137,18 @@ namespace Data_Base.GenericRepositories
         {
             return await _context.Set<T>().Where(filter).ToListAsync();
         }
+
+        public async Task<bool> DeleteRangeAsync(List<int> ids)
+        {
+            var entities = await _context.Set<T>()
+                                         .Where(e => ids.Contains(EF.Property<int>(e, "Id")))
+                                         .ToListAsync();
+
+            if (entities == null || entities.Count == 0)
+                return false;
+
+            _context.Set<T>().RemoveRange(entities);
+            return await _context.SaveChangesAsync() > 0;
+        }
     }
 }

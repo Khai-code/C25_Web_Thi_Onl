@@ -294,9 +294,10 @@ namespace Blazor_Server.Services
 
                     var addQuestion = await questionCreate.Content.ReadFromJsonAsync<Data_Base.Models.Q.Question>();
 
-                    Data_Base.Models.A.Answers answers = new Data_Base.Models.A.Answers();
+                    
                     foreach (var item in ansAdo)
                     {
+                        Data_Base.Models.A.Answers answers = new Data_Base.Models.A.Answers();
                         answers.Answers_Name = item.Name;
                         answers.Right_Answer = item.Right ? 1 : 0;
                         answers.Question_Id = addQuestion.Id;

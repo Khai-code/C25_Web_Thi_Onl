@@ -60,8 +60,10 @@ namespace Data_Base.App_DbContext
         public DbSet<Package_Type> Package_Types { get; set; }
         public DbSet<Question_Type> Question_Types { get; set; }
         public DbSet<Question_Level> Question_Levels { get; set; }
+        public DbSet<Review_Test> Review_Tests { get; set; }
         public DbSet<V_Package> V_Package { get; set; }
         public DbSet<V_Student> V_Student { get; set; }
+        public DbSet<V_Test> V_Test { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

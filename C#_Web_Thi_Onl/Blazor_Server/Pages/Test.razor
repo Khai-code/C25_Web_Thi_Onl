@@ -167,15 +167,33 @@
 
     private void OnAnswerChanged(ChangeEventArgs e)
     {
-        int answerId = int.Parse(e.Value.ToString());
+        try
+        {
+            int answerId = int.Parse(e.Value.ToString());
 
-        if (selectedAnsIds.Contains(answerId))
-        {
-            selectedAnsIds.Remove(answerId);
+            foreach (var item in histDTO.Questions)
+            {
+                if (item.Type == 1 || item.Type == 2) // Radio button - chọn 1
+                {
+                    selectedAnsIds.Clear(); // Xóa tất cả lựa chọn cũ
+                    selectedAnsIds.Add(answerId); // Thêm lựa chọn mới
+                }
+                else if (item.Type == 3) // Checkbox - chọn nhiều
+                {
+                    if (selectedAnsIds.Contains(answerId))
+                    {
+                        selectedAnsIds.Remove(answerId);
+                    }
+                    else
+                    {
+                        selectedAnsIds.Add(answerId);
+                    }
+                }
+            }
         }
-        else
+        catch (Exception ex)
         {
-            selectedAnsIds.Add(answerId);
+            toastService.ShowError("Lỗi: " + ex);
         }
     }
 

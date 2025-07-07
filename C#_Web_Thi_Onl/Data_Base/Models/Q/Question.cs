@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -21,7 +22,8 @@ namespace Data_Base.Models.Q
         public int Id { get; set; }
         [StringLength(4000, ErrorMessage = "Nội dung câu hỏi không quá 4000 ký tự")]
         public string Question_Name { get; set; }
-        public long? Maximum_Score { get; set; }
+        public byte[]? Image { get; set; }
+        public double? Maximum_Score { get; set; }
         public string? Note { get; set; }
         [ForeignKey("Question_Type_Id")]
         [JsonIgnore]

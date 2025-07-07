@@ -299,6 +299,20 @@ namespace ASP.NET.Controllers.G
             return NoContent();
         }
 
+        [HttpDelete("DeleteLst")]
+        public async Task<IActionResult> DeleteRange([FromBody] List<int> ids)
+        {
+            if (ids == null || ids.Count == 0)
+                return BadRequest("Danh sách ID không được rỗng.");
+
+            var deleted = await _repository.DeleteRangeAsync(ids);
+
+            if (!deleted)
+                return NotFound("Không tìm thấy một hoặc nhiều ID cần xóa.");
+
+            return NoContent();
+        }
+
         // 🔥 Hàm tạo Student_Code
         private string GenerateStudentCode(string lastCode, int offset = 0)
         {

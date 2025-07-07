@@ -170,7 +170,11 @@ namespace Blazor_Server.Services
 
             var Exam_Room_Student_Post = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/Post", ERStudent);
             if (!Exam_Room_Student_Post.IsSuccessStatusCode)
+            {
+                await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{testId}");
                 return false;
+            }    
+                
 
             var Exam_Room_Student = (await Exam_Room_Student_Post.Content.ReadFromJsonAsync<Data_Base.Models.E.Exam_Room_Student>());
 
@@ -192,7 +196,13 @@ namespace Blazor_Server.Services
             try
             {
                 if (exam_Room_Student == null || exam_Room == null)
-                    return 0; 
+                {
+                    int testId = exam_Room_Student.Test_Id;
+                    _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{exam_Room_Student.Id}");
+                    _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{testId}");
+                    return 0;
+                }    
+                    
 
                 int time = (int)(ConvertLong.ConvertLongToDateTime(exam_Room.End_Time) - ConvertLong.ConvertLongToDateTime(exam_Room_Student.Check_Time)).TotalSeconds;
 
