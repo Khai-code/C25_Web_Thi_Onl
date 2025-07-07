@@ -317,14 +317,31 @@ namespace Blazor_Server.Services
             return AnsHislst;
         }
 
-        public async Task<bool> CreateStudentAnswer(List<int> lstAns, string studentId, int testId) // trắc nghiệm
+        public async Task<bool> CreateStudentAnswer(List<int> lstAns, string studentCode, int testId) // trắc nghiệm
         {
             try
             {
-                if ((lstAns == null && lstAns.Count <= 0) || studentId == null || testId <= 0)
+                if ((lstAns == null && lstAns.Count <= 0) || studentCode == null || testId <= 0)
                 {
                     return false;
                 }
+
+                var filterStudent = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Student_Code", studentCode }
+                    }
+                };
+
+                var repStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
+
+                if (!repStudent.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                Data_Base.Models.S.Student student = (await repStudent.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault();
 
                 List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory> lstExamRoomStudentAnsHt = new List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory>();
 
@@ -332,7 +349,7 @@ namespace Blazor_Server.Services
                 {
                     Filters = new Dictionary<string, string>
                         {
-                             { "Student_Id", studentId },
+                             { "Student_Id", student.Id.ToString() },
                              { "Test_Id", testId.ToString()}
                         }
                 };
