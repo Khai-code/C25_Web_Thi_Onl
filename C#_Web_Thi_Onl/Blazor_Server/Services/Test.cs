@@ -420,7 +420,7 @@ namespace Blazor_Server.Services
                         examHistory.Score = pointPerQuestion; /// điểm
                         examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
                         examHistory.Exam_Room_Student_Id = ers.Id;
-                        examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế
+                        examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
 
                         var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
 
