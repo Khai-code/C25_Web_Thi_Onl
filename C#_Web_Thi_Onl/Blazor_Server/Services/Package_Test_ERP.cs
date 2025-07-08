@@ -45,8 +45,9 @@ namespace Blazor_Server.Services
                 {
                     foreach (var item in lstExamRoom)
                     {
-                        if ((model.Exam_Room.Start_Time < item.Start_Time && model.Exam_Room.End_Time < item.Start_Time)
-                            || model.Exam_Room.Start_Time > item.Start_Time && model.Exam_Room.End_Time > item.Start_Time)
+                        if (
+                            (model.Exam_Room.Start_Time < item.Start_Time && model.Exam_Room.End_Time < item.Start_Time)
+                            || (model.Exam_Room.Start_Time > item.End_Time && model.Exam_Room.End_Time > item.End_Time))
                         {
                             success = true;
 

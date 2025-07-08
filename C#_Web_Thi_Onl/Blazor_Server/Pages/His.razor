@@ -45,24 +45,29 @@
 </div>
 
 <div class="info">
-    <label>Điểm số:</label>
-    <span>@v_Test.Score</span>
-</div>
-
-<div class="info">
-    <label>Số câu đúng:</label>
-    <span>(@v_Test.Score * @v_Test.Total_Questions) / 10</span>
-</div>
-
-<div class="info">
-    <label>Số câu sai:</label>
-    <span>@v_Test.Total_Questions - ((@v_Test.Score * @v_Test.Total_Questions) / 10)</span>
-</div>
-
-<div class="info">
     <label>Thời gian làm bài:</label>
     <span>@v_Test.Actual_Execution_Time</span>
 </div>
+@if (PackageTypeId != 1)
+{
+    <div class="info">
+        <label>Điểm số:</label>
+        <span>@v_Test.Score</span>
+    </div>
+
+    <div class="info">
+        <label>Số câu đúng:</label>
+        <span>@correct</span>
+    </div>
+
+    <div class="info">
+        <label>Số câu sai:</label>
+        <span>@wrong</span>
+    </div>
+}
+
+
+
 
 <div style="margin-top: 20px;">
     <button class="btn btn-secondary" @onclick="Exit">Thoát</button>
@@ -71,7 +76,9 @@
 @code {
     public V_Test v_Test = new V_Test();
     public int TestId;
-
+    public int PackageTypeId;
+    public int correct;
+    public int wrong;
     protected override async Task OnInitializedAsync()
     {
         try
@@ -85,7 +92,19 @@
             }
             TestId = testIdReq.Value;
 
-            GetExamHis(TestId);
+            var PackageTypeIdReq = await SessionStorage.GetAsync<int>("PackageTypeId");
+            if (!PackageTypeIdReq.Success)
+            {
+                Navigation.NavigateTo("/Test");
+                return;
+            }
+            PackageTypeId = PackageTypeIdReq.Value;
+
+            GetExamHis(TestId, PackageTypeId);
+
+            correct = (int)((v_Test.Score * v_Test.Total_Questions) / 10);
+            wrong = v_Test.Total_Questions - correct;
+
         }
         catch (Exception ex)
         {
@@ -93,7 +112,7 @@
         }
     }
 
-    public async Task GetExamHis(int testId)
+    public async Task GetExamHis(int testId, int PackageTypeId)
     {
         try
         {
@@ -103,7 +122,7 @@
                 return;
             }
 
-            v_Test = await his.GetVTest(testId);
+            v_Test = await his.GetVTest(testId, PackageTypeId);
 
         }
         catch (Exception ex)

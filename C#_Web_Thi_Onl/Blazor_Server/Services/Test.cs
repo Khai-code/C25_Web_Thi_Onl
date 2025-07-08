@@ -456,16 +456,33 @@ namespace Blazor_Server.Services
             }
         }
 
-        public async Task<bool> CreateAnswerStudentAns(List<Ans> lstAns, string studentId, int testId) /// tự luận
+        public async Task<bool> CreateAnswerStudentAns(List<Ans> lstAns, string studentCode, int testId) /// tự luận
         {
             bool s = true;
             try
             {
-                if (lstAns == null && lstAns.Count <= 0 && studentId != null & testId > 0)
+                if (lstAns == null && lstAns.Count <= 0 && studentCode != null & testId > 0)
                 {
                     s = false;
                     return s;
                 }
+
+                var filterStudent = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Student_Code", studentCode }
+                    }
+                };
+
+                var repStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
+
+                if (!repStudent.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                Data_Base.Models.S.Student student = (await repStudent.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault();
 
                 List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory> lstExamRoomStudentAnsHt = new List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory>();
                 List<Data_Base.Models.A.Answers> lstAnswersADO = new List<Data_Base.Models.A.Answers>();
@@ -473,7 +490,7 @@ namespace Blazor_Server.Services
                 {
                     Filters = new Dictionary<string, string>
                         {
-                             { "Student_Id", studentId },
+                             { "Student_Id", student.Id.ToString() },
                              { "Test_Id", testId.ToString()}
                         }
                 };
@@ -523,6 +540,8 @@ namespace Blazor_Server.Services
                     if (lstExamRoomStudentAnsHt != null && lstExamRoomStudentAnsHt.Count > 0)
                     {
                         await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/PostList", lstExamRoomStudentAnsHt);
+
+
                     }
                 }
 
