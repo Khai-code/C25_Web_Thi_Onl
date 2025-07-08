@@ -41,7 +41,7 @@
         {
             <div class="mb-4 p-3 border rounded bg-white">
                 <div class="mb-2 fw-bold">Câu hỏi @Que.QuestionId: @Que.QuestionName (@Que.MaximumScore)</div>
-                <BlazoredTextEditor @ref="textEditor" @oninitialized="() => OnEditorInitialized(Que.QuestionId)" />
+                <textarea @bind="plainText" class="form-control" rows="5"></textarea>
             </div>
 
         }
@@ -57,25 +57,28 @@
             <div class="mb-4 p-3 border rounded bg-white">
                 <div class="mb-2 fw-bold">Câu hỏi @QueTN.QuestionId: @QueTN.QuestionName</div>
 
-                @if (QueTN.Type == 1 || QueTN.Type == 2)
+                @if (QueTN.Type == 1 || QueTN.Type == 2) // Radio
                 {
-                    @foreach (var a in QueTN.Answers)
+                    foreach (var a in QueTN.Answers)
                     {
                         <div class="input-group mb-2">
                             <span class="input-group-text">
-                                <input type="radio" name="tfanswer" value="@a.AnswerId" @onchange="OnAnswerChanged" />
+                                <input type="radio"
+                                name="answer_@QueTN.QuestionId"
+                                @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
                             </span>
                             <label class="form-control">@a.AnswersName</label>
                         </div>
                     }
                 }
-                else if (QueTN.Type == 3)
+                else if (QueTN.Type == 3) // Checkbox
                 {
-                    @foreach (var a in QueTN.Answers)
+                    foreach (var a in QueTN.Answers)
                     {
                         <div class="input-group mb-2">
                             <span class="input-group-text">
-                                <input type="checkbox" name="tfanswer" value="@a.AnswerId" @onchange="OnAnswerChanged" />
+                                <input type="checkbox"
+                                @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
                             </span>
                             <label class="form-control">@a.AnswersName</label>
                         </div>
@@ -110,6 +113,8 @@
     private BlazoredTextEditor textEditor;
     private List<Ans> listAnswers = new();
     private Dictionary<int, BlazoredTextEditor> editorsByQuesId = new Dictionary<int, BlazoredTextEditor>();
+    Dictionary<int, List<int>> selectedAnsByQuestionId = new();
+    private string plainText;
 
     private void OnEditorInitialized(int questionId)
     {
@@ -165,37 +170,40 @@
         }
     }
 
-    private void OnAnswerChanged(ChangeEventArgs e)
+    private void OnAnswerChanged(ChangeEventArgs e, int questionId, int questionType, int answerId)
     {
         try
         {
-            int answerId = int.Parse(e.Value.ToString());
+            if (!selectedAnsByQuestionId.ContainsKey(questionId))
+                selectedAnsByQuestionId[questionId] = new List<int>();
 
-            foreach (var item in histDTO.Questions)
+            List<int> selectedList = selectedAnsByQuestionId[questionId];
+
+            if (questionType == 1 || questionType == 2) // Radio
             {
-                if (item.Type == 1 || item.Type == 2) // Radio button - chọn 1
-                {
-                    selectedAnsIds.Clear(); // Xóa tất cả lựa chọn cũ
-                    selectedAnsIds.Add(answerId); // Thêm lựa chọn mới
-                }
-                else if (item.Type == 3) // Checkbox - chọn nhiều
-                {
-                    if (selectedAnsIds.Contains(answerId))
-                    {
-                        selectedAnsIds.Remove(answerId);
-                    }
-                    else
-                    {
-                        selectedAnsIds.Add(answerId);
-                    }
-                }
+                selectedList.Clear();
+                selectedList.Add(answerId);
+                selectedAnsIds = selectedAnsByQuestionId.Values.SelectMany(x => x).Distinct().ToList();
             }
+            else if (questionType == 3) // Checkbox
+            {
+                var isChecked = (bool?)e.Value ?? false;
+
+                if (isChecked)
+                    selectedList.Add(answerId);
+                else
+                    selectedList.Remove(answerId);
+
+                selectedAnsIds = selectedAnsByQuestionId.Values.SelectMany(x => x).Distinct().ToList();
+            }
+
         }
         catch (Exception ex)
         {
-            toastService.ShowError("Lỗi: " + ex);
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
+
 
     private async Task SaveAllAnswers()// lưu tự luận
     {

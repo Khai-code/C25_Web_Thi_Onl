@@ -58,11 +58,13 @@ namespace ASP.NET.Controllers.G
                     return await HandleVStudentFilter(request.Filters);
                 case "Exam_Room_Student":
                     return await HandleExamRoomStudentFilter(request.Filters);
+                case "Test_Question":
+                    return await HandleTestQuestionFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
         }
-
+         
         private string GetTableName(object entity)
         {
             if (entity == null) return null;
@@ -512,6 +514,16 @@ namespace ASP.NET.Controllers.G
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Student>(a =>
                 (!ExamRoomPackageId.HasValue || a.Exam_Room_Package_Id == ExamRoomPackageId) &&
                 (!studentId.HasValue || a.Student_Id == studentId) &&
+                (!testId.HasValue || a.Test_Id == testId)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleTestQuestionFilter(Dictionary<string, string> filters)
+        {
+            int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.T.Test_Question>(a =>
                 (!testId.HasValue || a.Test_Id == testId)
             );
 

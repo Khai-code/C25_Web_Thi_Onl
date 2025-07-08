@@ -559,7 +559,7 @@ namespace Blazor_Server.Services
 
         public class Question
         {
-            public int? QuestionId { get; set; }
+            public int QuestionId { get; set; }
             public string QuestionName { get; set; }
             public long? MaximumScore { get; set; }
             public int Type { get; set; }
@@ -569,7 +569,7 @@ namespace Blazor_Server.Services
 
         public class Answer
         {
-            public int? AnswerId { get; set; }
+            public int AnswerId { get; set; }
             public string AnswersName { get; set; }
             public int IsCorrect { get; set; }
             public int? QuestionId { get; set; }

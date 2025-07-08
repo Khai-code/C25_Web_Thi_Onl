@@ -15,6 +15,8 @@ namespace Data_Base.V_Model
         public string Package_Name { get; set; }
         public string Class_Code { get; set; }
         public string Class_Name { get; set; }
+        public int Point_Type_Id { get; set; }
+        public string Point_Type_Name { get; set; }
         public int Subject_Id { get; set; }
         public string Subject_Name { get; set; }
         public int Total_Questions { get; set; }    
