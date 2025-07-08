@@ -12,6 +12,7 @@ namespace Data_Base.DTO_Import_Excel
         public int Question_Type_Id { get; set; }
         public int Question_Level_Id { get; set; }
         public int Package_Id { get; set; }
+        public byte[] picture { get; set; }
         public List<AnswerImportDto> Answers { get; set; }
     }
 
