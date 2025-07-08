@@ -163,67 +163,182 @@ namespace ASP.NET.Controllers.E
             return Ok("Import học sinh thành công!");
         }
 
+        //[HttpPost("exceltuluan")]
+        //public async Task<IActionResult> ImportExcelTuLuan(IFormFile file, [FromQuery] int packageId)
+        //{
+        //    if (file == null || file.Length == 0)
+        //        return BadRequest("File rỗng");
+
+        //    // Lấy dữ liệu Type và Level từ DB
+        //    var questionTypes = await db_Context.Question_Types.ToListAsync();
+        //    var questionLevels = await db_Context.Question_Levels.ToListAsync();
+
+        //    var questions = new List<QuestionImportEssay>();
+
+        //    using var stream = file.OpenReadStream();
+        //    using var package = new ExcelPackage(stream);
+        //    var sheet = package.Workbook.Worksheets[0];
+
+        //    for (int row = 4; row <= sheet.Dimension.End.Row; row++)
+        //    {
+        //        var qName = sheet.Cells[row, 2].Text?.Trim();
+        //        var typeText = sheet.Cells[row, 3].Text?.Trim();
+        //        var levelText = sheet.Cells[row, 4].Text?.Trim();
+        //        var scoreText = sheet.Cells[row, 5].Text?.Trim();
+
+        //        if (string.IsNullOrWhiteSpace(qName)) continue;
+
+        //        // Tìm Id của Type theo tên
+        //        var questionType = questionTypes
+        //            .FirstOrDefault(x => x.Question_Type_Name.Trim().ToLower() == typeText?.ToLower());
+
+        //        if (questionType == null)
+        //            return BadRequest($"Không tìm thấy loại câu hỏi: {typeText}");
+
+        //        // Tìm Id của Level theo tên
+        //        var questionLevel = questionLevels
+        //            .FirstOrDefault(x => x.Question_Level_Name.Trim().ToLower() == levelText?.ToLower());
+
+        //        if (questionLevel == null)
+        //            return BadRequest($"Không tìm thấy mức độ câu hỏi: {levelText}");
+
+        //        long score = 0;
+        //        if (!string.IsNullOrEmpty(scoreText))
+        //            long.TryParse(scoreText, out score);
+
+        //        questions.Add(new QuestionImportEssay
+        //        {
+        //            Question_Name = qName,
+        //            Question_Type_Id = questionType.Id,
+        //            Question_Level_Id = questionLevel.Id,
+        //            Package_Id = packageId,
+        //            Maximum_Score = score
+        //        });
+        //    }
+
+        //    // Kiểm tra tổng điểm
+        //    var totalScore = questions.Sum(x => x.Maximum_Score);
+        //    if (totalScore != 10)
+        //    {
+        //        return BadRequest($"Tổng điểm các câu hỏi là {totalScore}. Tổng phải bằng đúng 10.");
+        //    }
+
+        //    // Lưu DB
+        //    foreach (var dto in questions)
+        //    {
+        //        var question = new Question
+        //        {
+        //            Question_Name = dto.Question_Name,
+        //            Question_Type_Id = dto.Question_Type_Id,
+        //            Question_Level_Id = dto.Question_Level_Id,
+        //            Package_Id = dto.Package_Id,
+        //            Maximum_Score = dto.Maximum_Score
+        //        };
+
+        //        db_Context.Questions.Add(question);
+        //    }
+
+        //    await db_Context.SaveChangesAsync();
+
+        //    return Ok("Thêm thành công!");
+        //}
         [HttpPost("exceltuluan")]
         public async Task<IActionResult> ImportExcelTuLuan(IFormFile file, [FromQuery] int packageId)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File rỗng");
 
-            // Lấy dữ liệu Type và Level từ DB
-            var questionTypes = await db_Context.Question_Types.ToListAsync();
-            var questionLevels = await db_Context.Question_Levels.ToListAsync();
+            var typeMapping = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var levelMapping = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
+            // Bước 1: Đọc mapping từ Excel (DataSourceType & DataSourceLevel)
+            using (var stream = file.OpenReadStream())
+            using (var package = new ExcelPackage(stream))
+            {
+                // Đọc Sheet DataSourceType
+                var sheetType = package.Workbook.Worksheets["Danhmuc"];
+                if (sheetType != null)
+                {
+                    for (int row = 1; row <= sheetType.Dimension.End.Row; row++)
+                    {
+                        var name = sheetType.Cells[row, 1].Text?.Trim();
+                        var idText = sheetType.Cells[row, 2].Text?.Trim();
+
+                        if (!string.IsNullOrEmpty(name) && int.TryParse(idText, out int id))
+                        {
+                            typeMapping[name] = id;
+                        }
+                    }
+                }
+
+                // Đọc Sheet DataSourceLevel
+                var sheetLevel = package.Workbook.Worksheets["Danhmuc"];
+                if (sheetLevel != null)
+                {
+                    for (int row = 1; row <= sheetLevel.Dimension.End.Row; row++)
+                    {
+                        var name = sheetLevel.Cells[row, 3].Text?.Trim();
+                        var idText = sheetLevel.Cells[row, 4].Text?.Trim();
+
+                        if (!string.IsNullOrEmpty(name) && int.TryParse(idText, out int id))
+                        {
+                            levelMapping[name] = id;
+                        }
+                    }
+                }
+            }
+
+            // Bước 2: Đọc sheet dữ liệu chính (Import Data)
             var questions = new List<QuestionImportEssay>();
 
-            using var stream = file.OpenReadStream();
-            using var package = new ExcelPackage(stream);
-            var sheet = package.Workbook.Worksheets[0];
-
-            for (int row = 4; row <= sheet.Dimension.End.Row; row++)
+            using (var stream2 = file.OpenReadStream())
+            using (var package2 = new ExcelPackage(stream2))
             {
-                var qName = sheet.Cells[row, 2].Text?.Trim();
-                var typeText = sheet.Cells[row, 3].Text?.Trim();
-                var levelText = sheet.Cells[row, 4].Text?.Trim();
-                var scoreText = sheet.Cells[row, 5].Text?.Trim();
+                var sheet = package2.Workbook.Worksheets[0];
 
-                if (string.IsNullOrWhiteSpace(qName)) continue;
-
-                // Tìm Id của Type theo tên
-                var questionType = questionTypes
-                    .FirstOrDefault(x => x.Question_Type_Name.Trim().ToLower() == typeText?.ToLower());
-
-                if (questionType == null)
-                    return BadRequest($"Không tìm thấy loại câu hỏi: {typeText}");
-
-                // Tìm Id của Level theo tên
-                var questionLevel = questionLevels
-                    .FirstOrDefault(x => x.Question_Level_Name.Trim().ToLower() == levelText?.ToLower());
-
-                if (questionLevel == null)
-                    return BadRequest($"Không tìm thấy mức độ câu hỏi: {levelText}");
-
-                long score = 0;
-                if (!string.IsNullOrEmpty(scoreText))
-                    long.TryParse(scoreText, out score);
-
-                questions.Add(new QuestionImportEssay
+                for (int row = 4; row <= sheet.Dimension.End.Row; row++)
                 {
-                    Question_Name = qName,
-                    Question_Type_Id = questionType.Id,
-                    Question_Level_Id = questionLevel.Id,
-                    Package_Id = packageId,
-                    Maximum_Score = score
-                });
+                    var picture = sheet.Cells[row, 2].Text?.Trim();
+                    var qName = sheet.Cells[row, 3].Text?.Trim();
+                    var typeText = sheet.Cells[row, 4].Text?.Trim();
+                    var levelText = sheet.Cells[row, 5].Text?.Trim();
+                    var scoreText = sheet.Cells[row, 6].Text?.Trim();
+                    byte[] pictureBytes = null;
+
+                    if (!string.IsNullOrEmpty(picture) && System.IO.File.Exists(picture))
+                    {
+                        pictureBytes = System.IO.File.ReadAllBytes(picture);
+                    }
+                    if (string.IsNullOrWhiteSpace(qName)) continue;
+
+                    if (!typeMapping.TryGetValue(typeText ?? "", out int questionTypeId))
+                    {
+                        return BadRequest($"Không tìm thấy loại câu hỏi: {typeText}");
+                    }
+
+                    if (!levelMapping.TryGetValue(levelText ?? "", out int questionLevelId))
+                    {
+                        return BadRequest($"Không tìm thấy mức độ câu hỏi: {levelText}");
+                    }
+
+                    double score = 0;
+                    if (!string.IsNullOrEmpty(scoreText))
+                        double.TryParse(scoreText, out score);
+
+                    questions.Add(new QuestionImportEssay
+                    {
+                        Question_Name = qName,
+                        Question_Type_Id = questionTypeId,
+                        Question_Level_Id = questionLevelId,
+                        Package_Id = packageId,
+                        Maximum_Score = score,
+                        pictures= pictureBytes
+                    });
+                }
             }
 
-            // Kiểm tra tổng điểm
-            var totalScore = questions.Sum(x => x.Maximum_Score);
-            if (totalScore != 10)
-            {
-                return BadRequest($"Tổng điểm các câu hỏi là {totalScore}. Tổng phải bằng đúng 10.");
-            }
+          
 
-            // Lưu DB
             foreach (var dto in questions)
             {
                 var question = new Question
@@ -232,7 +347,8 @@ namespace ASP.NET.Controllers.E
                     Question_Type_Id = dto.Question_Type_Id,
                     Question_Level_Id = dto.Question_Level_Id,
                     Package_Id = dto.Package_Id,
-                    Maximum_Score = dto.Maximum_Score
+                    Maximum_Score = dto.Maximum_Score,
+                    Image=dto.pictures 
                 };
 
                 db_Context.Questions.Add(question);
@@ -242,41 +358,80 @@ namespace ASP.NET.Controllers.E
 
             return Ok("Thêm thành công!");
         }
-
         [HttpPost("excel")]
         public async Task<IActionResult> ImportExcel(IFormFile file, [FromQuery] int packageId)
         {
             if (file == null || file.Length == 0)
                 return BadRequest("File rỗng");
-            var questionTypes = await db_Context.Question_Types.ToListAsync();
-            var questionLevels = await db_Context.Question_Levels.ToListAsync();
+            var typeMapping = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var levelMapping = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+            // Bước 1: Đọc mapping từ Excel (DataSourceType & DataSourceLevel)
+            using (var stream = file.OpenReadStream())
+            using (var package = new ExcelPackage(stream))
+            {
+                // Đọc Sheet DataSourceType
+                var sheetType = package.Workbook.Worksheets["DanhMuc"];
+                if (sheetType != null)
+                {
+                    for (int row = 1; row <= sheetType.Dimension.End.Row; row++)
+                    {
+                        var name = sheetType.Cells[row, 1].Text?.Trim();
+                        var idText = sheetType.Cells[row, 2].Text?.Trim();
+
+                        if (!string.IsNullOrEmpty(name) && int.TryParse(idText, out int id))
+                        {
+                            typeMapping[name] = id;
+                        }
+                    }
+                }
+
+                // Đọc Sheet DataSourceLevel
+                var sheetLevel = package.Workbook.Worksheets["DanhMuc"];
+                if (sheetLevel != null)
+                {
+                    for (int row = 1; row <= sheetLevel.Dimension.End.Row; row++)
+                    {
+                        var name = sheetLevel.Cells[row, 3].Text?.Trim();
+                        var idText = sheetLevel.Cells[row, 4].Text?.Trim();
+
+                        if (!string.IsNullOrEmpty(name) && int.TryParse(idText, out int id))
+                        {
+                            levelMapping[name] = id;
+                        }
+                    }
+                }
+            }
             var questions = new List<QuestionImportDto>();
 
-            using var stream = file.OpenReadStream();
-            using var package = new ExcelPackage(stream);
-            var sheet = package.Workbook.Worksheets[0];
+            using var stream2 = file.OpenReadStream();
+            using var package2 = new ExcelPackage(stream2);
+            var sheet = package2.Workbook.Worksheets[0];
 
             for (int row = 4; row <= sheet.Dimension.End.Row; row++)
             {
-                var qName = sheet.Cells[row, 2].Text?.Trim();
-                var typeText = sheet.Cells[row, 3].Text;
-                var levelText = sheet.Cells[row, 4].Text;
+                var picture = sheet.Cells[row, 2].Text?.Trim();
+                var qName = sheet.Cells[row, 3].Text?.Trim();
+                var typeText = sheet.Cells[row, 4].Text.Trim();
+                var levelText = sheet.Cells[row, 5].Text.Trim();
+                byte[] pictureBytes = null;
 
-                if (string.IsNullOrWhiteSpace(qName)) continue;
-                var questionType = questionTypes
-                   .FirstOrDefault(x => x.Question_Type_Name.Trim().ToLower() == typeText?.ToLower());
-
-                if (questionType == null)
+                if (!string.IsNullOrEmpty(picture) && System.IO.File.Exists(picture))
+                {
+                    pictureBytes = System.IO.File.ReadAllBytes(picture);
+                }
+                if (!typeMapping.TryGetValue(typeText ?? "", out int questionTypeId))
+                {
                     return BadRequest($"Không tìm thấy loại câu hỏi: {typeText}");
+                }
 
-                // Tìm Id của Level theo tên
-                var questionLevel = questionLevels
-                    .FirstOrDefault(x => x.Question_Level_Name.Trim().ToLower() == levelText?.ToLower());
-
-                if (questionLevel == null)
+                if (!levelMapping.TryGetValue(levelText ?? "", out int questionLevelId))
+                {
                     return BadRequest($"Không tìm thấy mức độ câu hỏi: {levelText}");
+                }
+
                 var answers = new List<AnswerImportDto>();
-                for (int col = 5; col <= sheet.Dimension.End.Column; col++)
+                for (int col = 6; col <= sheet.Dimension.End.Column; col++)
                 {
                     var cell = sheet.Cells[row, col].Text;
                     if (string.IsNullOrWhiteSpace(cell)) continue;
@@ -294,9 +449,10 @@ namespace ASP.NET.Controllers.E
                 questions.Add(new QuestionImportDto
                 {
                     Question_Name = qName,
-                    Question_Type_Id = questionType.Id,
-                    Question_Level_Id = questionLevel.Id,
+                    Question_Type_Id = questionTypeId,
+                    Question_Level_Id = questionLevelId,
                     Package_Id = packageId,
+                    picture = pictureBytes,
                     Answers = answers
                 });
             }
@@ -308,7 +464,8 @@ namespace ASP.NET.Controllers.E
                     Question_Name = dto.Question_Name,
                     Question_Type_Id = dto.Question_Type_Id,
                     Question_Level_Id = dto.Question_Level_Id,
-                    Package_Id = dto.Package_Id
+                    Package_Id = dto.Package_Id,
+                    Image = dto.picture,
                 };
 
                 db_Context.Questions.Add(question);
