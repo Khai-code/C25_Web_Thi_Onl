@@ -27,8 +27,7 @@ namespace Blazor_Server.Services
                 {
                     Filters = new Dictionary<string, string>
                     {
-                        { "Room_ID", model.Exam_Room.Room_Id.ToString() },
-                        { "Start_Time",  model.Package.Create_Time.ToString()}
+                        { "Room_ID", model.Exam_Room.Room_Id.ToString() }
                     },
                 };
                    

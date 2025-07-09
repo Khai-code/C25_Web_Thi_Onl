@@ -1,4 +1,5 @@
 ﻿using Data_Base.Filters;
+using Data_Base.GenericRepositories;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
@@ -6,6 +7,7 @@ using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using System.Net.WebSockets;
 using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.HistoriesExam;
 using static Blazor_Server.Services.Package_Test_ERP;
@@ -113,25 +115,24 @@ namespace Blazor_Server.Services
         {
             try
             {
+                var Class = await _httpClient.GetFromJsonAsync<Data_Base.Models.C.Class>($"https://localhost:7187/api/Class/GetBy/{classId}");
                 var lstClass = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.C.Class>>("https://localhost:7187/api/Class/Get");
-
-                int gradeId = lstClass.FirstOrDefault(o => o.Id == classId).Grade_Id;
-
+                lstClass = lstClass.Where(o => o.Grade_Id == Class.Grade_Id).ToList();
                 var filterRequest = new CommonFilterRequest
                 {
                     Filters = new Dictionary<string, string>
                     {
                         { "Subject_Id", subjectId.ToString() },
-                        { "Package_Type_Id", packageTypeId.ToString() }
+                        { "Package_Type_Id", packageTypeId.ToString() }  
                     },
                 };
 
                 var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/common/get", filterRequest);
-                if (packageGetResponse.IsSuccessStatusCode)
+                if (!packageGetResponse.IsSuccessStatusCode)
                     return null;
 
                 var lstpackage = await packageGetResponse.Content.ReadFromJsonAsync<List<Package>>();
-                var lstpackageId = lstpackage.Where(o => o.Classes.Grade_Id == gradeId).Select(o => o.Id).ToList();
+                var lstpackageId = lstpackage.Where(o => lstClass.Select(o => o.Id).ToList().Contains(o.Class_Id)).Select(o => o.Id).ToList();
 
                 var filterRequestQues = new CommonFilterRequest
                 {
@@ -142,7 +143,7 @@ namespace Blazor_Server.Services
                 };
 
                 var questionGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQues);
-                if (questionGetResponse.IsSuccessStatusCode)
+                if (!questionGetResponse.IsSuccessStatusCode)
                     return null;
 
                 var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
@@ -151,22 +152,29 @@ namespace Blazor_Server.Services
 
                 foreach (var item in lstpackage)
                 {
-                    var hist = new HistDTO
+                    var questions = questionList.Where(q => q.Package_Id == item.Id).Select(q => new ListQuesAns
                     {
-                        PackageId = item.Id,
-                        Package_Name = item.Package_Name,
-                        Create_Time = item.Create_Time,
-                        Questions = questionList.Select(q => new ListQuesAns
-                        {
-                            QuestionId = q.Id,
-                            QuestionName = q.Question_Name,
-                            Type = q.Question_Type_Id,
-                            Leva = q.Question_Level_Id,
-                            Answers = null
-                        }).ToList()
-                    };
+                        QuestionId = q.Id,
+                        PackageId = q.Package_Id,
+                        QuestionName = q.Question_Name,
+                        Type = q.Question_Type_Id,
+                        Leva = q.Question_Level_Id
+                    }).ToList();
 
-                    result.Add(hist);
+                    if (questions.Any())
+                    {
+                        var hist = new HistDTO
+                        {
+                            PackageId = item.Id,
+                            Package_Name = item.Package_Name,
+                            Create_Time = item.Create_Time,
+                            PackageTypeId = item.Package_Type_Id,
+                            PointTypeId = item.Point_Type_Id,
+                            Questions = questions
+                        };
+
+                        result.Add(hist);
+                    }
                 }
                 return result;
             }
@@ -399,19 +407,21 @@ namespace Blazor_Server.Services
             public string Name { get; set; }
             public bool Right { get; set; }
         }
-
         public class HistDTO
         {
             public int PackageId { get; set; }
             public string Package_Name { get; set; }
+            public int PackageTypeId { get; set; }
+            public int PointTypeId { get; set; }
             public long Create_Time { get; set; }
             public List<ListQuesAns> Questions { get; set; }
         }
-
         public class ListQuesAns
         {
             public int QuestionId { get; set; }
+            public int PackageId { get; set; }
             public string QuestionName { get; set; }
+            public double? MaximumScore { get; set; }
             public int Type { get; set; }
             public int Leva { get; set; }
             public List<Answer>? Answers { get; set; }
@@ -420,7 +430,7 @@ namespace Blazor_Server.Services
         {
             public int AnswerId { get; set; }
             public string AnswersName { get; set; }
-            public double? Points_Earned { get; set; }
+            public int? Right_Answer { get; set; }
         }
         public class QuestionAdo
         {
@@ -431,19 +441,16 @@ namespace Blazor_Server.Services
             public int Question_Type_Id { get; set; }
             public string Question_Type_Name { get; set; }
         }
-
         public class QuestionlevelViewModel
         {
             public int Question_Level_Id { get; set; }
             public string Question_Level_Name { get; set; }
         }
-
         public class TeacherViewModel
         {
             public int Teacher_Id { get; set; }
             public string Teacher_Name { get; set; }
         }
-
         public class PackageInactive
         {
             public int Id { get; set; }

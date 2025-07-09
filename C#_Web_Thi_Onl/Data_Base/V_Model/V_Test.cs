@@ -23,7 +23,6 @@ namespace Data_Base.V_Model
         public int Student_Id { get; set; }   
         public string Student_Code { get; set; }
         public string Full_Name { get; set; }
-        public string Avatar { get; set; }
         public long Data_Of_Birth { get; set; }
         public string Email { get; set; }
         public string Phone_Number { get; set; }

@@ -20,12 +20,10 @@ namespace Blazor_Server.Services
     public class Test
     {
         private readonly HttpClient _httpClient;
-
         public Test(HttpClient httpClient)
         {
             _httpClient = httpClient;
         }
-
         public async Task<HistDTO> GetQuestionAnswers(int Package_Code, string Student_Code)
         {
             HistDTO histDTO = new HistDTO();
@@ -316,7 +314,6 @@ namespace Blazor_Server.Services
 
             return AnsHislst;
         }
-
         public async Task<bool> CreateStudentAnswer(List<int> lstAns, string studentCode, int testId) // trắc nghiệm
         {
             try
@@ -455,7 +452,6 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
-
         public async Task<bool> CreateAnswerStudentAns(List<Ans> lstAns, string studentCode, int testId) /// tự luận
         {
             bool s = true;
@@ -571,13 +567,11 @@ namespace Blazor_Server.Services
                 return s;
             }
         }
-
         public class Ans
         {
             public int QuesId { get; set; }
             public string Name { get; set; }
         }
-
         public class HistDTO
         {
             public int PackageId { get; set; }
@@ -593,7 +587,6 @@ namespace Blazor_Server.Services
             public int Status { get; set; }
             public List<Question> Questions { get; set; }
         }
-
         public class Question
         {
             public int QuestionId { get; set; }
@@ -603,7 +596,6 @@ namespace Blazor_Server.Services
             public int Level { get; set; }
             public List<Answer>? Answers { get; set; }
         }
-
         public class Answer
         {
             public int AnswerId { get; set; }
