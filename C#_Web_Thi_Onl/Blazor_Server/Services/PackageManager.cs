@@ -1,5 +1,6 @@
 ﻿using Data_Base.Filters;
 using Data_Base.GenericRepositories;
+using Data_Base.Models.A;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
@@ -150,30 +151,84 @@ namespace Blazor_Server.Services
 
                 var result = new List<HistDTO>();
 
-                foreach (var item in lstpackage)
+                if (packageTypeId == 2)
                 {
-                    var questions = questionList.Where(q => q.Package_Id == item.Id).Select(q => new ListQuesAns
-                    {
-                        QuestionId = q.Id,
-                        PackageId = q.Package_Id,
-                        QuestionName = q.Question_Name,
-                        Type = q.Question_Type_Id,
-                        Leva = q.Question_Level_Id
-                    }).ToList();
+                    List<int> quesId = questionList.Select(o => o.Id).ToList();
 
-                    if (questions.Any())
+                    var filterAns = new CommonFilterRequest
                     {
-                        var hist = new HistDTO
+                        Filters = new Dictionary<string, string>
                         {
-                            PackageId = item.Id,
-                            Package_Name = item.Package_Name,
-                            Create_Time = item.Create_Time,
-                            PackageTypeId = item.Package_Type_Id,
-                            PointTypeId = item.Point_Type_Id,
-                            Questions = questions
-                        };
+                            { "Question_Id", string.Join(",", quesId) },
+                        },
+                    };
 
-                        result.Add(hist);
+                    var ansGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
+                    if (!ansGetResponse.IsSuccessStatusCode)
+                        return null;
+
+                    var ansList = await ansGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
+
+                    foreach (var item in lstpackage)
+                    {
+                        var questions = questionList.Where(q => q.Package_Id == item.Id).Select(q => new ListQuesAns
+                        {
+                            QuestionId = q.Id,
+                            PackageId = q.Package_Id,
+                            QuestionName = q.Question_Name,
+                            Type = q.Question_Type_Id,
+                            Leva = q.Question_Level_Id,
+                            Answers = ansList.Where(o => o.Question_Id == q.Id).Select(ans => new Answer
+                            {
+                                AnswerId = ans.Id,
+                                AnswersName = ans.Answers_Name,
+                                Right_Answer = ans.Right_Answer
+                            } ).ToList()
+                        }).ToList();
+
+                        if (questions.Any())
+                        {
+                            var hist = new HistDTO
+                            {
+                                PackageId = item.Id,
+                                Package_Name = item.Package_Name,
+                                Create_Time = item.Create_Time,
+                                PackageTypeId = item.Package_Type_Id,
+                                PointTypeId = item.Point_Type_Id,
+                                Questions = questions
+                            };
+
+                            result.Add(hist);
+                        }
+                    }
+                }
+                else if(packageTypeId == 1)
+                {
+                    foreach (var item in lstpackage)
+                    {
+                        var questions = questionList.Where(q => q.Package_Id == item.Id).Select(q => new ListQuesAns
+                        {
+                            QuestionId = q.Id,
+                            PackageId = q.Package_Id,
+                            QuestionName = q.Question_Name,
+                            Type = q.Question_Type_Id,
+                            Leva = q.Question_Level_Id
+                        }).ToList();
+
+                        if (questions.Any())
+                        {
+                            var hist = new HistDTO
+                            {
+                                PackageId = item.Id,
+                                Package_Name = item.Package_Name,
+                                Create_Time = item.Create_Time,
+                                PackageTypeId = item.Package_Type_Id,
+                                PointTypeId = item.Point_Type_Id,
+                                Questions = questions
+                            };
+
+                            result.Add(hist);
+                        }
                     }
                 }
                 return result;
@@ -239,51 +294,89 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
-        public async Task<bool> CreateListQuestionTL(List<int> QuesId, int packageId)
+        public async Task<bool> CreateListQuestionTL(List<int> QuesId, int packageId, int packageTypeId)
         {
-            List<Question> lstquestions = new List<Question>();
             try
             {
-                if (QuesId != null && QuesId.Count > 0)
+                if (QuesId == null || QuesId.Count == 0)
+                    return false;
+
+                // Bước 1: Lấy danh sách câu hỏi theo ID
+                var filter = new CommonFilterRequest
                 {
-                    var filter = new CommonFilterRequest
+                    Filters = new Dictionary<string, string> { { "Id", string.Join(",", QuesId) } }
+                };
+
+                var questionGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filter);
+                if (!questionGetResponse.IsSuccessStatusCode) return false;
+
+                var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
+                var lstquestions = new List<Question>();
+
+                // Bước 2: Tạo danh sách câu hỏi mới (bản sao)
+                foreach (var item in questionList)
+                {
+                    lstquestions.Add(new Question
                     {
-                        Filters = new Dictionary<string, string>
-                        {
-                             { "Id", string.Join(",", QuesId) },
-                        }
+                        Question_Level_Id = item.Question_Level_Id,
+                        Question_Type_Id = item.Question_Type_Id,
+                        Question_Name = item.Question_Name,
+                        Maximum_Score = item.Maximum_Score ?? 0,
+                        Package_Id = packageId
+                    });
+                }
+
+                // Bước 3: Gửi danh sách câu hỏi mới lên server
+                var repQues = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/PostList", lstquestions);
+                if (!repQues.IsSuccessStatusCode) return false;
+
+                // Bước 4: Đọc danh sách câu hỏi mới đã lưu
+                var lstQuesNew = await repQues.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
+
+                // Bước 5: Nếu là loại có đáp án (packageTypeId == 2) thì xử lý thêm đáp án
+                if (packageTypeId == 2 && lstQuesNew != null)
+                {
+                    // Lấy danh sách đáp án của các câu hỏi cũ
+                    var answerFilter = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string> { { "Id", string.Join(",", QuesId) } }
                     };
 
-                    var questionGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filter);
+                    var ansGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", answerFilter);
+                    if (!ansGetResponse.IsSuccessStatusCode) return false;
 
-                    if (questionGetResponse.IsSuccessStatusCode)
+                    var lstOldAnswers = await ansGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
+
+                    // Ánh xạ câu hỏi cũ - mới theo thứ tự
+                    for (int i = 0; i < questionList.Count; i++)
                     {
-                        var questionList = await questionGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
-                        foreach (var item in questionList)
+                        var oldQuestion = questionList[i];
+                        var newQuestion = lstQuesNew[i];
+
+                        // Lấy đáp án theo ID câu hỏi cũ
+                        var answersForOldQ = lstOldAnswers.Where(a => a.Question_Id == oldQuestion.Id).ToList();
+
+                        var newAnswers = answersForOldQ.Select(a => new Answers
                         {
-                            Question question = new Question();
-                            question.Question_Level_Id = item.Question_Level_Id;
-                            question.Question_Type_Id = item.Question_Type_Id;
-                            question.Question_Name = item.Question_Name;
-                            question.Maximum_Score = item.Maximum_Score;
-                            question.Package_Id = packageId;
+                            Question_Id = newQuestion.Id,
+                            Answers_Name = a.Answers_Name,
+                            Right_Answer = a.Right_Answer
+                        }).ToList();
 
-                            lstquestions.Add(question);
-                        }
-                    }
-
-                    if (lstquestions != null && lstquestions.Count > 0)
-                    {
-                        await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/PostList", lstquestions);
+                        // Gửi danh sách đáp án mới lên server
+                        var postAnsResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/PostList", newAnswers);
+                        if (!postAnsResponse.IsSuccessStatusCode) return false;
                     }
                 }
+
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return false;
             }
         }
+
         public async Task<bool> CreatequesTN(QuestionAdo quesAdo, List<AnsAdo> ansAdo)
         {
             try

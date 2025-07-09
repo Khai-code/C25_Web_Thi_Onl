@@ -276,32 +276,35 @@
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
         <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Thêm Câu Hỏi</h5>
-                    <label class="btn btn-primary">
-                        Tải Excel lên
-                        <InputFile OnChange="HandleFileSelectedessay" class="d-none" accept=".xlsx,.xls" />
-                    </label>
-                    <a href="files/Book2.xlsx" download>
-                        <button class="btn btn-primary">Tải file mẫu</button>
-                    </a>
+            <div class="modal-content shadow-lg rounded-4">
+                <div class="modal-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title"><i class="bi bi-patch-question-fill me-2"></i>Thêm Câu Hỏi Tự Luận</h5>
+                    <div class="d-flex gap-2">
+                        <label class="btn btn-light text-primary border-primary fw-semibold">
+                            <i class="bi bi-upload me-1"></i> Tải Excel lên
+                            <InputFile OnChange="HandleFileSelectedessay" class="d-none" accept=".xlsx,.xls" />
+                        </label>
+                        <a href="files/Book2.xlsx" download class="btn btn-outline-light fw-semibold">
+                            <i class="bi bi-download me-1"></i> Tải file mẫu
+                        </a>
+                    </div>
                 </div>
+
                 <div class="modal-body">
                     <div class="row">
-                        <!-- Cột trái: Form nhập liệu -->
+                        <!-- Form nhập liệu -->
                         <div class="col-md-6 border-end pe-4 d-flex flex-column justify-content-between">
                             <div>
                                 <form>
                                     <div class="mb-3">
-                                        <label for="questionName" class="form-label">Nội dung câu hỏi</label>
+                                        <label for="questionName" class="form-label fw-bold">📝 Nội dung câu hỏi</label>
                                         <textarea class="form-control" id="questionName" rows="5" placeholder="Nhập nội dung câu hỏi"
                                         @bind="questionAnswers.question.Question_Name"></textarea>
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Loại câu hỏi</label>
-                                        <select class="form-control" @bind="questionAnswers.question.Question_Type_Id">
+                                        <label class="form-label fw-bold">📌 Loại câu hỏi</label>
+                                        <select class="form-select" @bind="questionAnswers.question.Question_Type_Id">
                                             <option value="">-- Chọn Loại câu hỏi --</option>
                                             @foreach (var qt in questionTypeViewModels)
                                             {
@@ -311,8 +314,8 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Mức độ</label>
-                                        <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
+                                        <label class="form-label fw-bold">🎯 Mức độ</label>
+                                        <select class="form-select" @bind="questionAnswers.question.Question_Level_Id">
                                             <option value="">-- Chọn mức độ câu hỏi --</option>
                                             @foreach (var ql in questionlevelViewModel)
                                             {
@@ -322,50 +325,49 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Số điểm</label>
-                                        <input class="form-control" type="text" placeholder="Số điểm cho câu hỏi"
-                                        @bind="questionAnswers.question.Maximum_Score" />
+                                        <label class="form-label fw-bold">⭐ Số điểm</label>
+                                        <input class="form-control" type="number" placeholder="Số điểm cho câu hỏi"
+                                        @bind="questionAnswers.question.Maximum_Score" min="0" />
                                     </div>
                                 </form>
                             </div>
 
-                            <!-- Footer riêng cho form bên trái -->
                             <div class="mt-3 text-end">
                                 <button class="btn btn-success me-2" @onclick="CreateQues">
-                                    <i class="bi bi-save"></i> Lưu
+                                    <i class="bi bi-check-circle me-1"></i> Lưu câu hỏi
                                 </button>
                                 <button class="btn btn-secondary" @onclick="CloseModal">
-                                    Hủy
+                                    <i class="bi bi-x-circle me-1"></i> Hủy
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Cột phải: Danh sách câu hỏi -->
+                        <!-- Danh sách câu hỏi -->
                         <div class="col-md-6 ps-4 d-flex flex-column justify-content-between">
                             <div>
-                                <h6>Danh sách câu hỏi có sẵn</h6>
-                                <div style="max-height: 500px; overflow-y: auto;">
+                                <h6 class="fw-bold text-primary mb-3">📚 Danh sách câu hỏi có sẵn</h6>
+                                <div style="max-height: 500px; overflow-y: auto;" class="border rounded p-3 bg-light">
                                     @if (histDTOs != null && histDTOs.Any())
                                     {
                                         @foreach (var pkg in histDTOs)
                                         {
-                                            <div class="mb-3">
-                                                <strong class="text-secondary">@pkg.Package_Name</strong>
-                                                <ul class="list-group">
+                                            <div class="mb-4">
+                                                <strong class="text-secondary fst-italic">@pkg.Package_Name</strong>
+                                                <ul class="list-group list-group-flush mt-2">
                                                     @foreach (var ques in pkg.Questions)
                                                     {
-                                                        <li class="list-group-item d-flex align-items-start">
+                                                        <li class="list-group-item px-2 py-2 d-flex align-items-start">
                                                             <input class="form-check-input me-2 mt-1" type="checkbox"
                                                             @onchange="@(() => ToggleSelectedQues(ques.QuestionId))"
                                                             checked="@selectedQuestionIds.Contains(ques.QuestionId)" />
                                                             <div>
-                                                                <div>@ques.QuestionName</div>
+                                                                <div class="fw-semibold">@ques.QuestionName</div>
                                                                 @if (ques.Answers != null && ques.Answers.Any())
                                                                 {
-                                                                    <ul class="ms-4 mt-1">
+                                                                    <ul class="ms-4 mt-1 mb-0">
                                                                         @foreach (var ans in ques.Answers)
                                                                         {
-                                                                            <li>- @ans.AnswersName</li>
+                                                                            <li class="text-muted small">- @ans.AnswersName</li>
                                                                         }
                                                                     </ul>
                                                                 }
@@ -378,15 +380,14 @@
                                     }
                                     else
                                     {
-                                        <p>Không có dữ liệu câu hỏi.</p>
+                                        <p class="text-muted fst-italic">Không có dữ liệu câu hỏi.</p>
                                     }
                                 </div>
                             </div>
 
-                            <!-- Nút lưu riêng cho danh sách câu hỏi đã chọn -->
                             <div class="mt-3 text-end">
-                                <button class="btn btn-primary" @onclick="() =>SaveListQuestions(selectedQuestionIds)">
-                                    <i class="bi bi-save2"></i> Lưu các câu hỏi đã chọn
+                                <button class="btn btn-primary" @onclick="() => SaveListQuestions(selectedQuestionIds)">
+                                    <i class="bi bi-save2 me-1"></i> Lưu các câu hỏi đã chọn
                                 </button>
                             </div>
                         </div>
@@ -402,168 +403,166 @@
 @if (IsAddExamModalQuesMultipleChoice)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header bg-primary text-white justify-content-between">
                     <h5 class="modal-title">Thêm Câu Hỏi</h5>
-                    <label class="btn btn-primary">
-                        Tải Excel lên
-                        <InputFile OnChange="HandleFileSelected" class="d-none" accept=".xlsx,.xls" />
-                    </label>
-                    <a href="files/Book11.xlsm" download>
-                        <button class="btn btn-primary">Tải file mẫu</button>
-                    </a>
+                    <div class="d-flex gap-2">
+                        <label class="btn btn-light btn-sm mb-0">
+                            📤 Tải Excel
+                            <InputFile OnChange="HandleFileSelected" class="d-none" accept=".xlsx,.xls" />
+                        </label>
+                        <a href="files/Book11.xlsm" download class="btn btn-outline-light btn-sm">📄 Tải file mẫu</a>
+                        <button class="btn-close" @onclick="CloseModal"></button>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form>
-                        <div class="mb-3">
-                            <label for="questionName" class="form-label">Nội dung câu hỏi</label>
-                            <input class="form-control" id="questionName" type="text" placeholder="Nhập nội dung câu hỏi" @bind="questionAnswers.question.Question_Name" />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Loại câu hỏi</label>
-                            <select class="form-control" @bind="SelectedQuestionTypeId">
-                                <option value="">-- Chọn Loại câu hỏi --</option>
-                                @foreach (var qt in questionTypeViewModels)
-                                {
-                                    <option value="@qt.Question_Type_Id">@qt.Question_Type_Name</option>
-                                }
-                            </select>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Mức độ</label>
-                            <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
-                                <option value="">-- Chọn mức độ câu hỏi --</option>
-                                @foreach (var ql in questionlevelViewModel)
+                <div class="modal-body row">
+                    <!-- Form nhập câu hỏi -->
+                    <div class="col-md-6 border-end">
+                        <form>
+                            <div class="mb-3">
+                                <label for="questionName" class="form-label">Nội dung câu hỏi</label>
+                                <input class="form-control" id="questionName" type="text" placeholder="Nhập nội dung câu hỏi" @bind="questionAnswers.question.Question_Name" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Loại câu hỏi</label>
+                                <select class="form-control" @bind="SelectedQuestionTypeId">
+                                    <option value="">-- Chọn loại câu hỏi --</option>
+                                    @foreach (var qt in questionTypeViewModels)
+                                    {
+                                        <option value="@qt.Question_Type_Id">@qt.Question_Type_Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Mức độ</label>
+                                <select class="form-control" @bind="questionAnswers.question.Question_Level_Id">
+                                    <option value="">-- Chọn mức độ --</option>
+                                    @foreach (var ql in questionlevelViewModel)
+                                    {
+                                        <option value="@ql.Question_Level_Id">@ql.Question_Level_Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            @if (CheckType == 1)
+                            {
+                                <!-- Đúng/Sai -->
+                                <div class="mb-3 border rounded p-3">
+                                    <label class="form-label fw-bold">Đáp án Đúng/Sai</label>
+                                    @foreach (var ans in lstAns)
+                                    {
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">
+                                                <input type="radio" name="tfanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
+                                            </span>
+                                            <input class="form-control" type="text" @bind="ans.Name" />
+                                        </div>
+                                    }
+                                </div>
+                            }
+                            else if (CheckType == 2)
+                            {
+                                <!-- Một đáp án đúng -->
+                                <div class="mb-3 border rounded p-3">
+                                    <label class="form-label fw-bold">Chọn đáp án đúng (1 đáp án):</label>
+                                    @foreach (var ans in lstAns)
+                                    {
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">
+                                                <input type="radio" name="singleanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
+                                            </span>
+                                            <input class="form-control" type="text" placeholder="Nhập đáp án" @bind="ans.Name" />
+                                            <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
+                                        </div>
+                                    }
+                                    <button type="button" class="btn btn-outline-primary mt-2" @onclick="AddAnswer">➕ Thêm đáp án</button>
+                                </div>
+                            }
+                            else if (CheckType == 3)
+                            {
+                                <div class="mb-3 border rounded p-3">
+                                    <label class="form-label fw-bold">Đáp án (chọn nhiều):</label>
+                                    @foreach (var ans in lstAns)
+                                    {
+                                        <div class="input-group mb-2">
+                                            <span class="input-group-text">
+                                                <input type="checkbox" @bind="ans.Right" />
+                                            </span>
+                                            <input class="form-control" type="text" placeholder="Đáp án" @bind="ans.Name" />
+                                            <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
+                                        </div>
+                                    }
+                                    <button type="button" class="btn btn-outline-primary mt-2" @onclick="AddAnswer">➕ Thêm đáp án</button>
+                                </div>
+                            }
+                        </form>
+                    </div>
+
+                    <!-- Danh sách câu hỏi có sẵn -->
+                    <div class="col-md-6 ps-4 d-flex flex-column justify-content-between">
+                        <div>
+                            <h6 class="fw-bold">📋 Danh sách câu hỏi có sẵn</h6>
+                            <div style="max-height: 500px; overflow-y: auto;">
+                                @if (histDTOs != null && histDTOs.Any())
                                 {
-                                    <option value="@ql.Question_Level_Id">@ql.Question_Level_Name</option>
+                                    @foreach (var pkg in histDTOs)
+                                    {
+                                        <div class="mb-3">
+                                            <strong class="text-secondary">@pkg.Package_Name</strong>
+                                            <ul class="list-group">
+                                                @foreach (var ques in pkg.Questions)
+                                                {
+                                                    <li class="list-group-item">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" id="ques_@ques.QuestionId"
+                                                            checked="@selectedQuestionIds.Contains(ques.QuestionId)"
+                                                            @onchange="@(() => ToggleSelectedQues(ques.QuestionId))" />
+                                                            <label class="form-check-label" for="ques_@ques.QuestionId">
+                                                                <div class="fw-semibold">@ques.QuestionName</div>
+                                                                @if (ques.Answers != null && ques.Answers.Any())
+                                                                {
+                                                                    <ul class="ms-3 mt-1 mb-0">
+                                                                        @foreach (var ans in ques.Answers)
+                                                                        {
+                                                                            <li>- @ans.AnswersName @if (ans.Right_Answer == 1)
+                                                                                {
+                                                                                    <span class="badge bg-success ms-1">✔</span>
+                                                                                }</li>
+                                                                        }
+                                                                    </ul>
+                                                                }
+                                                            </label>
+                                                        </div>
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </div>
+                                    }
                                 }
-                            </select>
-                        </div>
-                        @if (this.CheckType == 1)
-                        {
-                            <!-- Đáp án Đúng/Sai -->
-                            <div class="mb-3 border rounded p-3">
-                                <label class="form-label"><strong>Đáp án Đúng/Sai (chỉ chọn 1):</strong></label>
-                                @foreach (var ans in lstAns)
+                                else
                                 {
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="radio" name="tfanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
-                                        </span>
-                                        <input class="form-control" type="text" @bind="ans.Name"/>
-                                    </div>
+                                    <p class="text-muted fst-italic">Không có dữ liệu câu hỏi.</p>
                                 }
                             </div>
-                        }
-                        else if (this.CheckType == 2)
-                        {
-                            <!-- Đáp án Một đáp án đúng -->
-                            <div class="mb-3 border rounded p-3">
-                                <label class="form-label"><strong>Đáp án Một đáp án đúng (chỉ chọn 1):</strong></label>
+                        </div>
 
-                                <!-- Container chứa các đáp án -->
-                                @foreach (var ans in lstAns)
-                                {
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 1" @bind="ans.Name" />
-                                        <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
-                                    </div>
-                                }
-                                @* <div id="single-answer-container">
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 1" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 2" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 3" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="radio" name="singleanswer" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 4" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeSingleAnswer(this)">❌</button>
-                                    </div>
-                                </div> *@
-
-                                <!-- Nút thêm đáp án -->
-                                <button type="button" class="btn btn-primary mt-2" @onclick="AddAnswer">Thêm đáp án</button>
-                            </div>
-                        }
-                        else if (this.CheckType == 3)
-                        {
-                            <div class="mb-3 border rounded p-3">
-                                <label class="form-label"><strong>Đáp án Nhiều đáp án đúng (chọn nhiều):</strong></label>
-
-                                <!-- Container chứa các đáp án -->
-                                @foreach (var ans in lstAns)
-                                {
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="checkbox" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án" @bind="ans.Name" />
-                                        <button type="button" class="btn btn-danger" @onclick="() => RemoveAnswer(ans)">❌</button>
-                                    </div>
-                                }
-                                @* <div id="answer-container">
-
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="checkbox" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 2" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="checkbox" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 3" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
-                                    </div>
-                                    <div class="input-group mb-2">
-                                        <span class="input-group-text">
-                                            <input type="checkbox" @bind="ans.Right" />
-                                        </span>
-                                        <input class="form-control" type="text" placeholder="Đáp án 4" @bind="ans.Name" />
-                                        <button class="btn btn-danger" onclick="removeAnswer(this)">❌</button>
-                                    </div>
-                                </div> *@
-
-                                <!-- Nút thêm đáp án -->
-                                <button type="button" class="btn btn-primary mt-2" @onclick="AddAnswer">Thêm đáp án</button>
-                            </div>
-                        }
-
-                    </form>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-primary" @onclick="() => SaveListQuestions(selectedQuestionIds)">
+                                <i class="bi bi-save2"></i> Lưu các câu hỏi đã chọn
+                            </button>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="modal-footer">
                     <button class="btn btn-success" @onclick="CreateQues">
-                        <i class="bi bi-save" ></i> Lưu
+                        <i class="bi bi-save"></i> Lưu
                     </button>
-                    <button class="btn btn-secondary" @onclick="CloseModal">
-                        Hủy
-                    </button>
+                    <button class="btn btn-secondary" @onclick="CloseModal">Hủy</button>
                 </div>
             </div>
         </div>
@@ -581,6 +580,7 @@
     public int SubjectId { get; set; }
     public int CheckType { get; set; }
     public int time { get; set; } = 0;
+    public int IsCheck { get; set; } = 0;
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -634,6 +634,7 @@
     private AnsAdo selectedAnswer;
 
     public List<int> selectedQuestionIds = new List<int>();
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -713,11 +714,24 @@
         {
             if (quesId != null && quesId.Count > 0 && this.packageId > 0)
             {
-                bool checkLstQue = await pm.CreateListQuestionTL(quesId, this.packageId);
+                if (IsAddExamModalQuesMultipleChoice)
+                {
+                    IsCheck = 2;
+                }
+                else if (IsAddExamModalQuesEssay)
+                {
+                    IsCheck = 1;
+                }
+                else
+                {
+                    toastService.ShowError("Trương trình lỗi");
+                    return;
+                }
+                bool checkLstQue = await pm.CreateListQuestionTL(quesId, this.packageId, this.IsCheck);
 
                 if (!checkLstQue)
                 {
-                    toastService.ShowSuccess("Thêm câu hỏi thất bại");
+                    toastService.ShowError("Thêm câu hỏi thất bại");
                     return;
                 }
                 else

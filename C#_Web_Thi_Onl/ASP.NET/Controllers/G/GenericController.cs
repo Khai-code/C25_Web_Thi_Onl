@@ -386,7 +386,8 @@ namespace ASP.NET.Controllers.G
                 ? filters["Package_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
             //int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
             int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
-            List<int>? lstQuestionId = filters.ContainsKey("Id") ? new List<int> { int.Parse(filters["Id"]) } : new List<int>();
+            List<int>? lstQuestionId = filters.ContainsKey("Id") && !string.IsNullOrEmpty(filters["Id"])
+                ? filters["Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
             string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
 
             var result = await _repository.GetWithFilterAsync<Question>(q =>
