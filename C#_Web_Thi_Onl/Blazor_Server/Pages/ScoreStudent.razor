@@ -5,7 +5,7 @@
 @inject ProtectedSessionStorage SessionStorage
 @layout StudentLayout
 
-<div class="bang-diem-container">
+<div class="bang-diem-container py-5">
     <h1 class="bang-diem-title">SMART SCHOOL</h1>
     <h2 class="bang-diem-subtitle">Bảng điểm của học sinh @studentFullName</h2>
     <p class="bang-diem-summary">
@@ -27,7 +27,7 @@
 @* Theo kỳ *@
 @if (!isAnnualSummary && scoresList != null)
 {
-    <div class="flex justify-center mt-6">
+    <div class="flex justify-center">
         <div class="overflow-x-auto shadow-lg rounded-lg w-full max-w-7xl">
             <table class="table-bangdiem">
                 <thead>

@@ -10,6 +10,7 @@
 });
 
 
+
 window.updateNavbar = function () {
     let navbar = document.getElementById("navbar");
 
@@ -21,7 +22,13 @@ window.updateNavbar = function () {
         navbar.classList.add("bg-transparent");
         navbar.style.removeProperty("background-color");
         navbar.style.removeProperty("box-shadow");
-    } else {
+        navbar.style.display = "block";
+    }
+    else if (currentPath === "/Test") {
+        navbar.style.display = "none";
+    }
+    else {
+            navbar.style.display = "block";
         navbar.classList.remove("bg-transparent");
         navbar.style.backgroundColor = "rgba(241, 245, 236, 0.95)";
         navbar.style.boxShadow = "0px 4px 10px rgba(0, 0, 0, 0.1)";
