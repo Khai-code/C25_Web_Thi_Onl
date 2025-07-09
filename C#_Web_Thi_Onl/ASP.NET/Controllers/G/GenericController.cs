@@ -377,7 +377,7 @@ namespace ASP.NET.Controllers.G
             int lastNumber = await _repository.GetLastTestNumberAsync(year, testType);
             int newNumber = lastNumber + 1;
 
-            return $"T{testType}{year}{newNumber:D5}"; // Ví dụ: TATT2024001, TFIN2024002
+            return $"T{testType}{year}{newNumber:D5}";
         }
 
         private async Task<IActionResult> HandleQuestionFilter(Dictionary<string, string> filters)
