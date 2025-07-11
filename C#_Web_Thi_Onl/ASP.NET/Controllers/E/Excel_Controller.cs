@@ -50,7 +50,7 @@ namespace ASP.NET.Controllers.E
 
                 int t = sheet.Dimension.End.Row - 1;
 
-                var Classes = await httpClient.GetFromJsonAsync<Data_Base.Models.C.Class>($"https://localhost:7187/api/Class/Get/{classId}");
+                var Classes = await httpClient.GetFromJsonAsync<Data_Base.Models.C.Class>($"https://localhost:7187/api/Class/GetBy/{classId}");
 
                 if (Classes == null)
                     return BadRequest("Không tìm thấy lớp học với Id: " + classId);
