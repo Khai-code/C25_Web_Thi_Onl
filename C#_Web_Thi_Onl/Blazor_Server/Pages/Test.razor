@@ -122,6 +122,46 @@
     private string plainText;
     private int index = 0;
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("window.registerDotnetHelper", DotNetObjectReference.Create(this));
+        }
+    }
+
+    [JSInvokable]
+    public async Task ResetExamTime()
+    {
+        try
+        {
+            if (countdownTimer != null)
+            {
+                countdownTimer.Dispose();  // Dừng bộ đếm thời gian
+            }
+            isTimeUp = true;  // Đánh dấu hết thời gian
+
+            // Lưu kết quả (nếu chưa lưu)
+            if (histDTO.PackageTypeId == 1)
+            {
+                await SaveAllAnswers();
+            }
+            else
+            {
+                await CreateStudentAns(selectedAnsIds);
+            }
+
+            toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");
+            Navigation.NavigateTo("/His");  // Điều hướng đến trang lịch sử
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi khi dừng thời gian và lưu dữ liệu: " + ex.Message);
+        }
+
+    }
+
+
     protected override async Task OnInitializedAsync()
     {
         try

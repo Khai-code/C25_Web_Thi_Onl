@@ -118,15 +118,12 @@ function callResetTimeAndRedirect() {
         window.dotnetHelper.invokeMethodAsync('ResetExamTime')
             .then(() => {
                 console.log("Đã gọi ResetExamTime bên Blazor");
-              /*  window.location.href = 'https://localhost:7181/';*/
             })
             .catch(err => {
                 console.error("Lỗi gọi ResetExamTime:", err);
-               /* window.location.href = 'https://localhost:7181/';*/
             });
     } else {
         console.log("Chưa có dotnetHelper. Điều hướng luôn.");
-      /*  window.location.href = 'https://localhost:7181/';*/
     }
 }
 
