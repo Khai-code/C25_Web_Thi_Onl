@@ -20,7 +20,6 @@ namespace Data_Base.V_Model
         public string Address { get; set; }
         public string Phone_Number { get; set; }
         public long Data_Of_Birth { get; set; }
-        public string Avatar { get; set; }
 
         // Role
         public int Role_Id { get; set; }
