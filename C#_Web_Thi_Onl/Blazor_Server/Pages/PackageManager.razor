@@ -739,6 +739,8 @@
                     toastService.ShowSuccess("Thêm câu thành công");
                 }
             }
+
+            this.selectedQuestionIds.Clear();
         }
         catch (Exception ex)
         {
@@ -849,6 +851,7 @@
 
     private void CloseModal()
     {
+        this.selectedQuestionIds.Clear();
         IsAddExamModalOpen = false;
         IsAddExamModalQuesEssay = false;
         IsAddExamModalQuesMultipleChoice = false;

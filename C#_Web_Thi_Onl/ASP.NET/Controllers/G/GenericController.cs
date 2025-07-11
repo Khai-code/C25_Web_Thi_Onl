@@ -64,7 +64,6 @@ namespace ASP.NET.Controllers.G
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
         }
-         
         private string GetTableName(object entity)
         {
             if (entity == null) return null;
@@ -79,7 +78,6 @@ namespace ASP.NET.Controllers.G
             }
             return type.Name;
         }
-
         // 🔵 GetAll
         [HttpGet("Get/")]
         public async Task<IActionResult> GetAll()
@@ -96,7 +94,6 @@ namespace ASP.NET.Controllers.G
             if (result == null) return NotFound();
             return Ok(result);
         }
-
         // 🔵 Create
         [HttpPost("Post")]
         public async Task<IActionResult> Create([FromBody] T entity)
@@ -178,7 +175,7 @@ namespace ASP.NET.Controllers.G
                 var classEntity = await _repository.GetByIdAsync<Class>(classId);
                 if (classEntity != null)
                 {
-                    classEntity.Number = studentCount;
+                    classEntity.Number = studentCount + 1;
                     await _repository.UpdateClassAsync(classEntity);
                 }
             }
@@ -186,7 +183,6 @@ namespace ASP.NET.Controllers.G
             var createdEntity = await _repository.CreateAsync(entity);
             return CreatedAtAction(nameof(GetById), new { id = createdEntity }, createdEntity);
         }
-
         [HttpPost("PostList")]
         public async Task<IActionResult> CreateList([FromBody] List<T> entities)
         {
@@ -281,7 +277,6 @@ namespace ASP.NET.Controllers.G
             var createdEntities = await _repository.CreateListAsync(entities);
             return Ok(createdEntities);
         }
-
         // 🔵 Update
         [HttpPut("Pus/{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] T entity)
@@ -291,7 +286,6 @@ namespace ASP.NET.Controllers.G
             if (!updated) return NotFound();
             return NoContent();
         }
-
         // 🔴 Delete
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)
@@ -314,7 +308,6 @@ namespace ASP.NET.Controllers.G
 
             return NoContent();
         }
-
         // 🔥 Hàm tạo Student_Code
         private string GenerateStudentCode(string lastCode, int offset = 0)
         {
@@ -322,7 +315,6 @@ namespace ASP.NET.Controllers.G
             long lastNumber = lastCode != null ? long.Parse(lastCode.Substring(5)) : 0;
             return $"STU{year}{lastNumber + 1 + offset:D9}";
         }
-
         // 🔥 Hàm tạo Teacher_Code
         private string GenerateTeacherCode(long yearOfBirth, string lastCode, int offset = 0)
         {
@@ -330,7 +322,6 @@ namespace ASP.NET.Controllers.G
             long lastNumber = lastCode != null ? long.Parse(lastCode.Substring(5)) : 0;
             return $"TEA{year}{lastNumber + 1 + offset:D9}";
         }
-
         // 🔥 Hàm tạo Class
         private string GenerateClassCode(string lastCode, string gradeName, int offset = 0)
         {
@@ -347,15 +338,13 @@ namespace ASP.NET.Controllers.G
             }
 
             int newIndex = lastIndex + offset + 1;
-            return $"CLS{year}{gradeName}{newIndex:D3}";
+            return $"CLS{year}{newIndex:D3}";
         }
-
         private int GenerateRandomPackageCode()
         {
             Random random = new Random();
             return random.Next(10000000, 99999999); // Tạo số nguyên ngẫu nhiên có 8 chữ số
         }
-
         private string GetTestType(int pointTypeId)
         {
             return pointTypeId switch
@@ -368,7 +357,6 @@ namespace ASP.NET.Controllers.G
                 _ => "UNK" // UNK: Unknown, nếu có lỗi
             };
         }
-
         private async Task<string> GenerateTestCodeAsync(int pointTypeId)
         {
             string testType = GetTestType(pointTypeId);
@@ -379,7 +367,6 @@ namespace ASP.NET.Controllers.G
 
             return $"T{testType}{year}{newNumber:D5}";
         }
-
         private async Task<IActionResult> HandleQuestionFilter(Dictionary<string, string> filters)
         {
             List<int>? lstPackageId = filters.ContainsKey("Package_Id") && !string.IsNullOrEmpty(filters["Package_Id"])
@@ -474,7 +461,6 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
-
         private async Task<IActionResult> HandleTestFilter(Dictionary<string, string> filters)
         {
             int? packageId = filters.ContainsKey("Package_Id") ? int.Parse(filters["Package_Id"]) : null;
@@ -487,7 +473,6 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
-
         private async Task<IActionResult> HandleVPackageFilter(Dictionary<string, string> filters)
         {
             int? packageCode = filters.ContainsKey("Package_Code") ? int.Parse(filters["Package_Code"]) : null;
@@ -508,7 +493,6 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
-
         private async Task<IActionResult> HandleExamRoomStudentFilter(Dictionary<string, string> filters)
         {
             int? ExamRoomPackageId = filters.ContainsKey("Exam_Room_Package_Id") ? int.Parse(filters["Exam_Room_Package_Id"]) : null;

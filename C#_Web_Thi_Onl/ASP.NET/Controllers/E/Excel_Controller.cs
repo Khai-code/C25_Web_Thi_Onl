@@ -48,6 +48,20 @@ namespace ASP.NET.Controllers.E
             {
                 var sheet = package.Workbook.Worksheets[0];
 
+                int t = sheet.Dimension.End.Row - 1;
+
+                var Classes = await httpClient.GetFromJsonAsync<Data_Base.Models.C.Class>($"https://localhost:7187/api/Class/Get/{classId}");
+
+                if (Classes == null)
+                    return BadRequest("Không tìm thấy lớp học với Id: " + classId);
+
+
+                if (Classes.Number >= Classes.Max_Student)
+                    return BadRequest("Số lượng học sinh đã đủ");
+
+                if (Classes.Number < Classes.Max_Student && ((Classes.Max_Student - Classes.Number) < t))
+                    return BadRequest("Trong lớp đã chỉ còn " + (Classes.Max_Student - Classes.Number) + " trỗ trống");
+
                 for (int row = 2; row <= sheet.Dimension.End.Row; row++)
                 {
                     object dobObj = sheet.Cells[row, 8].Value;
