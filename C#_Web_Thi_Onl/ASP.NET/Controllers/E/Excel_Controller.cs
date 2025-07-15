@@ -10,6 +10,7 @@ using System.Collections.Immutable;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.S;
 using Data_Base.Models.U;
+using Data_Base.Models.P;
 
 namespace ASP.NET.Controllers.E
 {
@@ -155,6 +156,63 @@ namespace ASP.NET.Controllers.E
             if (response.IsSuccessStatusCode)
             {
                 createdStudents = await response.Content.ReadFromJsonAsync<List<Student>>();
+
+                // Lấy toàn bộ Point_Type để đối chiếu tên
+                var pointTypes = await httpClient.GetFromJsonAsync<List<Point_Type>>("https://localhost:7187/api/Point_Type/Get");
+                var pointTypeSubjects = await httpClient.GetFromJsonAsync<List<Point_Type_Subject>>("https://localhost:7187/api/Point_Type_Subject/Get");
+                var summaries = await httpClient.GetFromJsonAsync<List<Summary>>("https://localhost:7187/api/Summary/Get");
+
+                foreach (var createdStudent in createdStudents) // Lặp qua từng học sinh vừa thêm
+                {
+                    foreach (var pts in pointTypeSubjects)
+                    {
+                        // Lấy tên của loại điểm
+                        var pointType = pointTypes.FirstOrDefault(pt => pt.Id == pts.Point_Type_Id);
+                        if (pointType == null) continue;
+
+                        int quantity = 1;
+                        switch (pointType.Point_Type_Name)
+                        {
+                            case "Attendance":
+                            case "Point_15":
+                                quantity = 3;
+                                break;
+                            case "Point_45":
+                                quantity = 2;
+                                break;
+                            case "Point_Midterm":
+                            case "Point_Final":
+                                quantity = 1;
+                                break;
+                            default:
+                                quantity = 1;
+                                break;
+                        }
+
+                        foreach (var summary in summaries)
+                        {
+                            for (int i = 0; i < quantity; i++)
+                            {
+                                var score = new Score
+                                {
+                                    Student_Id = createdStudent.Id,
+                                    Subject_Id = pts.Subject_Id,
+                                    Point_Type_Id = pts.Point_Type_Id,
+                                    Summary_Id = summary.Id,
+                                    Point = 0,
+                                };
+
+                                var scoreResponse = await httpClient.PostAsJsonAsync("https://localhost:7187/api/Score/Post", score);
+                                if (!scoreResponse.IsSuccessStatusCode)
+                                {
+                                    Console.WriteLine($"[WARNING] Không thể tạo điểm: Student {createdStudent.Id}, Subject {pts.Subject_Id}, PointType {pts.Point_Type_Id}, Summary {summary.Id}, Lần thứ {i + 1}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+
             }
             else
             {
@@ -162,7 +220,10 @@ namespace ASP.NET.Controllers.E
                 return BadRequest("Không import được student: " + err);
             }
 
+           
+
             // 5. Tạo Student_Class với danh sách Student vừa nhận về (đã có Id)
+            var studentClasses = new List<Student_Class>();
             foreach (var student in createdStudents)
             {
                 var studentClass = new Student_Class
@@ -170,9 +231,13 @@ namespace ASP.NET.Controllers.E
                     Student_Id = student.Id,
                     Class_Id = classId
                 };
-                db_Context.Student_Classes.Add(studentClass);
+                var responseStudentClass = await httpClient.PostAsJsonAsync("https://localhost:7187/api/Student_Class/Post", studentClass);
+                if (!responseStudentClass.IsSuccessStatusCode)
+                {
+                    var err = await responseStudentClass.Content.ReadAsStringAsync();
+                    Console.WriteLine($"Không thể tạo Student_Class cho StudentId {student.Id}: " + err);
+                }
             }
-            await db_Context.SaveChangesAsync();
 
             return Ok("Import học sinh thành công!");
         }
