@@ -19,6 +19,7 @@
 
 <h2>KẾT QUẢ BÀI THI</h2>
 
+@if(v_Test != null){
 <div class="info">
     <label>Họ tên học sinh:</label>
     <span>@v_Test.Full_Name</span>
@@ -66,6 +67,7 @@
     </div>
 }
 
+}
 
 
 
@@ -100,7 +102,7 @@
             }
             PackageTypeId = PackageTypeIdReq.Value;
 
-            GetExamHis(TestId, PackageTypeId);
+            await GetExamHis(TestId, PackageTypeId);
 
             correct = (int)((v_Test.Score * v_Test.Total_Questions) / 10);
             wrong = v_Test.Total_Questions - correct;

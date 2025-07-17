@@ -640,8 +640,7 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
-
-        public async Task<bool> UpdateQuestionAns(ListQuesAns ado)
+        public async Task<bool> UpdateQuestionAns(ListQuesAns ado, int packageTypeId)
         {
             try
             {
@@ -661,7 +660,7 @@ namespace Blazor_Server.Services
 
                 var questionResponse = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Question/Pus/{ado.QuestionId}", questionToUpdate);
 
-                if (questionResponse.IsSuccessStatusCode)
+                if (questionResponse.IsSuccessStatusCode && packageTypeId == 2)
                 {
                     // Update từng answer
                     foreach (var answer in ado.Answers)
@@ -682,7 +681,7 @@ namespace Blazor_Server.Services
                         }
                     }
                 }
-                else
+                else if(!questionResponse.IsSuccessStatusCode)
                 {
                     return false;
                 }

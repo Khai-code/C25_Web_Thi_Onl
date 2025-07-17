@@ -8,10 +8,10 @@ namespace Data_Base.V_Model
 {
     public class V_Test
     {
-        public int Id { get; set; }                    
+        public int Id { get; set; }      
         public string Test_Code { get; set; }
         public int Package_Id { get; set; }          
-        public string Package_Code { get; set; }
+        public int Package_Code { get; set; }
         public string Package_Name { get; set; }
         public string Class_Code { get; set; }
         public string Class_Name { get; set; }

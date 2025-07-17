@@ -570,7 +570,7 @@
 }
 
 
-@if (IsListQuestyon && packageTypeId == 2)
+@if (IsListQuestyon )
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -604,19 +604,21 @@
                                         </button>
                                     </div>
                                 </div>
-
-                                <ul class="list-unstyled ps-3 mb-0">
-                                    @foreach (var ans in question.Answers ?? new())
-                                    {
-                                        <li class="mb-1">
-                                            <span class="text-secondary">•</span> @ans.AnswersName
-                                            @if (ans.Right_Answer == 1)
-                                            {
-                                                <span class="badge bg-success ms-2">Đúng</span>
-                                            }
-                                        </li>
-                                    }
-                                </ul>
+                                @if(packageTypeId == 2)
+                                {
+                                    <ul class="list-unstyled ps-3 mb-0">
+                                        @foreach (var ans in question.Answers ?? new())
+                                        {
+                                            <li class="mb-1">
+                                                <span class="text-secondary">•</span> @ans.AnswersName
+                                                @if (ans.Right_Answer == 1)
+                                                {
+                                                    <span class="badge bg-success ms-2">Đúng</span>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                }
                             </div>
                         }
                     }
@@ -632,7 +634,78 @@
 }
 
 
-@if (isEditing && lstQuesAns != null)
+@if (isEditing && lstQuesAns != null && packageTypeId == 2)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-4 border-0 position-relative">
+                <!-- Nút đóng (X) -->
+                <button type="button"
+                class="btn-close position-absolute top-0 end-0 m-3"
+                aria-label="Close"
+                @onclick="CancelEdit">
+                </button>
+                <form onsubmit="return false" class="p-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-5">Câu hỏi:</label>
+                        <input type="text" class="form-control form-control-lg" @bind="lstQuesAns.QuestionName" placeholder="Nhập nội dung câu hỏi..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-5">Danh sách đáp án:</label>
+                        @for (int i = 0; i < lstQuesAns.Answers.Count; i++)
+                        {
+                            int index = i; // Capture index for closure
+                            <div class="d-flex mb-3 align-items-center">
+                                <span class="me-2 fw-bold">@((char)(65 + i)).</span>
+                                <input type="text"
+                                class="form-control me-3"
+                                value="@lstQuesAns.Answers[i].AnswersName"
+                                @oninput="(e) => UpdateAnswerName(index, e.Value.ToString())"
+                                placeholder="Nhập đáp án..." />
+                                @if (lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                        type="radio"
+                                        name="correctAnswer"
+                                        checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                        @onclick="() => SetCorrectAnswer(index)" />
+                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
+                                    </div>
+                                }
+                                else if (lstQuesAns.QuestionTypeId == 3)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                        type="checkbox"
+                                        checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                        @onclick="() => ToggleCorrectAnswer(index)" />
+                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Thông báo lỗi validation -->
+                    @if (!string.IsNullOrEmpty(validationMessage))
+                    {
+                        <div class="alert alert-danger mb-3">
+                            @validationMessage
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill" @onclick="CancelEdit">❌ Hủy</button>
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-pill" @onclick="SaveEditedQuestion">💾 Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@if (isEssay && lstQuesAns != null && packageTypeId == 1)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -648,43 +721,6 @@
                         <label class="form-label fw-bold fs-5">Câu hỏi:</label>
                         <input type="text" class="form-control form-control-lg" @bind="lstQuesAns.QuestionName" placeholder="Nhập nội dung câu hỏi..." />
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold fs-5">Danh sách đáp án:</label>
-                        @for (int i = 0; i < lstQuesAns.Answers.Count; i++)
-                        {
-                            int index = i; // Capture index for closure
-                            <div class="d-flex mb-3 align-items-center">
-                                <span class="me-2 fw-bold">@((char)(65 + i)).</span>
-                                <input type="text"
-                                       class="form-control me-3"
-                                       value="@lstQuesAns.Answers[i].AnswersName"
-                                       @oninput="(e) => UpdateAnswerName(index, e.Value.ToString())"
-                                       placeholder="Nhập đáp án..." />
-                                @if (lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2)
-                                {
-                                    <div class="form-check">
-                                        <input class="form-check-input"
-                                               type="radio"
-                                               name="correctAnswer"
-                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
-                                               @onclick="() => SetCorrectAnswer(index)" />
-                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
-                                    </div>
-                                }
-                                else if (lstQuesAns.QuestionTypeId == 3)
-                                {
-                                    <div class="form-check">
-                                        <input class="form-check-input"
-                                               type="checkbox"
-                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
-                                               @onclick="() => ToggleCorrectAnswer(index)" />
-                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
-                                    </div>
-                                }
-                            </div>
-                        }
-                    </div>
-
                     <!-- Thông báo lỗi validation -->
                     @if (!string.IsNullOrEmpty(validationMessage))
                     {
@@ -716,6 +752,7 @@
     public int time { get; set; } = 0;
     public int IsCheck { get; set; } = 0;
     private bool isEditing = false;
+    private bool isEssay = false;
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -774,6 +811,7 @@
 
     void CancelEdit()
     {
+        isEssay = false;
         isEditing = false;
         lstQuesAns = null;
         validationMessage = "";
@@ -1443,24 +1481,41 @@
 
     private void StartEditQuestion(ListQuesAns question)
     {
-        lstQuesAns = new ListQuesAns
+        if (packageTypeId == 2)
         {
-                QuestionId = question.QuestionId,
-                QuestionName = question.QuestionName,
-                QuestionTypeId = question.QuestionTypeId,
-                PackageId = question.PackageId,
-                MaximumScore = question.MaximumScore,
-                Leva = question.Leva,
-                Answers = question.Answers.Select(a => new Answer
+            lstQuesAns = new ListQuesAns
                 {
-                    AnswerId = a.AnswerId,
-                    AnswersName = a.AnswersName,
-                    Right_Answer = a.Right_Answer,
-                    QuestionId = a.QuestionId
-                }).ToList()
-        };
-        validationMessage = "";
-        isEditing = true;
+                    QuestionId = question.QuestionId,
+                    QuestionName = question.QuestionName,
+                    QuestionTypeId = question.QuestionTypeId,
+                    PackageId = question.PackageId,
+                    MaximumScore = question.MaximumScore,
+                    Leva = question.Leva,
+                    Answers = question.Answers.Select(a => new Answer
+                    {
+                        AnswerId = a.AnswerId,
+                        AnswersName = a.AnswersName,
+                        Right_Answer = a.Right_Answer,
+                        QuestionId = a.QuestionId
+                    }).ToList()
+                };
+            validationMessage = "";
+            isEditing = true;
+        }
+        else if (packageTypeId == 1)
+        {
+            lstQuesAns = new ListQuesAns
+                {
+                    QuestionId = question.QuestionId,
+                    QuestionName = question.QuestionName,
+                    QuestionTypeId = question.QuestionTypeId,
+                    PackageId = question.PackageId,
+                    MaximumScore = question.MaximumScore,
+                    Leva = question.Leva,
+                };
+            validationMessage = "";
+            isEssay = true;
+        }
     }
 
     private async Task SaveEditedQuestion()
@@ -1473,7 +1528,7 @@
                 return; // Không lưu nếu validation fail
             }
 
-            bool check = await pm.UpdateQuestionAns(lstQuesAns);
+            bool check = await pm.UpdateQuestionAns(lstQuesAns, packageTypeId);
             if (check)
             {
                 isEditing = false;
@@ -1506,31 +1561,33 @@
         }
 
         // Kiểm tra tất cả đáp án có nội dung
-        foreach (var answer in lstQuesAns.Answers)
+        if (packageTypeId == 2)
         {
-            if (string.IsNullOrWhiteSpace(answer.AnswersName))
+            foreach (var answer in lstQuesAns.Answers)
             {
-                validationMessage = "Vui lòng nhập nội dung cho tất cả đáp án!";
+                if (string.IsNullOrWhiteSpace(answer.AnswersName))
+                {
+                    validationMessage = "Vui lòng nhập nội dung cho tất cả đáp án!";
+                    return false;
+                }
+            }
+
+            var correctAnswersCount = lstQuesAns.Answers.Count(a => a.Right_Answer == 1);
+
+            if (correctAnswersCount == 0)
+            {
+                validationMessage = "Vui lòng chọn ít nhất 1 đáp án đúng!";
+                return false;
+            }
+
+            // Kiểm tra câu hỏi single choice chỉ có 1 đáp án đúng
+            if ((lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2) && correctAnswersCount > 1)
+            {
+                validationMessage = "Câu hỏi trắc nghiệm chỉ được chọn 1 đáp án đúng!";
                 return false;
             }
         }
-
-        // Kiểm tra phải có ít nhất 1 đáp án đúng
-        var correctAnswersCount = lstQuesAns.Answers.Count(a => a.Right_Answer == 1);
-
-        if (correctAnswersCount == 0)
-        {
-            validationMessage = "Vui lòng chọn ít nhất 1 đáp án đúng!";
-            return false;
-        }
-
-        // Kiểm tra câu hỏi single choice chỉ có 1 đáp án đúng
-        if ((lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2) && correctAnswersCount > 1)
-        {
-            validationMessage = "Câu hỏi trắc nghiệm chỉ được chọn 1 đáp án đúng!";
-            return false;
-        }
-
+        
         return true;
     }
 

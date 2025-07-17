@@ -405,7 +405,7 @@ namespace Blazor_Server.Services
                             }
                             };
 
-                            var ansResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/common/get", filterAns);
+                            var ansResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
                             if (!ansResponse.IsSuccessStatusCode) continue;
 
                             var answers = await ansResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();

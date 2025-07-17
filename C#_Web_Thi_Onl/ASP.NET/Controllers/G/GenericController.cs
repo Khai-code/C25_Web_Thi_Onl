@@ -60,6 +60,10 @@ namespace ASP.NET.Controllers.G
                     return await HandleExamRoomStudentFilter(request.Filters);
                 case "Test_Question":
                     return await HandleTestQuestionFilter(request.Filters);
+                case "V_Test":
+                    return await HandleVTestFilter(request.Filters);
+                case "Score":
+                    return await HandleScoreFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -493,6 +497,22 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
+
+        private async Task<IActionResult> HandleVTestFilter(Dictionary<string, string> filters)
+        {
+            int? Id = null;
+
+            if (filters.TryGetValue("Id", out var idStr) && int.TryParse(idStr, out var parsedId))
+            {
+                Id = parsedId;
+            }
+
+            var result = await _repository.GetWithFilterAsync<V_Test>(a =>
+                (!Id.HasValue || a.Id == Id)
+            );
+
+            return Ok(result);
+        }
         private async Task<IActionResult> HandleExamRoomStudentFilter(Dictionary<string, string> filters)
         {
             int? ExamRoomPackageId = filters.ContainsKey("Exam_Room_Package_Id") ? int.Parse(filters["Exam_Room_Package_Id"]) : null;
@@ -513,6 +533,23 @@ namespace ASP.NET.Controllers.G
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.T.Test_Question>(a =>
                 (!testId.HasValue || a.Test_Id == testId)
+            );
+
+            return Ok(result);
+        }
+        
+        private async Task<IActionResult> HandleScoreFilter(Dictionary<string, string> filters)
+        {
+            int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
+            int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
+            int? pointTypeId = filters.ContainsKey("Point_Type_Id") ? int.Parse(filters["Point_Type_Id"]) : null;
+            int? summaryId = filters.ContainsKey("Summary_Id") ? int.Parse(filters["Summary_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.S.Score>(a =>
+                (!studentId.HasValue || a.Student_Id == studentId) &&
+                (!subjectId.HasValue || a.Subject_Id == subjectId) &&
+                (!pointTypeId.HasValue || a.Point_Type_Id == pointTypeId) &&
+                (!summaryId.HasValue || a.Summary_Id == summaryId) 
             );
 
             return Ok(result);
