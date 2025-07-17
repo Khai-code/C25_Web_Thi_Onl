@@ -414,7 +414,6 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">Thêm lớp mới cho khối @selectedGrade.Grade_Name</h5>
-                        <button type="button" class="btn-close" @onclick="CloseAddClassModal"></button>
                     </div>
                     <div class="modal-body">
                         <EditForm Model="@model" OnValidSubmit="CreateNewClass">
@@ -1197,7 +1196,7 @@
             var result = await ClassService.DeleteStudent(studentToDelete.Id);
             if (result)
             {
-                successMessage = $"Đã xóa học sinh {studentToDelete.Full_Name} thành công.";
+                toastService.ShowSuccess("Đã xóa dữ liệu học sinh thành công");
                 // Nếu đang chọn học sinh bị xoá, clear selection
                 if (selectedStudent?.Id == studentToDelete.Id)
                 {
@@ -1208,7 +1207,7 @@
             }
             else
             {
-                errorMessage = "Không thể xóa học sinh. Vui lòng thử lại sau.";
+                toastService.ShowError("Không thể xóa dữ liệu học sinh");
             }
         }
         catch (Exception ex)

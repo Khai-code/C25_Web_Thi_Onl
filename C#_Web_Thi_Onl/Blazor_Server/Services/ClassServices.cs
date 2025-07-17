@@ -79,6 +79,30 @@ namespace Blazor_Server.Services
         {
             try
             {
+                // B1. Lấy danh sách Student_Class của classId này
+                var studentClasses = await _client.GetFromJsonAsync<List<Student_Class>>("api/Student_Class/Get");
+                var studentsInClass = studentClasses?
+                    .Where(sc => sc.Class_Id == classId)
+                    .ToList();
+
+                if (studentsInClass != null && studentsInClass.Count > 0)
+                {
+                    // B2. Lấy danh sách Student để lấy User_Id
+                    var students = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+
+                    foreach (var sc in studentsInClass)
+                    {
+                        var student = students?.FirstOrDefault(s => s.Id == sc.Student_Id);
+                        if (student != null)
+                        {
+                            int userId = student.User_Id;
+                            // B3. Gọi hàm xóa học sinh (đã tối ưu logic xóa hết điểm, xóa student_class, xóa user, xóa avatar)
+                            await DeleteStudent(userId); // Nếu muốn chờ lần lượt
+                        }
+                    }
+                }
+
+                // B4. Sau khi đã xóa hết học sinh (và dữ liệu liên quan), mới xóa lớp
                 var response = await _client.DeleteAsync($"api/Class/Delete/{classId}");
                 return response.IsSuccessStatusCode;
             }
@@ -226,6 +250,59 @@ namespace Blazor_Server.Services
                     var createdStudent = await studentResponse.Content.ReadFromJsonAsync<Student>();
                     if (createdStudent == null)
                         return null;
+
+                    // Lấy toàn bộ Point_Type để đối chiếu tên
+                    var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("api/Point_Type/Get");
+                    var pointTypeSubjects = await _client.GetFromJsonAsync<List<Point_Type_Subject>>("api/Point_Type_Subject/Get");
+                    var summaries = await GetAllSummaries();
+
+                    foreach (var pts in pointTypeSubjects)
+                    {
+                        // Lấy tên của loại điểm
+                        var pointType = pointTypes.FirstOrDefault(pt => pt.Id == pts.Point_Type_Id);
+                        if (pointType == null) continue;
+
+                        int quantity = 1;
+                        switch (pointType.Point_Type_Name)
+                        {
+                            case "Attendance":
+                            case "Point_15":
+                                quantity = 3;
+                                break;
+                            case "Point_45":
+                                quantity = 2;
+                                break;
+                            case "Point_Midterm":
+                            case "Point_Final":
+                                quantity = 1;
+                                break;
+                            default:
+                                quantity = 1;
+                                break;
+                        }
+
+                        foreach (var summary in summaries)
+                        {
+                            for (int i = 0; i < quantity; i++)
+                            {
+                                var score = new Score
+                                {
+                                    Student_Id = createdStudent.Id,
+                                    Subject_Id = pts.Subject_Id,
+                                    Point_Type_Id = pts.Point_Type_Id,
+                                    Summary_Id = summary.Id,
+                                    Point = 0,
+                                };
+
+                                var scoreResponse = await _client.PostAsJsonAsync("api/Score/Post", score);
+                                if (!scoreResponse.IsSuccessStatusCode)
+                                {
+                                    Console.WriteLine($"[WARNING] Không thể tạo điểm: Student {createdStudent.Id}, Subject {pts.Subject_Id}, PointType {pts.Point_Type_Id}, Summary {summary.Id}, Lần thứ {i + 1}");
+                                }
+                            }
+                        }
+                    }
+
 
                     // 3. Nếu có ảnh thì đặt tên theo Student_Code và lưu ảnh
                     if (imageFile != null && imageFile.Size > 0)
@@ -398,26 +475,64 @@ namespace Blazor_Server.Services
                 {
                     int studentId = student.Id;
 
-                    // 3. Xoá các bản ghi Student_Class liên quan
+                    // 3. Xoá các bản ghi Score liên quan tới student này
+                    var scores = await _client.GetFromJsonAsync<List<Score>>("api/Score/Get");
+                    var relatedScores = scores?.Where(s => s.Student_Id == studentId).ToList();
+                    if (relatedScores != null && relatedScores.Count > 0)
+                    {
+                        foreach (var score in relatedScores)
+                        {
+                            var deleteScoreResponse = await _client.DeleteAsync($"api/Score/Delete/{score.Id}");
+                            if (deleteScoreResponse.IsSuccessStatusCode)
+                            {
+                                Console.WriteLine($"[INFO] Đã xoá Score Id = {score.Id}");
+                            }
+                            else
+                            {
+                                var err = await deleteScoreResponse.Content.ReadAsStringAsync();
+                                Console.WriteLine($"[WARNING] Không xoá được Score Id = {score.Id}: {err}");
+                            }
+                        }
+                    }
+
+                    // 4. Xoá các bản ghi Student_Class liên quan
                     var studentClasses = await _client.GetFromJsonAsync<List<Student_Class>>("api/Student_Class/Get");
                     var relatedStudentClasses = studentClasses?
                         .Where(sc => sc.Student_Id == studentId)
                         .ToList();
 
-                    foreach (var sc in relatedStudentClasses)
+                    if (relatedStudentClasses != null && relatedStudentClasses.Count > 0)
                     {
-                        var deleteSCResponse = await _client.DeleteAsync($"api/Student_Class/Delete/{sc.Id}");
-                        if (deleteSCResponse.IsSuccessStatusCode)
+                        foreach (var sc in relatedStudentClasses)
                         {
-                            Console.WriteLine($"[INFO] Đã xoá Student_Class Id = {sc.Id}");
+                            var deleteSCResponse = await _client.DeleteAsync($"api/Student_Class/Delete/{sc.Id}");
+                            if (deleteSCResponse.IsSuccessStatusCode)
+                            {
+                                Console.WriteLine($"[INFO] Đã xoá Student_Class Id = {sc.Id}");
+                            }
+                            else
+                            {
+                                var err = await deleteSCResponse.Content.ReadAsStringAsync();
+                                Console.WriteLine($"[WARNING] Không xoá được Student_Class Id = {sc.Id}: {err}");
+                            }
                         }
                     }
 
-                    // 4. Xoá Student
+                    // 5. Xoá Student
                     var deleteStudentResponse = await _client.DeleteAsync($"api/Student/Delete/{studentId}");
+                    if (!deleteStudentResponse.IsSuccessStatusCode)
+                    {
+                        var err = await deleteStudentResponse.Content.ReadAsStringAsync();
+                        Console.WriteLine($"[ERROR] Không xoá được Student: {err}");
+                        return false;
+                    }
+                    else
+                    {
+                        Console.WriteLine("[INFO] Đã xoá Student.");
+                    }
                 }
 
-                // 5. Cuối cùng xoá User
+                // 6. Cuối cùng xoá User
                 var deleteUserResponse = await _client.DeleteAsync($"api/User/Delete/{userId}");
                 if (!deleteUserResponse.IsSuccessStatusCode)
                 {
