@@ -166,7 +166,7 @@
     {
         try
         {
-            await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
+            //await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
             var codeResult = await SessionStorage.GetAsync<int>("packagecode");
             if (!codeResult.Success)
             {

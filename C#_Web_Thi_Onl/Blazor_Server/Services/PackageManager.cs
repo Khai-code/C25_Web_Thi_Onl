@@ -1,4 +1,5 @@
-﻿using Data_Base.Filters;
+﻿using Blazor_Server.Pages;
+using Data_Base.Filters;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.C;
@@ -9,9 +10,12 @@ using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
 using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.HistoriesExam;
 using static Blazor_Server.Services.Package_Test_ERP;
+using static Blazor_Server.Services.PackageManager;
 using static Blazor_Server.Services.Test;
 using static System.Net.WebRequestMethods;
 using Question = Data_Base.Models.Q.Question;
@@ -26,10 +30,9 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
-
         public async Task<List<PackageInactive>> GetPackageInactive()
         {
-            var lstPackage = await _httpClient.GetFromJsonAsync<List<Package>>("https://localhost:7187/api/Package/Get");
+            var lstPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
             if (lstPackage == null || lstPackage.Count == 0)
                 return new List<PackageInactive>();
 
@@ -132,7 +135,7 @@ namespace Blazor_Server.Services
                 if (!packageGetResponse.IsSuccessStatusCode)
                     return null;
 
-                var lstpackage = await packageGetResponse.Content.ReadFromJsonAsync<List<Package>>();
+                var lstpackage = await packageGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>();
                 var lstpackageId = lstpackage.Where(o => lstClass.Select(o => o.Id).ToList().Contains(o.Class_Id)).Select(o => o.Id).ToList();
 
                 var filterRequestQues = new CommonFilterRequest
@@ -176,13 +179,14 @@ namespace Blazor_Server.Services
                             QuestionId = q.Id,
                             PackageId = q.Package_Id,
                             QuestionName = q.Question_Name,
-                            Type = q.Question_Type_Id,
+                            QuestionTypeId = q.Question_Type_Id,
                             Leva = q.Question_Level_Id,
                             Answers = ansList.Where(o => o.Question_Id == q.Id).Select(ans => new Answer
                             {
                                 AnswerId = ans.Id,
                                 AnswersName = ans.Answers_Name,
-                                Right_Answer = ans.Right_Answer
+                                Right_Answer = ans.Right_Answer,
+                                QuestionId = q.Id
                             } ).ToList()
                         }).ToList();
 
@@ -211,7 +215,7 @@ namespace Blazor_Server.Services
                             QuestionId = q.Id,
                             PackageId = q.Package_Id,
                             QuestionName = q.Question_Name,
-                            Type = q.Question_Type_Id,
+                            QuestionTypeId = q.Question_Type_Id,
                             Leva = q.Question_Level_Id
                         }).ToList();
 
@@ -376,7 +380,6 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
-
         public async Task<bool> CreatequesTN(QuestionAdo quesAdo, List<AnsAdo> ansAdo)
         {
             try
@@ -495,6 +498,202 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+        public async Task <List<ListQuesAns>> GetQuestyonNew(int packageId, int packageTypeId)
+        {
+            try
+            {
+                if (packageId <= 0) 
+                {
+                    return null;
+                }
+
+                var filterRequestQues = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", packageId.ToString() },
+                    },
+                };
+
+                var quesrepo = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQues);
+
+                if (!quesrepo.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var lstQuestyon = await quesrepo.Content.ReadFromJsonAsync<List<Data_Base.Models.Q.Question>>();
+
+                var result = new List<ListQuesAns>();
+
+                if (packageTypeId == 2)
+                {
+                    List<int> lstQuestyonId = lstQuestyon.Select(o => o.Id).ToList();
+
+                    var filterAns = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
+                        {
+                            { "Question_Id", string.Join(",", lstQuestyonId) },
+                        },
+                    };
+
+                    var ansGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
+                    if (!ansGetResponse.IsSuccessStatusCode)
+                        return null;
+
+                    var ansList = await ansGetResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
+
+                    foreach (var item in lstQuestyon)
+                    {
+                        ListQuesAns que = new ListQuesAns();
+                        que.QuestionId = item.Id;
+                        que.QuestionTypeId = item.Question_Type_Id;
+                        que.QuestionName = item.Question_Name;
+                        que.PackageId = item.Package_Id;
+                        //que.Type = item.Question_Type_Id;
+                        que.Leva = item.Question_Level_Id;
+                        que.Answers = ansList.Where(o => o.Question_Id == item.Id).Select(ans => new Answer
+                        {
+                            AnswerId = ans.Id,
+                            AnswersName = ans.Answers_Name,
+                            Right_Answer = ans.Right_Answer,
+                            QuestionId = item.Id
+
+                        }).ToList();
+
+                        result.Add(que);
+                    }
+                }
+                else if (packageTypeId == 1)
+                {
+                    foreach (var item in lstQuestyon)
+                    {
+                        ListQuesAns que = new ListQuesAns();
+                        que.QuestionId = item.Id;
+                        que.QuestionName = item.Question_Name;
+                        que.PackageId = item.Package_Id;
+                        que.QuestionTypeId = item.Question_Type_Id;
+                        que.Leva = item.Question_Level_Id;
+
+                        result.Add(que);
+                    }
+                }
+                return result;
+
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+        public async Task<bool> DeleteQuestion(int questionId, int? questionTypeId)
+        {
+            try
+            {
+                if (questionId <= 0 && questionTypeId <= 0)
+                {
+                    return false;
+                }
+
+                if (questionTypeId == 1 || questionTypeId == 2 || questionTypeId == 3)
+                {
+                    var filter = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string> { { "Question_Id", questionId.ToString() } }
+                    };
+
+                    var ansRep = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filter);
+
+                    if (!ansRep.IsSuccessStatusCode)
+                    {
+                        return false;
+                    }
+
+                    List<int> lstAnsId = (await ansRep.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>()).Select(o => o.Id).ToList();
+
+                    var request = new HttpRequestMessage
+                    {
+                        Method = HttpMethod.Delete,
+                        RequestUri = new Uri("https://localhost:7187/api/Answers/DeleteLst"),
+                        Content = new StringContent(JsonSerializer.Serialize(lstAnsId), Encoding.UTF8, "application/json")
+                    };
+
+                    var response = await _httpClient.SendAsync(request);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        return false;
+                    }
+                }
+                
+                var ques = await _httpClient.DeleteAsync($"https://localhost:7187/api/Question/Delete/{questionId}");
+                if (!ques.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateQuestionAns(ListQuesAns ado)
+        {
+            try
+            {
+                if (ado == null)
+                {
+                    return false;
+                }
+
+                var questionToUpdate = new Question
+                {
+                    Id = ado.QuestionId,
+                    Question_Name = ado.QuestionName,
+                    Question_Type_Id = ado.QuestionTypeId ?? 0,
+                    Question_Level_Id = ado.Leva,
+                    Package_Id = ado.PackageId,
+                };
+
+                var questionResponse = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Question/Pus/{ado.QuestionId}", questionToUpdate);
+
+                if (questionResponse.IsSuccessStatusCode)
+                {
+                    // Update từng answer
+                    foreach (var answer in ado.Answers)
+                    {
+                        var answerToUpdate = new Data_Base.Models.A.Answers
+                        {
+                            Id = answer.AnswerId,
+                            Answers_Name = answer.AnswersName,
+                            Right_Answer = answer.Right_Answer,
+                            Question_Id = ado.QuestionId // Đảm bảo có QuestionId nếu cần
+                        };
+
+                        var answerResponse = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Answers/Pus/{answer.AnswerId}", answerToUpdate);
+
+                        if (!answerResponse.IsSuccessStatusCode)
+                        {
+                            return false;
+                        }
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
         public class AnsAdo
         {
             public string Name { get; set; }
@@ -512,10 +711,10 @@ namespace Blazor_Server.Services
         public class ListQuesAns
         {
             public int QuestionId { get; set; }
+            public int? QuestionTypeId { get; set; }
             public int PackageId { get; set; }
             public string QuestionName { get; set; }
             public double? MaximumScore { get; set; }
-            public int Type { get; set; }
             public int Leva { get; set; }
             public List<Answer>? Answers { get; set; }
         }
@@ -524,6 +723,12 @@ namespace Blazor_Server.Services
             public int AnswerId { get; set; }
             public string AnswersName { get; set; }
             public int? Right_Answer { get; set; }
+            public int? QuestionId { get; set; }
+            public bool IsCorrect
+            {
+                get => Right_Answer == 1;
+                set => Right_Answer = value ? 1 : 0;
+            }
         }
         public class QuestionAdo
         {

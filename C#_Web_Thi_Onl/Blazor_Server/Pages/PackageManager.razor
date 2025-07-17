@@ -118,10 +118,10 @@
                         <button class="btn btn-secondary btn-sm me-1" @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)" title="Thêm câu hỏi">
                             <i class="bi bi-plus-circle"></i> Thêm câu hỏi
                         </button>
-                        @* <button class="btn btn-danger btn-sm me-1" @onclick="() => XoaBaiThi(baiThi.Id)" title="Xóa">
-                            <i class="bi bi-trash"></i> Xóa
+                        <button class="btn btn-danger btn-sm me-1" @onclick="() => GetLstQues(baiThi.Id, baiThi.PackageTypeId)">
+                            <i class="bi bi-trash"></i>Danh sách câu hỏi
                         </button>
-                        <button class="btn btn-warning btn-sm" @onclick="() => SuaBaiThi(baiThi.Id)" title="Sửa">
+                        @*<button class="btn btn-warning btn-sm" @onclick="() => SuaBaiThi(baiThi.Id)" title="Sửa">
                             <i class="bi bi-pencil"></i> Sửa
                         </button> *@
                     </td>
@@ -570,7 +570,141 @@
 }
 
 
+@if (IsListQuestyon && packageTypeId == 2)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow rounded-4 position-relative">
+
+                <!-- Nút đóng -->
+                <button type="button" class="btn-close position-absolute top-0 end-0 m-2" @onclick="CloseModal" aria-label="Close"></button>
+
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">📋 Danh sách câu hỏi</h5>
+                </div>
+
+                <div class="modal-body">
+                    @if (lstQues?.Any() == true)
+                    {
+                        @foreach (var question in lstQues)
+                        {
+                            <div class="question-box border rounded-3 p-3 mb-3 bg-light shadow-sm" style="font-size: 0.9rem;">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <strong class="text-dark">❓ Câu hỏi:</strong>
+                                        <span class="text-primary">@question.QuestionName</span>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-warning"
+                                        @onclick="() => StartEditQuestion(question)">
+                                            ✏️ Sửa
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteQues(question.QuestionId, question.QuestionTypeId)" >@*@onclick="() => UpdateQuestion(question.QuestionId)"*@
+                                            🗑️ Xóa
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <ul class="list-unstyled ps-3 mb-0">
+                                    @foreach (var ans in question.Answers ?? new())
+                                    {
+                                        <li class="mb-1">
+                                            <span class="text-secondary">•</span> @ans.AnswersName
+                                            @if (ans.Right_Answer == 1)
+                                            {
+                                                <span class="badge bg-success ms-2">Đúng</span>
+                                            }
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="alert alert-info text-center">Không có câu hỏi nào.</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+}
+
+
+@if (isEditing && lstQuesAns != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-4 border-0 position-relative">
+                <!-- Nút đóng (X) -->
+                <button type="button"
+                        class="btn-close position-absolute top-0 end-0 m-3"
+                        aria-label="Close"
+                        @onclick="CancelEdit">
+                </button>
+                <form onsubmit="return false" class="p-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-5">Câu hỏi:</label>
+                        <input type="text" class="form-control form-control-lg" @bind="lstQuesAns.QuestionName" placeholder="Nhập nội dung câu hỏi..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-5">Danh sách đáp án:</label>
+                        @for (int i = 0; i < lstQuesAns.Answers.Count; i++)
+                        {
+                            int index = i; // Capture index for closure
+                            <div class="d-flex mb-3 align-items-center">
+                                <span class="me-2 fw-bold">@((char)(65 + i)).</span>
+                                <input type="text"
+                                       class="form-control me-3"
+                                       value="@lstQuesAns.Answers[i].AnswersName"
+                                       @oninput="(e) => UpdateAnswerName(index, e.Value.ToString())"
+                                       placeholder="Nhập đáp án..." />
+                                @if (lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="correctAnswer"
+                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                               @onclick="() => SetCorrectAnswer(index)" />
+                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
+                                    </div>
+                                }
+                                else if (lstQuesAns.QuestionTypeId == 3)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                               @onclick="() => ToggleCorrectAnswer(index)" />
+                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Thông báo lỗi validation -->
+                    @if (!string.IsNullOrEmpty(validationMessage))
+                    {
+                        <div class="alert alert-danger mb-3">
+                            @validationMessage
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button" class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill" @onclick="CancelEdit">❌ Hủy</button>
+                        <button type="button" class="btn btn-primary px-4 py-2 rounded-pill" @onclick="SaveEditedQuestion">💾 Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
+    private bool IsListQuestyon = false;
     private bool IsAddExamModalOpen = false;
     private bool IsAddExamModalQuesEssay = false;
     private bool IsAddExamModalQuesMultipleChoice = false;
@@ -581,6 +715,7 @@
     public int CheckType { get; set; }
     public int time { get; set; } = 0;
     public int IsCheck { get; set; } = 0;
+    private bool isEditing = false;
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -632,9 +767,17 @@
     public int CountQuestion { get; set; }
     public string PackageName = null;
     private AnsAdo selectedAnswer;
-
+    private List<ListQuesAns> lstQues = new List<ListQuesAns>();
+    private ListQuesAns lstQuesAns = new ListQuesAns();
     public List<int> selectedQuestionIds = new List<int>();
+    private string validationMessage = "";
 
+    void CancelEdit()
+    {
+        isEditing = false;
+        lstQuesAns = null;
+        validationMessage = "";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -851,10 +994,12 @@
 
     private void CloseModal()
     {
+
         this.selectedQuestionIds.Clear();
         IsAddExamModalOpen = false;
         IsAddExamModalQuesEssay = false;
         IsAddExamModalQuesMultipleChoice = false;
+        this.IsListQuestyon = false;
     }
 
     private void OpenAddExamModal()
@@ -965,7 +1110,7 @@
                     {
                         item.Right = (item == selectedAnswer);
                     }
-                    
+
                     if (item.Name.Trim() == null)
                     {
                         toastService.ShowSuccess($"Đáp án " + item + " chưa có nội dung");
@@ -1140,7 +1285,7 @@
                 toastService.ShowError("Chưa nhập tên gói đề");
                 return;
             }
-            
+
 
             if (CountQuestion > 0)
             {
@@ -1151,7 +1296,7 @@
                 toastService.ShowError("Chưa nhập số lượng câu hỏi cho bài thi");
                 return;
             }
-                
+
 
             var packageTestViewModel = await PTERP.AddPackageTestERP(packageTestADO);
             if (packageTestViewModel != null)
@@ -1171,6 +1316,7 @@
             Console.WriteLine($"Lỗi: {ex.Message}");
         }
     }
+
     private async Task HandleFileSelectedessay(InputFileChangeEventArgs e)
     {
         try
@@ -1199,8 +1345,9 @@
             toastService.ShowError("Lỗi: " + ex);
         }
     }
+
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
-       {
+    {
         try
         {
             System.Diagnostics.Debugger.Break();
@@ -1226,5 +1373,201 @@
         {
             toastService.ShowError("Lỗi: " + ex);
         }
+    }
+
+    private async Task GetLstQues(int packageId, int packageTypeId)
+    {
+        try
+        {
+            if (packageId <= 0 && packageTypeId <= 0)
+            {
+                toastService.ShowError("Không xác định được gói đề ");
+                return;
+            }
+            IsListQuestyon = true;
+            this.packageTypeId = packageTypeId;
+            this.packageId = packageId;
+            lstQues = await pm.GetQuestyonNew(packageId, packageTypeId);
+
+            if (lstQues == null || lstQues.Count <=0)
+            {
+                toastService.ShowWarning("Gói đề chưa có câu hỏi");
+                return;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
+
+    private async Task DeleteQues(int questionId, int? questionTypeId)
+    {
+        try
+        {
+            if (questionId <= 0)
+            {
+                toastService.ShowError("Không xác định được gói đề ");
+                return;
+            }
+
+            bool check = await pm.DeleteQuestion(questionId, questionTypeId);
+
+            if (check)
+            {
+                // Xoá câu hỏi khỏi danh sách hiển thị tạm thời
+                var quesToRemove = lstQues.FirstOrDefault(q => q.QuestionId == questionId);
+                if (quesToRemove != null)
+                {
+                    lstQues.Remove(quesToRemove);
+                }
+
+                toastService.ShowSuccess("Xóa thành công");
+
+                // Gọi lại danh sách (nếu muốn đảm bảo dữ liệu mới nhất từ server)
+                await GetLstQues(packageId, packageTypeId);
+            }
+            else
+            {
+                toastService.ShowError("Xóa thất bại");
+                return;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
+
+    private void StartEditQuestion(ListQuesAns question)
+    {
+        lstQuesAns = new ListQuesAns
+        {
+                QuestionId = question.QuestionId,
+                QuestionName = question.QuestionName,
+                QuestionTypeId = question.QuestionTypeId,
+                PackageId = question.PackageId,
+                MaximumScore = question.MaximumScore,
+                Leva = question.Leva,
+                Answers = question.Answers.Select(a => new Answer
+                {
+                    AnswerId = a.AnswerId,
+                    AnswersName = a.AnswersName,
+                    Right_Answer = a.Right_Answer,
+                    QuestionId = a.QuestionId
+                }).ToList()
+        };
+        validationMessage = "";
+        isEditing = true;
+    }
+
+    private async Task SaveEditedQuestion()
+    {
+        try
+        {
+            // Validate trước khi lưu
+            if (!ValidateAnswers())
+            {
+                return; // Không lưu nếu validation fail
+            }
+
+            bool check = await pm.UpdateQuestionAns(lstQuesAns);
+            if (check)
+            {
+                isEditing = false;
+                lstQuesAns = null;
+                validationMessage = "";
+                toastService.ShowSuccess("Update thành công");
+                await GetLstQues(packageId, packageTypeId);
+            }
+            else
+            {
+                toastService.ShowError("Update thất bại");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
+        }
+    }
+
+    private bool ValidateAnswers()
+    {
+        validationMessage = "";
+
+        // Kiểm tra câu hỏi có nội dung
+        if (string.IsNullOrWhiteSpace(lstQuesAns.QuestionName))
+        {
+            validationMessage = "Vui lòng nhập nội dung câu hỏi!";
+            return false;
+        }
+
+        // Kiểm tra tất cả đáp án có nội dung
+        foreach (var answer in lstQuesAns.Answers)
+        {
+            if (string.IsNullOrWhiteSpace(answer.AnswersName))
+            {
+                validationMessage = "Vui lòng nhập nội dung cho tất cả đáp án!";
+                return false;
+            }
+        }
+
+        // Kiểm tra phải có ít nhất 1 đáp án đúng
+        var correctAnswersCount = lstQuesAns.Answers.Count(a => a.Right_Answer == 1);
+
+        if (correctAnswersCount == 0)
+        {
+            validationMessage = "Vui lòng chọn ít nhất 1 đáp án đúng!";
+            return false;
+        }
+
+        // Kiểm tra câu hỏi single choice chỉ có 1 đáp án đúng
+        if ((lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2) && correctAnswersCount > 1)
+        {
+            validationMessage = "Câu hỏi trắc nghiệm chỉ được chọn 1 đáp án đúng!";
+            return false;
+        }
+
+        return true;
+    }
+
+    private void UpdateAnswerName(int index, string value)
+    {
+        if (index >= 0 && index < lstQuesAns.Answers.Count)
+        {
+            lstQuesAns.Answers[index].AnswersName = value;
+            validationMessage = ""; // Clear validation message
+        }
+    }
+
+    private void SetCorrectAnswer(int index)
+    {
+        // Reset tất cả về 0
+        for (int i = 0; i < lstQuesAns.Answers.Count; i++)
+        {
+            lstQuesAns.Answers[i].Right_Answer = 0;
+        }
+        // Set đáp án được chọn thành 1
+        lstQuesAns.Answers[index].Right_Answer = 1;
+
+        // Clear validation message khi user thực hiện action
+        validationMessage = "";
+
+        // Trigger re-render
+        StateHasChanged();
+    }
+
+    private void ToggleCorrectAnswer(int index)
+    {
+        lstQuesAns.Answers[index].Right_Answer = lstQuesAns.Answers[index].Right_Answer == 1 ? 0 : 1;
+
+        // Clear validation message khi user thực hiện action
+        validationMessage = "";
+
+        // Trigger re-render
+        StateHasChanged();
     }
 }

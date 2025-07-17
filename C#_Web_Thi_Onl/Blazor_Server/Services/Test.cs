@@ -425,7 +425,7 @@ namespace Blazor_Server.Services
                                 correctCount++;
                         }
 
-                        double pointPerQuestion = 10.0 / totalQuestions;// tính điểm cảu bài thi
+                        double pointPerQuestion = 10.0 / totalQuestions * correctCount;// tính điểm cảu bài thi
 
                         DateTime currentTime = DateTime.Now;
                         int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
