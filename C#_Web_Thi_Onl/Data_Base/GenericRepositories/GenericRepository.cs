@@ -109,14 +109,15 @@ namespace Data_Base.GenericRepositories
 
         public async Task<int> GetLastTestNumberAsync(string year, string testType)
         {
+            string prefix = $"T{testType}{year}";
             var lastTest = await _context.Tests
-                .Where(t => t.Test_Code.StartsWith($"T{testType}{year}"))
+                .Where(t => t.Test_Code.StartsWith(prefix))
                 .OrderByDescending(t => t.Test_Code)
                 .FirstOrDefaultAsync();
 
             if (lastTest == null) return 0;
 
-            string lastNumberStr = lastTest.Test_Code.Substring(6, 5); // Lấy 3 số cuối
+            string lastNumberStr = lastTest.Test_Code.Substring(8, 5); // Lấy 3 số cuối
             return int.TryParse(lastNumberStr, out int lastNumber) ? lastNumber : 0;
         }
 

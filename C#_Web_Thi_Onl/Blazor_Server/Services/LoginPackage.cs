@@ -167,7 +167,7 @@ namespace Blazor_Server.Services
             ERStudent.Student_Id = student.Id;
             ERStudent.Check_Time = time;
             ERStudent.Test_Id = testId;
-
+            
             var Exam_Room_Student_Post = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/Post", ERStudent);
             if (!Exam_Room_Student_Post.IsSuccessStatusCode)
             {

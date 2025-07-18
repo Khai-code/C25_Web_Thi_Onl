@@ -131,11 +131,7 @@
             await JSRuntime.InvokeVoidAsync("registerDotnetHelper", dotnetHelper);
         }
     }
-    [JSInvokable]
-    public async Task<bool> load()
-    {
-        return await TestService.GetExamHis(histDTO.TestId);
-    }
+    
     [JSInvokable]
     public async Task ResetExamTime()
     {
@@ -289,11 +285,11 @@
         }
     }
 
-    public  async Task CreateStudentAns(List<int> lstAnsId) // lưu trắc nghiệm
+    public  async Task CreateStudentAns(List<int>? lstAnsId) // lưu trắc nghiệm
     {
         try
         {
-            if (lstAnsId != null && lstAnsId.Count > 0 && !isSubmitted)
+            if (!isSubmitted)
             {
                 bool checkAns = await TestService.CreateStudentAnswer(lstAnsId, studentCode, histDTO.TestId);
                 if (checkAns)
@@ -362,5 +358,9 @@
         int secs = seconds % 60;
         return $"{minutes:D2}:{secs:D2}";
     }
-
+    // [JSInvokable]
+    // public async Task<bool> load()
+    // {
+    //     return await TestService.GetExamHis(histDTO.TestId);
+    // }
 }
