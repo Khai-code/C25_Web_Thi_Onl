@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const result = await window.dotnetHelper.invokeMethodAsync("load");
             console.log("📥 Kết quả load:", result);
             if (result === true) {
-                window.location.href = "/StudentLayout";
+                clearInterval(intervalTime);
             }
         } catch (error) {
             console.error("❌ Lỗi khi gọi load():", error);

@@ -131,6 +131,28 @@
             await JSRuntime.InvokeVoidAsync("registerDotnetHelper", dotnetHelper);
         }
     }
+  
+    [JSInvokable]
+    public async Task<bool> load()
+    {
+        bool abc = await TestService.GetExamHis(histDTO.TestId);
+        if (abc == true)
+        {
+            if (histDTO.PackageTypeId == 1)
+            {
+                await SaveAllAnswers();
+            }
+            else
+            {
+                await CreateStudentAns(selectedAnsIds);
+            }
+
+            toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");
+            Navigation.NavigateTo("/His");  // Điều hướng đến trang lịch sử // ✅ Bắt đầu countdown và chờ chạy xong
+            return true;
+        }
+        return false;
+    }
     
     [JSInvokable]
     public async Task ResetExamTime()

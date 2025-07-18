@@ -1,9 +1,13 @@
-﻿using Data_Base.GenericRepositories;
+﻿using Data_Base.Filters;
+using Data_Base.GenericRepositories;
+using Data_Base.Models.A;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
+using Data_Base.Models.Q;
 using Data_Base.Models.R;
 using Data_Base.Models.S;
+using Data_Base.Models.T;
 using Data_Base.Models.U;
 using System.Net.WebSockets;
 using System.Text.RegularExpressions;
@@ -145,7 +149,8 @@ namespace Blazor_Server.Services
                     NamePackage = package.Package_Name,
                     StartTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time),
                     EndTime = ConvertLong.ConvertLongToDateTime(examRoom.End_Time),
-                    RoomName = room.Room_Name
+                    RoomName = room.Room_Name,
+                    PackageTypeID = package.Package_Type_Id
                 };
             });
 
@@ -299,6 +304,231 @@ namespace Blazor_Server.Services
             }
         }
 
+        public async Task<List<Data_Base.Models.T.Test>> GetTestsByPackage(int packageId)
+        {
+            var request = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Package_Id", packageId.ToString() }
+        }
+            };
+            var response = await _httpClient.PostAsJsonAsync("/api/Test/common/get", request);
+            if (!response.IsSuccessStatusCode)
+                return new List<Data_Base.Models.T.Test>();
+            var tests = await response.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>();
+            return tests ?? new List<Data_Base.Models.T.Test>();
+        }
+
+        public async Task<List<Test_Question>> GetTestQuestionsByTest(int testId)
+        {
+            var request = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Test_Id", testId.ToString() }
+        }
+            };
+            var response = await _httpClient.PostAsJsonAsync("/api/Test_Question/common/get", request);
+            if (!response.IsSuccessStatusCode)
+                return new List<Test_Question>();
+            var testQuestions = await response.Content.ReadFromJsonAsync<List<Test_Question>>();
+            return testQuestions ?? new List<Test_Question>();
+        }
+
+        public async Task<List<Question>> GetQuestionsByIds(List<int> questionIds)
+        {
+            var request = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Id", string.Join(",", questionIds) }
+        }
+            };
+            var response = await _httpClient.PostAsJsonAsync("/api/Question/common/get", request);
+            if (!response.IsSuccessStatusCode)
+                return new List<Question>();
+            var questions = await response.Content.ReadFromJsonAsync<List<Question>>();
+            return questions ?? new List<Question>();
+        }
+
+        public async Task<List<Answers>> GetAnswersByQuestion(int questionId)
+        {
+            var request = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Question_Id", questionId.ToString() }
+        }
+            };
+            var response = await _httpClient.PostAsJsonAsync("/api/Answers/common/get", request);
+            if (!response.IsSuccessStatusCode)
+                return new List<Answers>();
+            var answers = await response.Content.ReadFromJsonAsync<List<Answers>>();
+            return answers ?? new List<Answers>();
+        }
+
+        // Lấy lịch sử thi theo Exam_Room_Student_Id
+        public async Task<Exam_HisTory?> GetExamHistoryByExamRoomStudentId(int examRoomStudentId)
+        {
+            var request = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Exam_Room_Student_Id", examRoomStudentId.ToString() }
+        }
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("/api/Exam_HisTory/common/get", request);
+            if (!response.IsSuccessStatusCode) return null;
+
+            var histories = await response.Content.ReadFromJsonAsync<List<Exam_HisTory>>();
+            return histories?.SingleOrDefault();
+        }
+
+
+
+        public async Task<List<Exam_Room_Student>> GetExamRoomStudentsByPackageId(int packageId)
+        {
+            var request = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Exam_Room_Package_Id", packageId.ToString() }
+        }
+            };
+            var response = await _httpClient.PostAsJsonAsync("/api/Exam_Room_Student/common/get", request);
+            if (!response.IsSuccessStatusCode)
+                return new List<Exam_Room_Student>();
+            var data = await response.Content.ReadFromJsonAsync<List<Exam_Room_Student>>();
+            return data ?? new List<Exam_Room_Student>();
+        }
+
+
+        public async Task<List<QuestionWithAnswers>> GetFullQuestionsByTest(int testId)
+        {
+            var testQuestions = await GetTestQuestionsByTest(testId);
+            var questionIds = testQuestions.Select(q => q.Question_Id).ToList();
+            var questions = await GetQuestionsByIds(questionIds);
+
+            var questionWithAnswers = new List<QuestionWithAnswers>();
+            foreach (var question in questions)
+            {
+                var answers = await GetAnswersByQuestion(question.Id);
+                questionWithAnswers.Add(new QuestionWithAnswers
+                {
+                    Question = question,
+                    Answers = answers
+                });
+            }
+            return questionWithAnswers;
+        }
+
+
+        public async Task<bool> SaveAllScores(int examRoomStudentId, List<Answers> updatedAnswers)
+        {
+            // 1. Update từng Answer
+            double totalScore = 0;
+            foreach (var answer in updatedAnswers)
+            {
+                // Update Answer trong db
+                var answerResponse = await _httpClient.GetAsync($"/api/Answers/GetBy/{answer.Id}");
+                if (!answerResponse.IsSuccessStatusCode) continue;
+                var answerDb = await answerResponse.Content.ReadFromJsonAsync<Answers>();
+                if (answerDb == null) continue;
+                answerDb.Points_Earned = answer.Points_Earned;
+                await _httpClient.PutAsJsonAsync($"/api/Answers/Pus/{answer.Id}", answerDb);
+
+                // Cộng tổng điểm
+                totalScore += answer.Points_Earned ?? 0;
+            }
+
+            // 2. Update lại Score trong Exam_HisTory
+            var examHistory = await GetExamHistoryByExamRoomStudentId(examRoomStudentId);
+            if (examHistory != null)
+            {
+                examHistory.Score = totalScore;
+                var updateHistoryResponse = await _httpClient.PutAsJsonAsync($"/api/Exam_HisTory/Pus/{examHistory.Id}", examHistory);
+            }
+
+            // 3. Cập nhật vào bảng Score (chỉ update, không tạo mới)
+            // -- Lấy thông tin liên quan
+            var examRoomStudent = await _httpClient.GetFromJsonAsync<Exam_Room_Student>($"/api/Exam_Room_Student/GetBy/{examRoomStudentId}");
+            if (examRoomStudent == null) return false;
+
+            int studentId = examRoomStudent.Student_Id;
+            var examRoomPackage = await _httpClient.GetFromJsonAsync<Exam_Room_Package>($"/api/Exam_Room_Package/GetBy/{examRoomStudent.Exam_Room_Package_Id}");
+            if (examRoomPackage == null) return false;
+
+            var package = await _httpClient.GetFromJsonAsync<Data_Base.Models.P.Package>($"/api/Package/GetBy/{examRoomPackage.Package_Id}");
+            if (package == null) return false;
+
+            int subjectId = package.Subject_Id;
+            int pointTypeId = package.Package_Type_Id;
+
+            // -- Xác định SummaryId hiện tại (kỳ thi đang diễn ra)
+            int summaryId = await GetCurrentSummaryId();
+
+            var filterScore = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+        {
+            { "Student_Id", studentId.ToString() },
+            { "Subject_Id", subjectId.ToString() },
+            { "Point_Type_Id", pointTypeId.ToString() },
+            { "Summary_Id", summaryId.ToString() }
+        }
+            };
+
+            var scoreRep = await _httpClient.PostAsJsonAsync("/api/Score/common/get", filterScore);
+            if (!scoreRep.IsSuccessStatusCode)
+                return false;
+
+            // Lấy bản ghi đầu tiên chưa có điểm (Point == 0)
+            var lstScore = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).Where(s => s.Point == 0).FirstOrDefault();
+            if (lstScore == null)
+                return true; // Không còn bản ghi trống để update, coi như đã xong
+
+            // Update điểm
+            Data_Base.Models.S.Score score = new Score
+            {
+                Id = lstScore.Id,
+                Student_Id = studentId,
+                Subject_Id = subjectId,
+                Point_Type_Id = pointTypeId,
+                Point = totalScore,
+                Summary_Id = summaryId
+            };
+
+            var checkScore = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{lstScore.Id}", score);
+            if (!checkScore.IsSuccessStatusCode)
+                return false;
+
+            return true;
+
+        }
+
+        public async Task<int> GetCurrentSummaryId()
+        {
+            var summaries = await _httpClient.GetFromJsonAsync<List<Summary>>("/api/Summary/Get") ?? new();
+            var currentTime = DateTime.Now;
+
+            // Tìm kỳ học mà thời gian hiện tại nằm trong phạm vi
+            var today = DateTime.Now.Date;
+
+            var currentSummary = summaries.FirstOrDefault(s =>
+                today >= ConvertLong.ConvertLongToDateTime(s.Start_Time).Date &&
+                today <= ConvertLong.ConvertLongToDateTime(s.End_Time).Date);
+
+            return currentSummary?.Id ?? 0;
+        }
+
+        public class QuestionWithAnswers
+        {
+            public Question Question { get; set; }
+            public List<Answers> Answers { get; set; }
+        }
+
         public class listexam
         {
             public int Id { get; set; }
@@ -320,6 +550,8 @@ namespace Blazor_Server.Services
             public DateTime StartTime { get; set; }
             public DateTime EndTime { get; set; }
             public string RoomName {  get; set; }
+            public int PackageTypeID { get; set; }
+
         }
         public class listStudent
         {
