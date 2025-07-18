@@ -205,3 +205,26 @@ function showWarningModal(message) {
     modal.appendChild(box);
     document.body.appendChild(modal);
 }
+document.addEventListener('DOMContentLoaded', () => {
+    const intervalTime = 5000;
+
+    const fetchData = async () => {
+        try {
+            if (!window.dotnetHelper) {
+                console.warn("⚠️ dotnetHelper chưa khởi tạo.");
+                return;
+            }
+
+            const result = await window.dotnetHelper.invokeMethodAsync("load");
+            console.log("📥 Kết quả load:", result);
+            if (result === true) {
+                window.location.href = "/StudentLayout";
+            }
+        } catch (error) {
+            console.error("❌ Lỗi khi gọi load():", error);
+        }
+    };
+
+    fetchData(); // gọi lần đầu
+    setInterval(fetchData, intervalTime); // gọi lặp lại
+});

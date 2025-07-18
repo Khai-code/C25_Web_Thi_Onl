@@ -119,6 +119,7 @@
     private Ans ans = new Ans();
     private List<Ans> listAnswers = new();
     Dictionary<int, List<int>> selectedAnsByQuestionId = new();
+    private DotNetObjectReference<Test>? dotnetHelper;
     private string plainText;
     private int index = 0;
 
@@ -126,10 +127,15 @@
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeVoidAsync("window.registerDotnetHelper", DotNetObjectReference.Create(this));
+            dotnetHelper = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerDotnetHelper", dotnetHelper);
         }
     }
-
+    [JSInvokable]
+    public async Task<bool> load()
+    {
+        return await TestService.GetExamHis(histDTO.TestId);
+    }
     [JSInvokable]
     public async Task ResetExamTime()
     {
@@ -166,7 +172,7 @@
     {
         try
         {
-            //await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
+            await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
             var codeResult = await SessionStorage.GetAsync<int>("packagecode");
             if (!codeResult.Success)
             {

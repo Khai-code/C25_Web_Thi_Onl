@@ -16,6 +16,34 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<bool> cancelexam(int id, int packagecode)
+        {
+            var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
+            var package = getallpackage.FirstOrDefault(x => x.Package_Code == packagecode);
+            if (package == null)
+                return false;
+            var getalltest = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+            var test = getalltest.FirstOrDefault(x => x.Package_Id == package.Id && x.Student_Id == id);
+            if (test == null)
+                return false;
+            var getallexamroomstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+            var examRoomStudent = getallexamroomstudent.FirstOrDefault(x => x.Test_Id == test.Id && x.Student_Id == id);
+            var ressutl = new Exam_HisTory
+            {
+                Exam_Room_Student_Id = examRoomStudent.Id,
+                Create_Time = ConvertLong.ConvertDateTimeToLong(DateTime.Now),
+                Actual_Execution_Time = 0,
+                Score = 0
+            };
+            var response = await _httpClient.PostAsJsonAsync("/api/Exam_HisTory/Post", ressutl);
+            if (!response.IsSuccessStatusCode)
+            {
+                Console.WriteLine("Không thể thêm lịch sử thi.");
+                return false;
+            }
+            return true;
+
+        }
         public async Task<List<listexam>> SeachExam(DateTime start, DateTime end)
         {
             var result = new List<listexam>();
@@ -164,21 +192,37 @@ namespace Blazor_Server.Services
                 {
                     var startTime = ConvertLong.ConvertLongToDateTime(exroom.Start_Time);
                     var endTime = ConvertLong.ConvertLongToDateTime(exroom.End_Time);
+                    var checkTime = ConvertLong.ConvertLongToDateTime(exstd.Check_Time);
 
-                    if (startTime > DateTime.Now)
+                    var studentHistories = Listexhistories
+                        .Where(h => h.Exam_Room_Student_Id == exstd.Id)
+                        .ToList();
+
+                    if (DateTime.Now < startTime)
                     {
                         status = "Chưa thi";
                     }
-                    else if (ConvertLong.ConvertLongToDateTime(exstd.Check_Time) >= startTime &&
-                             ConvertLong.ConvertLongToDateTime(exstd.Check_Time) < endTime)
+                    else if (studentHistories.Any(h => h.Actual_Execution_Time == 0))
                     {
-                        status = "Đang thi";
+                        var cheatTime = studentHistories.First(h => h.Actual_Execution_Time == 0).Create_Time;
+                        var cheatDateTime = ConvertLong.ConvertLongToDateTime(cheatTime);
+                        status = $"Đã phát hiện gian lận lúc {cheatDateTime:HH:mm:ss dd/MM/yyyy}";
                     }
-                    else if (Listexhistories.Any(h => h.Exam_Room_Student_Id == exstd.Id &&
-                                                      ConvertLong.ConvertLongToDateTime(h.Create_Time) >= startTime &&
-                                                      ConvertLong.ConvertLongToDateTime(h.Create_Time) <= endTime))
+                    else if (studentHistories.Any(h =>
+                     ConvertLong.ConvertLongToDateTime(h.Create_Time) >= startTime &&
+                     ConvertLong.ConvertLongToDateTime(h.Create_Time) <= endTime))
                     {
-                        status = "Đã hoàn thành bài thi";
+                        var finishHistory = studentHistories.First(h =>
+                            ConvertLong.ConvertLongToDateTime(h.Create_Time) >= startTime &&
+                            ConvertLong.ConvertLongToDateTime(h.Create_Time) <= endTime);
+
+                        var finishTime = ConvertLong.ConvertLongToDateTime(finishHistory.Create_Time);
+                        status = $"Đã hoàn thành bài thi lúc {finishTime:HH:mm:ss dd/MM/yyyy}";
+                    }
+
+                    else if (checkTime >= startTime && checkTime < endTime)
+                    {
+                        status = $"Đang thi lúc{checkTime:HH:mm:ss dd/MM/yyyy}";
                     }
                     else
                     {
@@ -186,10 +230,12 @@ namespace Blazor_Server.Services
                     }
                 }
 
+
                 result.Add(new listStudent
                 {
                     Id = student.Id,
                     NameStudent = user.Full_Name,
+                    packagecode = package.Package_Code,
                     status = status
                 });
             }
@@ -259,6 +305,13 @@ namespace Blazor_Server.Services
             public string NameExam { get; set; }
             public int Totalpackage { get; set; } 
         }
+        public class posthis
+        {
+            public int Exam_Room_Student_Id { get; set; }
+            public long Create_Time { get; set; }
+            public int Actual_Execution_Time { get; set; }
+            public float Score { get; set; }
+        }
         public class listpackage 
         {
             public int Id { get; set; }
@@ -271,6 +324,7 @@ namespace Blazor_Server.Services
         public class listStudent
         {
             public int Id { get; set; }
+            public int packagecode { get; set; }
             public string NameStudent { get; set; }
             public string status { get; set; }
         }

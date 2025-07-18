@@ -22,13 +22,11 @@ window.updateNavbar = function () {
         navbar.classList.add("bg-transparent");
         navbar.style.removeProperty("background-color");
         navbar.style.removeProperty("box-shadow");
-        navbar.style.display = "block";
     }
-    else if (currentPath === "/Test") {
+    else if (currentPath === "/Test" || currentPath=="/His") {
         navbar.style.display = "none";
     }
     else {
-            navbar.style.display = "block";
         navbar.classList.remove("bg-transparent");
         navbar.style.backgroundColor = "rgba(241, 245, 236, 0.95)";
         navbar.style.boxShadow = "0px 4px 10px rgba(0, 0, 0, 0.1)";

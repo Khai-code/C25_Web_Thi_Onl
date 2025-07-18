@@ -24,6 +24,49 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<bool> GetExamHis(int testID)
+        {
+            var getallTest = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+            var getTestList = getallTest
+                .FirstOrDefault(o => o.Id == testID);
+            if (getTestList == null)
+                return false;
+            var getallExamRoomStd = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+            var examRoomStd = getallExamRoomStd
+                .FirstOrDefault(e => e.Test_Id == getTestList.Id);
+
+            if (examRoomStd == null)
+            {
+                return false;
+            }
+
+            var idExamStd = examRoomStd.Id;
+
+            var filterStudent = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+         {
+             { "Exam_Room_Student_Id", idExamStd.ToString() }
+         }
+            };
+            var response = await _httpClient.PostAsJsonAsync(
+                "https://localhost:7187/api/Exam_HisTory/common/get",
+                filterStudent
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+
+                return false;
+
+            }
+            var abc = await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_HisTory>>();
+            if (abc == null || abc.Count <= 0)
+            {
+                return false;
+            }
+            return true;
+        }
         public async Task<HistDTO> GetQuestionAnswers(int Package_Code, string Student_Code)
         {
             HistDTO histDTO = new HistDTO();

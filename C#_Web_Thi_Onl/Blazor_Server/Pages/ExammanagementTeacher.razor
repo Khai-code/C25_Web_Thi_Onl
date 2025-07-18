@@ -147,7 +147,7 @@
                                             <i class="bi bi-pencil-square"></i> Chỉnh sửa
                                         </button>
                                     }
-                                    
+
                                 }
                             </div>
 
@@ -171,12 +171,29 @@
                                 </div>
                                 <div>
                                     <h6 class="mb-1 fw-bold">@student.NameStudent</h6>
-                                    <small class="text-muted">@student.status</small>
+                                    <small class="@GetStatusClass(student.status)">@student.status</small>
+
                                 </div>
                             </div>
-                            <button class="btn btn-outline-danger btn-sm d-flex align-items-center">
-                                <i class="fas fa-times me-1" @onclick="TriggerStopTest"></i> Hủy thi
-                            </button>
+                            @if (student.status.StartsWith("Đã phát hiện gian lận"))
+                            {
+                                <button class="btn btn-success btn-sm d-flex align-items-center"
+                                        title="Kích hoạt lại bài thi sau khi phát hiện gian lận">
+                                    <i class="fas fa-redo me-1"></i> Kích hoạt lại bài thi
+                                </button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-sm d-flex align-items-center
+                                         @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
+                                        @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
+                                        disabled="@(student.status.StartsWith("Đã hoàn thành"))"
+                                        title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
+                                    <i class="fas fa-times me-1"></i> Hủy thi
+                                </button>
+                            }
+
+
                         </li>
 
 
@@ -247,6 +264,19 @@
     {
         _selectedTimeFilter = id;
     }
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            var s when s.StartsWith("Chưa thi") => "text-secondary fw-bold",
+            var s when s.StartsWith("Đang thi") => "text-primary fw-bold",
+            var s when s.StartsWith("Đã hoàn thành bài thi") => "text-success fw-bold",
+            var s when s.StartsWith("Đã phát hiện gian lận") => "text-danger fw-bold",
+            var s when s.StartsWith("Đã thi") => "text-info fw-bold",
+            _ => "text-muted"
+        };
+    }
+
 
 
     private async Task ApplyDateFilter()
@@ -317,9 +347,10 @@
 
     }
 
-    private async Task TriggerStopTest()
+    private async Task TriggerStopTest(int id, int code)
     {
-        await OnStopTest.InvokeAsync(); 
+        await exammanagement.cancelexam(id, code);
+        await SelectPackage(SelectedPackage);
     }
     private bool isSearchVisible = false;
     private int SelectedExam;

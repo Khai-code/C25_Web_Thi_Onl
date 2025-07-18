@@ -64,6 +64,8 @@ namespace ASP.NET.Controllers.G
                     return await HandleVTestFilter(request.Filters);
                 case "Score":
                     return await HandleScoreFilter(request.Filters);
+                case "Exam_HisTory":
+                    return await HandleExam_HisToryFilter(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -550,6 +552,16 @@ namespace ASP.NET.Controllers.G
                 (!subjectId.HasValue || a.Subject_Id == subjectId) &&
                 (!pointTypeId.HasValue || a.Point_Type_Id == pointTypeId) &&
                 (!summaryId.HasValue || a.Summary_Id == summaryId) 
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleExam_HisToryFilter(Dictionary<string, string> filters)
+        {
+            int? testId = filters.ContainsKey("Exam_Room_Student_Id") ? int.Parse(filters["Exam_Room_Student_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_HisTory>(a =>
+                (!testId.HasValue || a.Exam_Room_Student_Id == testId)
             );
 
             return Ok(result);
