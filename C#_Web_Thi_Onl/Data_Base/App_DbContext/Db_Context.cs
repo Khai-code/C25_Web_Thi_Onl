@@ -37,7 +37,6 @@ namespace Data_Base.App_DbContext
         public DbSet<Student_Class> Student_Classes { get; set; }
         public DbSet<Exam_Room_Student> Exam_Room_Students { get; set; }
         public DbSet<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; }
-        public DbSet<Teacher_Subject> Teacher_Subjects { get; set; }
         public DbSet<Subject> Subjects { get; set; }
         public DbSet<Point_Type_Subject> Point_Type_Subjects { get; set; }
         public DbSet<Class> Classes { get; set; }

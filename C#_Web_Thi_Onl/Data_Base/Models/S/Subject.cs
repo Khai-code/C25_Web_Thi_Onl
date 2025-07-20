@@ -27,8 +27,6 @@ namespace Data_Base.Models.S
         [JsonIgnore]
         public ICollection<Exam> Exams { get; set; } = new List<Exam>();
         [JsonIgnore]
-        public ICollection<Teacher_Subject> Teacher_Subject { get; set; } = new List<Teacher_Subject>();
-        [JsonIgnore]
         public ICollection<Score> Scores { get; set; } = new List<Score>();
         [JsonIgnore]
         public ICollection<Learning_Summary> Learning_Summaries { get; set; } = new List<Learning_Summary>();
