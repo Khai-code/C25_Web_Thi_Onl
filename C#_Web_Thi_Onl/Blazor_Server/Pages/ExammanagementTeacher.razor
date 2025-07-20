@@ -125,6 +125,11 @@
                             </div>
 
                             <div>
+                                @if (package.PackageTypeID == 1)
+                                {
+                                    <button class="btn btn-success btn-sm" @onclick="() => ShowGradingModal(package.Id, package.NamePackage)">Chấm điểm bài thi</button>
+                                }
+
                                 @if (EditingPackageId == package.Idexam)
                                 {
                                     <button class="btn btn-success btn-sm" @onclick="() => SaveChanges(package)">
@@ -238,16 +243,75 @@
         </div>
     }
 </div>
+
+@if (IsGradingModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">📝 Chấm điểm - @CurrentGradingPackageName</h5>
+                    <button class="btn-close" @onclick="CloseGradingModal"></button>
+                </div>
+                <div class="modal-body">
+                    <h6 class="mb-2 text-primary">Danh sách bài Test</h6>
+                    <ul class="list-group mb-3">
+                        @foreach (var test in TestsOfPackage)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>@test.Test_Code</span>
+                                <button class="btn btn-link btn-sm" @onclick="() => LoadQuestionsForTest(test.Id)">Xem câu hỏi</button>
+                            </li>
+                        }
+                    </ul>
+                    @if (QuestionsWithAnswers.Any())
+                    {
+                        <div>
+                            <h6 class="text-success">Câu hỏi trong Test</h6>
+                            <ol>
+                                @foreach (var q in QuestionsWithAnswers)
+                                {
+                                    <li>
+                                        <b>@q.Question.Question_Name</b> (Max: @q.Question.Maximum_Score)
+                                        <ul>
+                                            @foreach (var ans in q.Answers)
+                                            {
+                                                <li>
+                                                    @ans.Answers_Name
+                                                    <input type="number" min="0" max="@q.Question.Maximum_Score" step="0.01"
+                                                           class="form-control form-control-sm d-inline-block mx-2"
+                                                           style="width:90px;display:inline"
+                                                           @bind="ans.Points_Earned" />
+                                                </li>
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                            </ol>
+                            <button class="btn btn-success" @onclick="SaveAllScores">Lưu điểm</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
 @code {
     [Parameter] public EventCallback OnStopTest { get; set; }
     private List<listexam> exams = new List<listexam>();
     private List<listpackage> Listpackages = new List<listpackage>();
     private List<listStudent> listStudents = new List<listStudent>();
     List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
+    private List<Exam_Room_Student> listExamRoomStudents = new();
     private int _selectedTimeFilter = 0;
     private DateTime status=DateTime.Now;
     private DateTime startDate = DateTime.Today;
     private DateTime endDate = DateTime.Today;
+    private bool IsGradingModalOpen = false;
+    private int CurrentGradingPackageId;
+    private string CurrentGradingPackageName = "";
+    private List<Data_Base.Models.T.Test> TestsOfPackage = new();
+    private List<ExammanagementService.QuestionWithAnswers> QuestionsWithAnswers = new();
     [Inject] IJSRuntime JS { get; set; }
     private List<(int Id, string Label)> timeOptions = new()
 {
@@ -438,6 +502,7 @@
     {
         SelectedPackage = id;
         listStudents = await exammanagement.GetAllStudent(id);
+        listExamRoomStudents = await exammanagement.GetExamRoomStudentsByPackageId(id);
     }
     private void EditPackage(int id)
     {
@@ -479,4 +544,50 @@
     {
         EditingPackageId = null;
     }
+
+    private async Task ShowGradingModal(int packageId, string packageName)
+    {
+        CurrentGradingPackageId = packageId;
+        CurrentGradingPackageName = packageName;
+        IsGradingModalOpen = true;
+        TestsOfPackage = await exammanagement.GetTestsByPackage(packageId);
+        QuestionsWithAnswers.Clear();
+        StateHasChanged();
+    }
+
+    private void CloseGradingModal()
+    {
+        IsGradingModalOpen = false;
+        CurrentGradingPackageId = 0;
+        CurrentGradingPackageName = "";
+        TestsOfPackage.Clear();
+        QuestionsWithAnswers.Clear();
+    }
+
+    private async Task LoadQuestionsForTest(int testId)
+    {
+        QuestionsWithAnswers = await exammanagement.GetFullQuestionsByTest(testId);
+        StateHasChanged();
+    }
+
+    private async Task SaveAllScores()
+    {
+        if (listExamRoomStudents == null || !listExamRoomStudents.Any())
+        {
+            toastService.ShowError("Không tìm thấy Exam_Room_Student tương ứng để lưu điểm!");
+            return;
+        }
+        // Giả sử bạn chỉ có 1 học sinh chấm điểm 1 lần (nếu nhiều hơn thì cần chọn cụ thể)
+        var examRoomStudentId = listExamRoomStudents.First().Id;
+        // Gom hết các answer từ QuestionsWithAnswers
+        var allAnswers = QuestionsWithAnswers.SelectMany(q => q.Answers).ToList();
+
+        var result = await exammanagement.SaveAllScores(examRoomStudentId, allAnswers);
+
+        if (result)
+            toastService.ShowSuccess("Lưu toàn bộ điểm thành công!");
+        else
+            toastService.ShowError("Lưu điểm thất bại!");
+    }
+
 }
