@@ -8,6 +8,7 @@ using Data_Base.Models.G;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
+using Data_Base.Models.T;
 using Data_Base.Models.U;
 using Data_Base.V_Model;
 using Microsoft.AspNetCore.Http;
@@ -65,7 +66,9 @@ namespace ASP.NET.Controllers.G
                 case "Score":
                     return await HandleScoreFilter(request.Filters);
                 case "Exam_HisTory":
-                    return await HandleExam_HisToryFilter(request.Filters);
+                    return await HandleExamHisToryFilter(request.Filters);
+                case "Exam_Room_Teacher":
+                    return await HandleExamRoomTeacher(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -556,12 +559,22 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
-        private async Task<IActionResult> HandleExam_HisToryFilter(Dictionary<string, string> filters)
+        private async Task<IActionResult> HandleExamHisToryFilter(Dictionary<string, string> filters)
         {
             int? testId = filters.ContainsKey("Exam_Room_Student_Id") ? int.Parse(filters["Exam_Room_Student_Id"]) : null;
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_HisTory>(a =>
                 (!testId.HasValue || a.Exam_Room_Student_Id == testId)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleExamRoomTeacher(Dictionary<string, string> filters)
+        {
+            int? examRoomId = filters.ContainsKey("Exam_Room_Id") ? int.Parse(filters["Exam_Room_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Teacher>(a =>
+                (!examRoomId.HasValue || a.Exam_Room_Id == examRoomId)
             );
 
             return Ok(result);

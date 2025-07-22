@@ -1,10 +1,12 @@
-﻿using Data_Base.Filters;
+﻿using Blazor_Server.Pages;
+using Data_Base.Filters;
 using Data_Base.Models.C;
 using Data_Base.Models.E;
 using Data_Base.Models.P;
 using Data_Base.Models.Q;
 using Data_Base.Models.R;
 using Data_Base.Models.S;
+using Microsoft.AspNetCore.Components.Forms;
 using static Blazor_Server.Services.ExamService;
 
 namespace Blazor_Server.Services
@@ -65,59 +67,158 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+
         public async Task<PackageTestADO> AddPackageTestERP(PackageTestADO model)
         {
 
-            bool check = await CheckPackage(model);
-
-            if (!check)
-                return null;
-
-            var model_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/Post", model.Package);
-            if (!model_Package.IsSuccessStatusCode)
+            try
             {
-                var errorContent = await model_Package.Content.ReadAsStringAsync();
-                Console.WriteLine("Lỗi khi gọi API Package/Post:");
-                Console.WriteLine(errorContent);
+                bool check = await CheckPackage(model);
+
+                if (!check)
+                    return null;
+
+                var model_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/Post", model.Package);
+                if (!model_Package.IsSuccessStatusCode)
+                {
+                    var errorContent = await model_Package.Content.ReadAsStringAsync();
+                    Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                    Console.WriteLine(errorContent);
+                    return null;
+                }
+
+                var addedPackage = await model_Package.Content.ReadFromJsonAsync<Data_Base.Models.P.Package>();
+                if (addedPackage == null) return null;
+
+                var model_Exam_Room = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/Post", model.Exam_Room);
+                if (!model_Exam_Room.IsSuccessStatusCode)
+                    return null;
+
+                var addedExam_Room = await model_Exam_Room.Content.ReadFromJsonAsync<Exam_Room>();
+                if (addedExam_Room == null) return null;
+
+                model.Exam_Room_Package.Exam_Room_Id = addedExam_Room.Id;
+                model.Exam_Room_Package.Package_Id = addedPackage.Id;
+
+                model.Exam_Room_Teacher.Exam_Room_Id = addedExam_Room.Id;
+
+                var model_Exam_Room_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/Post", model.Exam_Room_Package);
+
+                if (!model_Exam_Room_Package.IsSuccessStatusCode)
+                    return null;
+
+                var model_Exam_Room_Teacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/Post", model.Exam_Room_Teacher);
+                if (!model_Exam_Room_Teacher.IsSuccessStatusCode)
+                {
+                    var errorContent = await model_Exam_Room_Teacher.Content.ReadAsStringAsync();
+                    Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                    Console.WriteLine(errorContent);
+                    return null;
+                }
+
+                return new PackageTestADO
+                {
+                    Package = addedPackage,
+                    Exam_Room = addedExam_Room,
+                    Exam_Room_Package = model.Exam_Room_Package,
+                    Exam_Room_Teacher = model.Exam_Room_Teacher,
+                };
+            }
+            catch (Exception ex)
+            {
                 return null;
             }
+        }
 
-            var addedPackage = await model_Package.Content.ReadFromJsonAsync<Package>();
-            if (addedPackage == null) return null;
-
-            var model_Exam_Room = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/Post", model.Exam_Room);
-            if (!model_Exam_Room.IsSuccessStatusCode)
-                return null;
-
-            var addedExam_Room = await model_Exam_Room.Content.ReadFromJsonAsync<Exam_Room>();
-            if (addedExam_Room == null) return null;
-
-            model.Exam_Room_Package.Exam_Room_Id = addedExam_Room.Id;
-            model.Exam_Room_Package.Package_Id = addedPackage.Id;
-
-            model.Exam_Room_Teacher.Exam_Room_Id = addedExam_Room.Id;
-
-            var model_Exam_Room_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/Post", model.Exam_Room_Package);
-
-            if (!model_Exam_Room_Package.IsSuccessStatusCode)
-                return null;
-
-            var model_Exam_Room_Teacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/Post", model.Exam_Room_Teacher);
-            if (!model_Exam_Room_Teacher.IsSuccessStatusCode)
+        public async Task<PackageTestADO> FillPackage(int packageId)
+        {
+            try
             {
-                var errorContent = await model_Exam_Room_Teacher.Content.ReadAsStringAsync();
-                Console.WriteLine("Lỗi khi gọi API Package/Post:");
-                Console.WriteLine(errorContent);
+                if (packageId == null || packageId <= 0)
+                {
+                    return null;
+                }
+
+                var package = await _httpClient.GetFromJsonAsync<Data_Base.Models.P.Package>($"https://localhost:7187/api/Package/GetBy/{packageId}");
+
+                var filterExamRoomPackage = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", packageId.ToString() }
+                    },
+                };
+
+                var repoErp = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/common/get", filterExamRoomPackage);
+
+                if (!repoErp.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var examRoomPackage = (await repoErp.Content.ReadFromJsonAsync<List<Exam_Room_Package>>()).FirstOrDefault();
+
+                var examRoom = await _httpClient.GetFromJsonAsync<Exam_Room>($"https://localhost:7187/api/Exam_Room/GetBy/{examRoomPackage.Exam_Room_Id}");
+
+                var filterExamRoomTacher = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Exam_Room_Id", examRoomPackage.Exam_Room_Id.ToString() },
+                    },
+                };
+
+                var repoErt = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/common/get", filterExamRoomPackage);
+
+                if (!repoErt.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var examRoomTeacher = (await repoErt.Content.ReadFromJsonAsync<List<Exam_Room_Teacher>>()).FirstOrDefault();
+
+                return new PackageTestADO
+                {
+                    Package = package,
+                    Exam_Room = examRoom,
+                    Exam_Room_Package = examRoomPackage,
+                    Exam_Room_Teacher = examRoomTeacher
+                };
+            }
+            catch (Exception ex)
+            {
                 return null;
             }
+        }
 
-            return new PackageTestADO
+        public async Task<bool> UpdatePackage(PackageTestADO packageTestADO) 
+        {
+            try
             {
-                Package = addedPackage,
-                Exam_Room = addedExam_Room,
-                Exam_Room_Package = model.Exam_Room_Package,
-                Exam_Room_Teacher = model.Exam_Room_Teacher,
-            };
+                if (packageTestADO == null)
+                {
+                    return false;
+                }
+                var packageModel = packageTestADO.Package;
+                var examroomModel = packageTestADO.Exam_Room;
+                var examRoomPackageModel = packageTestADO.Exam_Room_Package;
+                var examRoomTeacherModel = packageTestADO.Exam_Room_Teacher;
+
+                var package = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
+                var examroom = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room/Pus/{examroomModel.Id}", examroomModel);
+                var examRoomPackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Package/Pus/{examRoomPackageModel.Id}", examRoomPackageModel);
+                var examRoomTeacher = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Teacher/Pus/{examRoomTeacherModel.Id}", examRoomTeacherModel);
+                if (!package.IsSuccessStatusCode || !examroom.IsSuccessStatusCode || !examRoomPackage.IsSuccessStatusCode || !examRoomTeacher.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
 
         public async Task<List<PackageTypeViewModel>> GetPackageType()
@@ -179,7 +280,7 @@ namespace Blazor_Server.Services
 
         public async Task<List<ExamsViewModel>> GetExam()
         {
-            var lstExam = await _httpClient.GetFromJsonAsync<List<Exam>>("https://localhost:7187/api/Exam/Get");
+            var lstExam = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.E.Exam>>("https://localhost:7187/api/Exam/Get");
 
             var exams = (from exam in lstExam
                              select new ExamsViewModel
@@ -207,7 +308,7 @@ namespace Blazor_Server.Services
 
         public class PackageTestADO
         {
-            public Package Package { get; set; }
+            public Data_Base.Models.P.Package Package { get; set; }
             public Exam_Room Exam_Room { get; set; }
             public Exam_Room_Package Exam_Room_Package { get; set; }
             public Exam_Room_Teacher Exam_Room_Teacher { get; set; }

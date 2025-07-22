@@ -84,75 +84,97 @@
     </div>
 
     <!-- Danh sách bài thi -->
-    <table class="table table-bordered shadow-sm table-hover">
-        <thead class="table-light">
-            <tr>
-                <th>#</th>
-                <th>Mã gói đề</th>
-                <th>Tên gói đề</th>
-                <th>Môn học</th>
-                <th>Lớp</th>
-                <th>Số lượng bài thi</th>
-                <th>Giáo viên coi thi</th>
-                <th>Giáo viên chủ nhiêu</th>
-                <th>Thời gian bắt đầu</th>
-                <th>Thời gian kết thúc</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var baiThi in packageInactive)
-            {
-                <tr>
-                    <td>@baiThi.Id</td>
-                    <td>@baiThi.Code</td>
-                    <td>@baiThi.Name</td>
-                    <td>@baiThi.SubjectName</td>
-                    <td>@baiThi.ClassName</td>
-                    <td>@baiThi.ClassNub</td>
-                    <td>@baiThi.TeacherExamRoom</td>
-                    <td>@baiThi.TeacherClass</td>
-                    <td>@ConvertLong.ConvertLongToDateTime(baiThi.StartTime)</td>
-                    <td>@ConvertLong.ConvertLongToDateTime(baiThi.EndTime)</td>
-                    <td>
-                        <button class="btn btn-secondary btn-sm me-1" @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)" title="Thêm câu hỏi">
-                            <i class="bi bi-plus-circle"></i> Thêm câu hỏi
-                        </button>
-                        <button class="btn btn-danger btn-sm me-1" @onclick="() => GetLstQues(baiThi.Id, baiThi.PackageTypeId)">
-                            <i class="bi bi-trash"></i>Danh sách câu hỏi
-                        </button>
-                        @*<button class="btn btn-warning btn-sm" @onclick="() => SuaBaiThi(baiThi.Id)" title="Sửa">
-                            <i class="bi bi-pencil"></i> Sửa
-                        </button> *@
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="card shadow-sm rounded-4 border-0">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center px-4 py-3">
+            <h5 class="mb-0 fw-bold text-primary">📦 Danh sách gói đề</h5>
+            <input type="text" class="form-control w-auto" placeholder="🔍 Tìm kiếm..." />
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light text-center">
+                    <tr>
+                        <th>#</th>
+                        <th>Mã</th>
+                        <th>Tên</th>
+                        <th>Môn học</th>
+                        <th>Lớp</th>
+                        <th>Số bài</th>
+                        <th>GV coi thi</th>
+                        <th>GV chủ nhiệm</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var baiThi in packageInactive)
+                    {
+                        <tr>
+                            <td class="text-center text-muted">@baiThi.Id</td>
+                            <td>@baiThi.Code</td>
+                            <td class="fw-semibold">@baiThi.Name</td>
+                            <td><span class="badge bg-primary-subtle text-primary">@baiThi.SubjectName</span></td>
+                            <td><span class="badge bg-success-subtle text-success">@baiThi.ClassName</span></td>
+                            <td class="text-center">@baiThi.ClassNub</td>
+                            <td><span class="text-primary">@baiThi.TeacherExamRoom</span></td>
+                            <td><span class="text-success">@baiThi.TeacherClass</span></td>
+                            <td>@ConvertLong.ConvertLongToDateTime(baiThi.StartTime)</td>
+                            <td>@ConvertLong.ConvertLongToDateTime(baiThi.EndTime)</td>
+                            <td>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button class="btn btn-sm btn-outline-primary" title="Thêm câu hỏi"
+                                            data-bs-toggle="tooltip"
+                                            @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" title="DS câu hỏi"
+                                            data-bs-toggle="tooltip"
+                                            @onclick="() => GetLstQues(baiThi.Id, baiThi.PackageTypeId)">
+                                        <i class="bi bi-list-ul"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-warning" title="Sửa"
+                                            data-bs-toggle="tooltip"
+                                            @onclick="() => StartEditPackage(baiThi.Id)">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
+                                    
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
 
     <!-- Modal Thêm Bài Thi -->
     @if (IsAddExamModalOpen)
     {
         <div class="modal fade show d-block" tabindex="-1">
             <div class="modal-dialog modal-xl">
-                <div class="modal-content relative">
+                <div class="modal-content relative shadow-2xl rounded-2xl border border-green-200 p-6 bg-white">
                     <!-- Nút đóng modal -->
-                    <button type="button" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-xl font-bold" @onclick="CloseModal">
+                    <button type="button" class="absolute top-3 right-4 text-gray-500 hover:text-red-600 text-2xl font-bold transition duration-200" @onclick="CloseModal">
                         ×
                     </button>
 
-                    <div class="space-y-4">
-                        <h2 class="text-xl md:text-2xl font-bold mb-2 text-center text-green-600">Thêm Gói Đề Thi</h2>
-                        <form class="space-y-4">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-6">
+                        <h2 class="text-3xl font-bold text-center bg-gradient-to-r from-green-500 via-lime-400 to-green-500 text-white py-2 rounded-lg shadow">
+                            🌿 Thêm Gói Đề Thi
+                        </h2>
+
+                        <form class="space-y-6">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="packageName" class="block font-medium mb-1">Tên Package</label>
-                                    <input type="text" id="packageName" name="packageName" class="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400" @bind="PackageName">
+                                    <label for="packageName" class="block font-medium text-green-700 mb-1">Tên Package</label>
+                                    <input type="text" id="packageName" name="packageName" class="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 hover:border-green-500 transition" @bind="PackageName">
                                 </div>
 
                                 <div>
-                                    <label for="subject" class="block font-medium mb-1">Bài thi</label>
-                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Package_Type_Id">
+                                    <label for="subject" class="block font-medium text-green-700 mb-1">Bài thi</label>
+                                    <select id="subject" name="subject" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Package_Type_Id">
                                         <option value="">-- Chọn bài thi --</option>
                                         @foreach (var pt in packageTypeViewModels)
                                         {
@@ -162,32 +184,33 @@
                                 </div>
                             </div>
 
-                            <div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="createTime" class="block font-medium mb-1">Thời gian tạo</label>
-                                    <input type="text" class="w-full bg-gray-100 border rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
+                                    <label class="block font-medium text-green-700 mb-1">Thời gian tạo</label>
+                                    <input type="text" class="w-full bg-gray-100 border border-gray-300 rounded-lg px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly>
                                 </div>
+
                                 <div>
-                                    <label for="CountQuestion" class="block font-medium mb-1">Số lượng câu hỏi</label>
-                                    <input type="text" id="CountQuestion" name="CountQuestion" class="w-full border rounded-lg px-3 py-2" @bind="CountQuestion">
+                                    <label for="CountQuestion" class="block font-medium text-green-700 mb-1">Số lượng câu hỏi</label>
+                                    <input type="text" id="CountQuestion" name="CountQuestion" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="CountQuestion">
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="startTime" class="block font-medium mb-1">Bắt đầu</label>
-                                    <input type="datetime-local" id="startTime" name="startTime" required class="w-full border rounded-lg px-3 py-2" @bind="Start_Time" />
+                                    <label for="startTime" class="block font-medium text-green-700 mb-1">Bắt đầu</label>
+                                    <input type="datetime-local" id="startTime" name="startTime" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="Start_Time" required />
                                 </div>
                                 <div>
-                                    <label for="endTime" class="block font-medium mb-1">Kết thúc</label>
-                                    <input type="datetime-local" id="endTime" name="endTime" required class="w-full border rounded-lg px-3 py-2" @bind="End_Time">
+                                    <label for="endTime" class="block font-medium text-green-700 mb-1">Kết thúc</label>
+                                    <input type="datetime-local" id="endTime" name="endTime" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="End_Time" required>
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="subject" class="block font-medium mb-1">Môn học</label>
-                                    <select id="subject" name="subject" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Subject_Id">
+                                    <label for="subject" class="block font-medium text-green-700 mb-1">Môn học</label>
+                                    <select id="subject" name="subject" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Subject_Id">
                                         <option value="">-- Chọn gói môn --</option>
                                         @foreach (var subj in subjectViewModel)
                                         {
@@ -197,8 +220,8 @@
                                 </div>
 
                                 <div>
-                                    <label for="class" class="block font-medium mb-1">Lớp</label>
-                                    <select id="class" name="class" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Package.Class_Id">
+                                    <label for="class" class="block font-medium text-green-700 mb-1">Lớp</label>
+                                    <select id="class" name="class" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Class_Id">
                                         <option value="">-- Chọn gói lớp --</option>
                                         @foreach (var classes in classViewModels)
                                         {
@@ -208,11 +231,11 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="pointType" class="block font-medium mb-1">Loại bài thi</label>
-                                    <select id="pointType" name="pointType" class="w-full border rounded-lg px-3 py-2"
-                                    @onchange="OnPointTypeChanged">
+                                    <label for="pointType" class="block font-medium text-green-700 mb-1">Loại bài thi</label>
+                                    <select id="pointType" name="pointType" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400"
+                                            @onchange="OnPointTypeChanged">
                                         <option value="">-- Chọn gói loại --</option>
                                         @foreach (var point in pointTypeViewModels)
                                         {
@@ -222,8 +245,8 @@
                                 </div>
 
                                 <div>
-                                    <label for="room" class="block font-medium mb-1">Phòng thi</label>
-                                    <select id="room" name="room" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Room_Id">
+                                    <label for="room" class="block font-medium text-green-700 mb-1">Phòng thi</label>
+                                    <select id="room" name="room" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Exam_Room.Room_Id">
                                         <option value="">-- Chọn gói phòng --</option>
                                         @foreach (var room in roomViewModels)
                                         {
@@ -233,10 +256,10 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="exam" class="block font-medium mb-1">Đề thi</label>
-                                    <select id="exam" name="exam" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room.Exam_Id">
+                                    <label for="exam" class="block font-medium text-green-700 mb-1">Đề thi</label>
+                                    <select id="exam" name="exam" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Exam_Room.Exam_Id">
                                         <option value="">-- Chọn gói Exam --</option>
                                         @foreach (var exam in examsViewModels)
                                         {
@@ -246,8 +269,8 @@
                                 </div>
 
                                 <div>
-                                    <label for="teacher" class="block font-medium mb-1">Giáo viên coi thi</label>
-                                    <select id="teacher" name="teacher" class="w-full border rounded-lg px-3 py-2" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
+                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên coi thi</label>
+                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
                                         <option value="">-- Chọn giáo viên coi thi --</option>
                                         @foreach (var tea in teacherViewModels)
                                         {
@@ -257,9 +280,9 @@
                                 </div>
                             </div>
 
-                            <button class="w-full bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded-lg text-base font-semibold"
-                            @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
-                                thêm package
+                            <button class="w-full bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-2 px-4 rounded-xl font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2"
+                                    @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
+                                ➕ Thêm Package
                             </button>
                         </form>
                     </div>
@@ -705,6 +728,7 @@
     </div>
 }
 
+
 @if (isEssay && lstQuesAns != null && packageTypeId == 1)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
@@ -712,9 +736,9 @@
             <div class="modal-content shadow-lg rounded-4 border-0 position-relative">
                 <!-- Nút đóng (X) -->
                 <button type="button"
-                        class="btn-close position-absolute top-0 end-0 m-3"
-                        aria-label="Close"
-                        @onclick="CancelEdit">
+                class="btn-close position-absolute top-0 end-0 m-3"
+                aria-label="Close"
+                @onclick="CancelEdit">
                 </button>
                 <form onsubmit="return false" class="p-4">
                     <div class="mb-4">
@@ -739,6 +763,170 @@
     </div>
 }
 
+
+@if (updatePackageTestADO != null && IsUpdateExamModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content relative shadow-lg rounded-lg border border-gray-300">
+                <!-- Nút đóng modal -->
+                <button type="button" class="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold" @onclick="CloseModal">
+                    ×
+                </button>
+
+                <div class="p-6 space-y-6">
+                    <h2 class="text-2xl font-bold text-center text-green-700 uppercase">Cập Nhật Gói Đề Thi</h2>
+
+                    <form class="space-y-6">
+                        <!-- Hàng 1: Tên package + Bài thi -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="packageName" class="block text-sm font-medium text-gray-700 mb-1">Tên Package</label>
+                                <input type="text" id="packageName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                                @bind="updatePackageTestADO.Package.Package_Name" />
+                            </div>
+
+                            <div>
+                                <label for="packageType" class="block text-sm font-medium text-gray-700 mb-1">Bài thi</label>
+                                <select id="packageType" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="updatePackageTestADO.Package.Package_Type_Id">
+                                    <option value="">-- Chọn bài thi --</option>
+                                    @foreach (var pt in packageTypeViewModels)
+                                    {
+                                        <option value="@pt.Package_Type_Id">@pt.Package_Type_Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Hàng 2: Ngày tạo (readonly) + Số lượng câu -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Thời gian tạo</label>
+                                <input type="text" class="w-full bg-gray-100 border border-gray-300 rounded-md px-3 py-2 text-gray-600" value="@CreateTimeFormatted" readonly />
+                            </div>
+
+                            <div>
+                                <label for="CountQuestion" class="block text-sm font-medium text-gray-700 mb-1">Số lượng câu hỏi</label>
+                                <input type="text" id="CountQuestion" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="CountQuestion" />
+                            </div>
+                        </div>
+
+                        <!-- Hàng 3: Start - End time -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="startTime" class="block text-sm font-medium text-gray-700 mb-1">Bắt đầu</label>
+                                <input type="datetime-local" id="startTime" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="Start_Time" />
+                            </div>
+
+                            <div>
+                                <label for="endTime" class="block text-sm font-medium text-gray-700 mb-1">Kết thúc</label>
+                                <input type="datetime-local" id="endTime" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="End_Time" />
+                            </div>
+                        </div>
+
+                        <!-- Hàng 4: Môn học - Lớp -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="subject" class="block text-sm font-medium text-gray-700 mb-1">Môn học</label>
+                                <select id="subject" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="updatePackageTestADO.Package.Subject_Id">
+                                    <option value="">-- Chọn môn --</option>
+                                    @foreach (var subj in subjectViewModel)
+                                    {
+                                        <option value="@subj.Subject_Id">@subj.Subject_Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="class" class="block text-sm font-medium text-gray-700 mb-1">Lớp</label>
+                                <select id="class" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="updatePackageTestADO.Package.Class_Id">
+                                    <option value="">-- Chọn lớp --</option>
+                                    @foreach (var classes in classViewModels)
+                                    {
+                                        <option value="@classes.Class_Id">@classes.Class_Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Hàng 5: Loại điểm - Phòng thi -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="pointType" class="block text-sm font-medium text-gray-700 mb-1">Loại bài thi</label>
+                                <select id="pointType" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @onchange="OnPointTypeChanged">
+                                    <option value="">-- Chọn loại điểm --</option>
+                                    @foreach (var point in pointTypeViewModels)
+                                    {
+                                        <option value="@point.PointType_Id">@point.PointType_Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="room" class="block text-sm font-medium text-gray-700 mb-1">Phòng thi</label>
+                                <select id="room" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="updatePackageTestADO.Exam_Room.Room_Id">
+                                    <option value="">-- Chọn phòng --</option>
+                                    @foreach (var room in roomViewModels)
+                                    {
+                                        <option value="@room.Room_Id">@room.Room_Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Hàng 6: Đề thi - Giáo viên coi thi -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="exam" class="block text-sm font-medium text-gray-700 mb-1">Đề thi</label>
+                                <select id="exam" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="updatePackageTestADO.Exam_Room.Exam_Id">
+                                    <option value="">-- Chọn đề thi --</option>
+                                    @foreach (var exam in examsViewModels)
+                                    {
+                                        <option value="@exam.Exams_Id">@exam.Exams_Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="teacher" class="block text-sm font-medium text-gray-700 mb-1">Giáo viên coi thi</label>
+                                <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                @bind="updatePackageTestADO.Exam_Room_Teacher.Teacher_Id">
+                                    <option value="">-- Chọn giáo viên --</option>
+                                    @foreach (var tea in teacherViewModels)
+                                    {
+                                        <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 mt-6">
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md font-semibold" @onclick="() => UpdatePackage(updatePackageTestADO)">
+                            Cập nhật
+                        </button>
+
+                        <button class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-6 py-2 rounded-md font-semibold"
+                        @onclick="CloseModal">
+                            Hủy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
 @code {
     private bool IsListQuestyon = false;
     private bool IsAddExamModalOpen = false;
@@ -753,6 +941,8 @@
     public int IsCheck { get; set; } = 0;
     private bool isEditing = false;
     private bool isEssay = false;
+    private bool IsUpdateExamModalOpen = false;
+
     List<PackageInactive> packageInactive = new List<PackageInactive>();
     PackageTestADO packageTestADO = new PackageTestADO
         {
@@ -761,13 +951,22 @@
             Package = new Data_Base.Models.P.Package(),
             Exam_Room_Teacher = new Exam_Room_Teacher()
         };
+
+    PackageTestADO updatePackageTestADO = new PackageTestADO
+        {
+            Exam_Room = new Exam_Room(),
+            Exam_Room_Package = new Exam_Room_Package(),
+            Package = new Data_Base.Models.P.Package(),
+            Exam_Room_Teacher = new Exam_Room_Teacher()
+        };
+
     QuestionAdo questionAnswers = new QuestionAdo
         {
             question = new Question()
         };
     Question question = new Question();
     List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
-    List<PackageTypeViewModel> packageTypeViewModels = new List<PackageTypeViewModel>();
+    List<PackageTypeViewModel> packageTypeViewModels = new List<PackageTypeViewModel>();      
     List<ClassViewModel> classViewModels = new List<ClassViewModel>();
     List<PointTypeViewModel> pointTypeViewModels = new List<PointTypeViewModel>();
     List<ExamsViewModel> examsViewModels = new List<ExamsViewModel>();
@@ -947,53 +1146,60 @@
 
     private void OnPointTypeChanged(ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out int selectedPointTypeId))
+        try
         {
-            packageTestADO.Package.Point_Type_Id = selectedPointTypeId;
+            if (int.TryParse(e.Value?.ToString(), out int selectedPointTypeId))
+            {
+                packageTestADO.Package.Point_Type_Id = selectedPointTypeId;
 
-            if (selectedPointTypeId == 1 || selectedPointTypeId == 2)
-            {
-                packageTestADO.Package.ExecutionTime = 900;
-                this.time = 900;
+                if (selectedPointTypeId == 1 || selectedPointTypeId == 2)
+                {
+                    packageTestADO.Package.ExecutionTime = 900;
+                    this.time = 900;
 
-                TimeSpan duration = End_Time - Start_Time;
-                if (duration.TotalSeconds < this.time)
-                {
-                    toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
-                    return;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
                 }
-            }
-            else if (selectedPointTypeId == 3)
-            {
-                packageTestADO.Package.ExecutionTime = 2700;
-                this.time = 2700;
-                TimeSpan duration = End_Time - Start_Time;
-                if (duration.TotalSeconds < this.time)
+                else if (selectedPointTypeId == 3)
                 {
-                    toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
-                    return;
+                    packageTestADO.Package.ExecutionTime = 2700;
+                    this.time = 2700;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
                 }
-            }
-            else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
-            {
-                packageTestADO.Package.ExecutionTime = 5400;
-                this.time = 5400;
-                TimeSpan duration = End_Time - Start_Time;
-                if (duration.TotalSeconds != this.time)
+                else if (selectedPointTypeId == 4 || selectedPointTypeId == 5)
                 {
-                    toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
-                    return;
+                    packageTestADO.Package.ExecutionTime = 5400;
+                    this.time = 5400;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds != this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else
+                {
+                    this.time = 0;
                 }
             }
             else
             {
-                this.time = 0;
+                packageTestADO.Package.Point_Type_Id = 0;
+                time = 0;
             }
         }
-        else
+        catch (Exception ex)
         {
-            packageTestADO.Package.Point_Type_Id = 0;
-            time = 0;
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1034,9 +1240,10 @@
     {
 
         this.selectedQuestionIds.Clear();
-        IsAddExamModalOpen = false;
-        IsAddExamModalQuesEssay = false;
-        IsAddExamModalQuesMultipleChoice = false;
+        this.IsAddExamModalOpen = false;
+        this.IsAddExamModalQuesEssay = false;
+        this.IsAddExamModalQuesMultipleChoice = false;
+        this.IsUpdateExamModalOpen = false;
         this.IsListQuestyon = false;
     }
 
@@ -1190,7 +1397,7 @@
         catch (Exception ex)
         {
             questionlevelViewModel = new List<QuestionlevelViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1203,7 +1410,7 @@
         catch (Exception ex)
         {
             packageInactive = new List<PackageInactive>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1216,7 +1423,7 @@
         catch (Exception ex)
         {
             packageTypeViewModels = new List<PackageTypeViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1229,7 +1436,7 @@
         catch (Exception ex)
         {
             subjectViewModel = new List<SubjectViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1242,7 +1449,7 @@
         catch (Exception ex)
         {
             classViewModels = new List<ClassViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1255,7 +1462,7 @@
         catch (Exception ex)
         {
             packageInactive = new List<PackageInactive>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1268,7 +1475,7 @@
         catch (Exception ex)
         {
             pointTypeViewModels = new List<PointTypeViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1281,7 +1488,7 @@
         catch (Exception ex)
         {
             examsViewModels = new List<ExamsViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1294,7 +1501,7 @@
         catch (Exception ex)
         {
             roomViewModels = new List<RoomViewModel>();
-            Console.WriteLine($"Lỗi: {ex.Message}");
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1481,40 +1688,47 @@
 
     private void StartEditQuestion(ListQuesAns question)
     {
-        if (packageTypeId == 2)
+        try
         {
-            lstQuesAns = new ListQuesAns
-                {
-                    QuestionId = question.QuestionId,
-                    QuestionName = question.QuestionName,
-                    QuestionTypeId = question.QuestionTypeId,
-                    PackageId = question.PackageId,
-                    MaximumScore = question.MaximumScore,
-                    Leva = question.Leva,
-                    Answers = question.Answers.Select(a => new Answer
+            if (packageTypeId == 2)
+            {
+                lstQuesAns = new ListQuesAns
                     {
-                        AnswerId = a.AnswerId,
-                        AnswersName = a.AnswersName,
-                        Right_Answer = a.Right_Answer,
-                        QuestionId = a.QuestionId
-                    }).ToList()
-                };
-            validationMessage = "";
-            isEditing = true;
+                        QuestionId = question.QuestionId,
+                        QuestionName = question.QuestionName,
+                        QuestionTypeId = question.QuestionTypeId,
+                        PackageId = question.PackageId,
+                        MaximumScore = question.MaximumScore,
+                        Leva = question.Leva,
+                        Answers = question.Answers.Select(a => new Answer
+                        {
+                            AnswerId = a.AnswerId,
+                            AnswersName = a.AnswersName,
+                            Right_Answer = a.Right_Answer,
+                            QuestionId = a.QuestionId
+                        }).ToList()
+                    };
+                validationMessage = "";
+                isEditing = true;
+            }
+            else if (packageTypeId == 1)
+            {
+                lstQuesAns = new ListQuesAns
+                    {
+                        QuestionId = question.QuestionId,
+                        QuestionName = question.QuestionName,
+                        QuestionTypeId = question.QuestionTypeId,
+                        PackageId = question.PackageId,
+                        MaximumScore = question.MaximumScore,
+                        Leva = question.Leva,
+                    };
+                validationMessage = "";
+                isEssay = true;
+            }
         }
-        else if (packageTypeId == 1)
+        catch (Exception ex)
         {
-            lstQuesAns = new ListQuesAns
-                {
-                    QuestionId = question.QuestionId,
-                    QuestionName = question.QuestionName,
-                    QuestionTypeId = question.QuestionTypeId,
-                    PackageId = question.PackageId,
-                    MaximumScore = question.MaximumScore,
-                    Leva = question.Leva,
-                };
-            validationMessage = "";
-            isEssay = true;
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1551,44 +1765,52 @@
 
     private bool ValidateAnswers()
     {
-        validationMessage = "";
-
-        // Kiểm tra câu hỏi có nội dung
-        if (string.IsNullOrWhiteSpace(lstQuesAns.QuestionName))
+        try
         {
-            validationMessage = "Vui lòng nhập nội dung câu hỏi!";
-            return false;
-        }
+            validationMessage = "";
 
-        // Kiểm tra tất cả đáp án có nội dung
-        if (packageTypeId == 2)
-        {
-            foreach (var answer in lstQuesAns.Answers)
+            // Kiểm tra câu hỏi có nội dung
+            if (string.IsNullOrWhiteSpace(lstQuesAns.QuestionName))
             {
-                if (string.IsNullOrWhiteSpace(answer.AnswersName))
+                validationMessage = "Vui lòng nhập nội dung câu hỏi!";
+                return false;
+            }
+
+            // Kiểm tra tất cả đáp án có nội dung
+            if (packageTypeId == 2)
+            {
+                foreach (var answer in lstQuesAns.Answers)
                 {
-                    validationMessage = "Vui lòng nhập nội dung cho tất cả đáp án!";
+                    if (string.IsNullOrWhiteSpace(answer.AnswersName))
+                    {
+                        validationMessage = "Vui lòng nhập nội dung cho tất cả đáp án!";
+                        return false;
+                    }
+                }
+
+                var correctAnswersCount = lstQuesAns.Answers.Count(a => a.Right_Answer == 1);
+
+                if (correctAnswersCount == 0)
+                {
+                    validationMessage = "Vui lòng chọn ít nhất 1 đáp án đúng!";
+                    return false;
+                }
+
+                // Kiểm tra câu hỏi single choice chỉ có 1 đáp án đúng
+                if ((lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2) && correctAnswersCount > 1)
+                {
+                    validationMessage = "Câu hỏi trắc nghiệm chỉ được chọn 1 đáp án đúng!";
                     return false;
                 }
             }
 
-            var correctAnswersCount = lstQuesAns.Answers.Count(a => a.Right_Answer == 1);
-
-            if (correctAnswersCount == 0)
-            {
-                validationMessage = "Vui lòng chọn ít nhất 1 đáp án đúng!";
-                return false;
-            }
-
-            // Kiểm tra câu hỏi single choice chỉ có 1 đáp án đúng
-            if ((lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2) && correctAnswersCount > 1)
-            {
-                validationMessage = "Câu hỏi trắc nghiệm chỉ được chọn 1 đáp án đúng!";
-                return false;
-            }
+            return true;
         }
-        
-        return true;
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
+            return false;
+        }
     }
 
     private void UpdateAnswerName(int index, string value)
@@ -1597,6 +1819,62 @@
         {
             lstQuesAns.Answers[index].AnswersName = value;
             validationMessage = ""; // Clear validation message
+        }
+    }
+
+    private async Task StartEditPackage(int packageId)
+    {
+        try
+        {
+            if (packageId == null || packageId <= 0)
+            {
+                toastService.ShowError("Không tìm được gói đề");
+                return;
+            }
+
+            updatePackageTestADO = await PTERP.FillPackage(packageId);
+            if (updatePackageTestADO != null)
+            {
+                Start_Time = ConvertLong.ConvertLongToDateTime(updatePackageTestADO.Exam_Room.Start_Time);
+                End_Time = ConvertLong.ConvertLongToDateTime(updatePackageTestADO.Exam_Room.End_Time);
+                this.IsUpdateExamModalOpen = true;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
+        }
+    }
+
+    private async Task UpdatePackage(PackageTestADO packageAdo)
+    {
+        try
+        {
+            if (packageAdo == null)
+            {
+                toastService.ShowError("Không tìm được gói đề");
+                return;
+            }
+
+            packageAdo.Exam_Room.Start_Time = ConvertLong.ConvertDateTimeToLong(Start_Time);
+            packageAdo.Exam_Room.End_Time = ConvertLong.ConvertDateTimeToLong(End_Time);
+
+            bool check = await PTERP.UpdatePackage(packageAdo);
+
+            if (check)
+            {
+                IsUpdateExamModalOpen = false;
+                await PackageInactive();
+            }
+            else
+            {
+                toastService.ShowError("Cập nhập thất bại ");
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 

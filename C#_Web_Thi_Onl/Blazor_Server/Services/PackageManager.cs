@@ -693,6 +693,7 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+
         public class AnsAdo
         {
             public string Name { get; set; }
