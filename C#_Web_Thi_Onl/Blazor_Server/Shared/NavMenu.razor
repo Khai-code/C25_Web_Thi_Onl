@@ -1,12 +1,16 @@
-﻿@inject NavigationManager navigation
+﻿@using Blazor_Server.Services
+@using Data_Base.Models.R
+@inject NavigationManager navigation
 @inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
 @inject IJSRuntime jSRuntime
+@using static Blazor_Server.Services.HistoriesExam
+@inject HistoriesExam HistoriesExam
 <nav id="navbar" class="navbar navbar-expand-md navbar-light bg-transparent  fixed-top">
     <div class="container-fluid">
         <a class="navbar-brand d-none d-md-flex align-items-center" href="/" style="padding-left:30px">
             <img src="image/LogoHome.png" alt="Logo" class="me-2 logo" width="60" height="60" />
             <span class="fw-bold navbar-brand text-uppercase"
-                  style="font-family: 'Poppins', sans-serif;
+            style="font-family: 'Poppins', sans-serif;
                      font-size: 1.5rem;
                      font-weight: 600;
                      letter-spacing: 1px;
@@ -16,7 +20,7 @@
             </span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse  justify-content-center" id="navbarNav">
@@ -49,16 +53,65 @@
         </div>
         <div class="auth-section d-flex align-items-center" style="padding-right:30px">
             <span class="nav-text me-3 d-none d-md-inline">Xin chào, @username</span>
+
+            <!-- Thông báo -->
+            <div class="dropdown me-3">
+                <span class=" position-relative" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-bell-fill fs-5"></i>
+                    @if (notificationCount > 0)
+                    {
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            @notificationCount
+                            <span class="visually-hidden">thông báo chưa đọc</span>
+                        </span>
+                    }
+                </span>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    @if (review_Tests?.Any(rt => rt.status == 2 || rt.status == 3) == true)
+                    {
+                        @foreach (var noti in review_Tests.Where(rt => rt.status == 2 || rt.status == 3))
+                        {
+                            <li>
+                                <a class="dropdown-item small py-2" href="/student-exam-history">
+                                    <div class="d-flex align-items-start">
+                                        <span class="me-2">
+                                            @(noti.status == 2 ? "✅" : "❌")
+                                        </span>
+                                        <div class="flex-grow-1">
+                                            <div>
+                                                Phúc khảo môn <strong>@noti.Name_subject</strong>
+                                                <br />
+                                                <span class="text-muted">
+                                                    @(noti.status == 2 ? "Đã được chấp nhận" : "Đã bị từ chối")
+                                                </span>
+                                            </div>
+                                            <small class="text-muted">Mã bài thi: <strong>@noti.Test_code</strong></small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        }
+                    }
+                    else
+                    {
+                        <li><span class="dropdown-item text-muted small">Không có thông báo</span></li>
+                    }
+                </ul>
+
+
+            </div>
+
+            <!-- Avatar người dùng -->
             <div class="dropdown">
                 <span class="dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    @if (!string.IsNullOrEmpty(avatar))
+                    @*     @if (!string.IsNullOrEmpty(avatar))
                     {
                         <img src="@avatar" class="avatar me-2">
                     }
                     else
                     {
                         <div class="avatar-placeholder me-2">@GetInitial(username)</div>
-                    }
+                    } *@
                 </span>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="/InforStudent">Hồ sơ</a></li>
@@ -67,19 +120,21 @@
                 </ul>
             </div>
         </div>
+
     </div>
 </nav>
 
 @code {
     private string username;
     private string avatar;
+    private string studentcode;
+    private List<Test_Review> review_Tests = new List<Test_Review>();
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             var result = await SessionStorage.GetAsync<string>("Full_Name");
             var picture = await SessionStorage.GetAsync<string>("Picture");
-
             if (result.Success && !string.IsNullOrEmpty(result.Value))
             {
                 username = result.Value;
@@ -99,6 +154,60 @@
 
         }
     }
+    private PeriodicTimer timer;
+    private CancellationTokenSource cts = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadNotifications(); // Gọi lần đầu
+        StartAutoRefresh();        // Bắt đầu tự động cập nhật
+    }
+
+    private async Task LoadNotifications()
+    {
+        try
+        {
+            var Studentccode = await SessionStorage.GetAsync<string>("Id");
+            if (Studentccode.Success && !string.IsNullOrEmpty(Studentccode.Value))
+            {
+                studentcode = Studentccode.Value;
+            }
+
+            review_Tests = await HistoriesExam.Getinfor(int.Parse(studentcode));
+            notificationCount = review_Tests?.Count(rt => rt.status == 2 || rt.status == 3) ?? 0;
+
+            StateHasChanged(); // Cập nhật lại UI
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error during notification load: {ex.Message}");
+        }
+    }
+
+    private async void StartAutoRefresh()
+    {
+        timer = new PeriodicTimer(TimeSpan.FromSeconds(1)); // 30 giây
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cts.Token))
+            {
+                await LoadNotifications();
+                StateHasChanged();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Console.WriteLine("⏹️ Tự động cập nhật dừng lại.");
+        }
+    }
+
+    public void Dispose()
+    {
+        cts.Cancel();
+        timer?.Dispose();
+    }
+
     private async Task Logout()
     {
         await SessionStorage.DeleteAsync("userRole");
@@ -114,4 +223,17 @@
         }
         return "?";
     }
+    private int notificationCount =0;
+    private List<NotificationItem> notifications = new()
+        {
+            new NotificationItem { Message = "Bạn có bài thi cần xem lại", Link = "/Review" },
+            new NotificationItem { Message = "Lịch thi mới đã được cập nhật", Link = "/Schedule" }
+        };
+
+    public class NotificationItem
+    {
+        public string Message { get; set; }
+        public string Link { get; set; }
+    }
+
 }

@@ -9,6 +9,7 @@ using Data_Base.Models.R;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using System.ComponentModel.DataAnnotations;
 using System.Net.WebSockets;
 using System.Text.RegularExpressions;
 namespace Blazor_Server.Services
@@ -127,27 +128,36 @@ namespace Blazor_Server.Services
             }
             return result;
         }
-        public async Task<List<listpackage>> GetallPackage(int id)
+        public async Task<List<listpackage>> GetallPackage(int id, DateTime? from=null, DateTime? to=null)
         {
-            var listPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
+            var listPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get")
+                              ?? new List<Data_Base.Models.P.Package>();
 
             var tasks = listPackage.Select(async package =>
             {
-                var listExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
+                var listExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get")
+                                          ?? new List<Exam_Room_Package>();
                 var exrPackage = listExamRoomPackage.FirstOrDefault(x => x.Package_Id == package.Id);
                 if (exrPackage == null) return null;
-                var listExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")?? new List<Exam_Room>();
-                var examRoom = listExamRoom.FirstOrDefault(x =>x.Id == exrPackage.Exam_Room_Id &&x.Exam_Id == id && IsOverlapCurrentWeek(x.Start_Time, x.End_Time));
+
+                var listExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")
+                                    ?? new List<Exam_Room>();
+                var examRoom = listExamRoom.FirstOrDefault(x => x.Id == exrPackage.Exam_Room_Id && x.Exam_Id == id);
                 if (examRoom == null) return null;
-                var listRoom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get")?? new List<Room>();
+                var startTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time);
+                if (from != null && startTime < from) return null;
+                if (to != null && startTime > to) return null;
+
+                var listRoom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get") ?? new List<Room>();
                 var room = listRoom.FirstOrDefault(x => x.ID == examRoom.Room_Id);
                 if (room == null) return null;
+
                 return new listpackage
                 {
                     Id = package.Id,
                     Idexam = examRoom.Id,
                     NamePackage = package.Package_Name,
-                    StartTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time),
+                    StartTime = startTime,
                     EndTime = ConvertLong.ConvertLongToDateTime(examRoom.End_Time),
                     RoomName = room.Room_Name,
                     PackageTypeID = package.Package_Type_Id
@@ -156,8 +166,8 @@ namespace Blazor_Server.Services
 
             var results = await Task.WhenAll(tasks);
             return results.Where(x => x != null).Distinct().ToList();
-
         }
+
 
         public async Task<List<listStudent>> GetAllStudent(int Id)
         {
@@ -560,5 +570,11 @@ namespace Blazor_Server.Services
             public string NameStudent { get; set; }
             public string status { get; set; }
         }
+        public class ExamModel
+        {
+            public string ExamName { get; set; }
+            public int SubjectId { get; set; }
+        }
+
     }
 }

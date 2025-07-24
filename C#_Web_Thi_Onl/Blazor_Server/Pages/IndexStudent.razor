@@ -32,56 +32,5 @@
             </div>
         </div>
     </div>
-    @{
-        string[] colors = { "#FFEBEE", "#E3F2FD", "#E8F5E9", "#FFF3E0", "#F3E5F5" }; 
-        int index = 0; 
-    }
-    <div class="container mt-4 py-5">
-        <h4 class="text-white text-center mb-3 p-3 rounded shadow" style="background: linear-gradient(to right, #4facfe, #00f2fe);">
-            📅 Danh sách bài thi sắp tới
-        </h4>
-        <div class="p-3 ">
-            <ul class="list-group">
-                @foreach (var exam in upcomingExams)
-                {
-                    <li class="list-group-item d-flex shadow justify-content-between align-items-center border-0 shadow-sm mb-2 rounded"
-                        style="background-color: @(colors[index % colors.Length]);">
-                        <div>
-                            <h5 class="mb-1 text-primary fw-bold">@exam.Title</h5>
-                            <p class="mb-1 text-secondary"><i class="bi bi-calendar-event text-danger"></i> Ngày thi: <span class="fw-semibold text-dark">@exam.Date.ToString("dd/MM/yyyy HH:mm")</span></p>
-                            <p class="mb-1 text-secondary"><i class="bi bi-clock text-warning"></i> Thời gian: <span class="fw-semibold text-dark">@exam.Duration</span></p>
-                        </div>
-                        <button class="btn btn-outline-primary rounded-pill px-4">Xem chi tiết</button>
-                    </li>
-                    index++; 
-                }
-            </ul>
-        </div>
-    </div>
-
-
-
 </div>
-@code {
-    List<Exam> upcomingExams = new()
-    {
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Toán - Học kỳ 1", Date = new DateTime(2025, 04, 10, 9, 0, 0), Duration = "90 phút" },
-        new Exam { Title = "Văn - Học kỳ 1", Date = new DateTime(2025, 04, 12, 8, 30, 0), Duration = "120 phút" },
-        new Exam { Title = "Lý - Kiểm tra giữa kỳ", Date = new DateTime(2025, 04, 15, 10, 0, 0), Duration = "60 phút" }
-    };
-
-    public class Exam
-    {
-        public string Title { get; set; }
-        public DateTime Date { get; set; }
-        public string Duration { get; set; }
-    }
-}
 

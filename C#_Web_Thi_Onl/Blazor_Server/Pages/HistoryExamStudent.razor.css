@@ -30,3 +30,55 @@
     border-right: 8px solid transparent;
     border-bottom: 8px solid white; /* màu nền dropdown */
 }
+@keyframes zoomInCenter {
+    0% {
+        opacity: 0;
+        transform: scale(0.7);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-zoom {
+    animation: zoomInCenter 0.4s ease-out;
+}
+@keyframes bookOpen {
+    0% {
+        opacity: 0;
+        transform: scaleX(0);
+        transform-origin: center;
+    }
+
+    100% {
+        opacity: 1;
+        transform: scaleX(1);
+        transform-origin: center;
+    }
+}
+
+@keyframes bookClose {
+    0% {
+        opacity: 1;
+        transform: scaleX(1);
+        transform-origin: center;
+    }
+
+    100% {
+        opacity: 0;
+        transform: scaleX(0);
+        transform-origin: center;
+    }
+}
+
+.modal-book-open {
+    animation: bookOpen 0.5s ease-out forwards;
+}
+
+.modal-book-close {
+    animation: bookClose 0.5s ease-in forwards;
+}
+
+

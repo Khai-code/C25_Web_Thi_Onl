@@ -16,80 +16,69 @@
     @layout TeacherLayout
     @inject Blazored.Toast.Services.IToastService toastService
 
-@if (errorMessage != null)
-{
-    <div class="alert alert-danger">
-        @errorMessage
-    </div>
-}
-
-@if (successMessage != null)
-{
-    <div class="alert alert-success">
-        @successMessage
-    </div>
-}
 
 <div class="container-fluid">
     <!-- Phần chọn khối và lớp -->
-    <div class="row mb-4 align-items-end">
-        <div class="d-flex justify-content-between align-items-end flex-wrap mb-3 gap-2">
-            <div>
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="d-flex align-items-end flex-wrap gap-3">
+
+                <!-- Chọn khối -->
+                <div style="min-width: 100px;">
+                    <select class="form-control" @onchange="OnGradeChange">
+                        <option value="">-- Chọn khối --</option>
+                        @if (grades != null)
+                        {
+                            @foreach (var grade in grades)
+                            {
+                                <option value="@grade.ID" selected="@(selectedGrade?.ID == grade.ID)">
+                                    Khối: @grade.Grade_Name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Chọn lớp -->
+                <div style="min-width: 100px;">
+                    <select class="form-control" @onchange="OnClassChange">
+                        <option value="">-- Chọn lớp --</option>
+                        @if (filteredClasses != null)
+                        {
+                            @foreach (var classItem in filteredClasses)
+                            {
+                                <option value="@classItem.Id" selected="@(selectedClass?.Id == classItem.Id)">
+                                    @classItem.Class_Name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <!-- Nút Thêm lớp -->
                 @if (selectedGrade != null)
                 {
-                    <button class="btn btn-success btn-sm" @onclick="ShowAddClassModal">
-                        <i class="bi bi-plus-circle"></i> Thêm lớp cho khối @selectedGrade.Grade_Name
-                    </button>
+                    <div>
+                        <button class="btn btn-success btn-sm" @onclick="ShowAddClassModal">
+                            <i class="bi bi-plus-circle"></i> Thêm lớp
+                        </button>
+                    </div>
                 }
+
+                <!-- Tìm kiếm -->
+                <div class="d-flex align-items-center gap-2 ms-auto" style="min-width: 350px;">
+                    <input type="text" class="form-control form-control-sm" placeholder="Tìm tên lớp hoặc giáo viên"
+                           @bind="searchTerm" @bind:event="oninput" />
+                    <button class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+                            @onclick="SearchClass" style="min-width: 100px;">
+                        <i class="bi bi-search"></i> <span>Tìm kiếm</span>
+                    </button>
+                </div>
+
             </div>
-
-            <div class="d-flex align-items-center gap-2">
-                <input type="text" class="form-control form-control-sm" placeholder="Tìm tên lớp hoặc giáo viên"
-                style="min-width: 220px;" @bind="searchTerm" @bind:event="oninput" />
-                <button class="btn btn-primary btn-sm d-flex align-items-center justify-content-center gap-1"
-                style="min-width: 120px;" @onclick="SearchClass">
-                    <i class="bi bi-search"></i> <span>Tìm kiếm</span>
-                </button>
-
-            </div>
-        </div>
-
-        <div class="col-md-8 d-flex align-items-center gap-2">
-            <div>
-                <label>Chọn khối:</label>
-                <select class="form-control" @onchange="OnGradeChange">
-                    <option value="">-- Chọn khối --</option>
-                    @if (grades != null)
-                    {
-                        @foreach (var grade in grades)
-                        {
-                            <option value="@grade.ID" selected="@(selectedGrade?.ID == grade.ID)">
-                                Khối: @grade.Grade_Name
-                            </option>
-                        }
-                    }
-                </select>
-            </div>
-
-            <div>
-                <label>Chọn lớp:</label>
-                <select class="form-control" @onchange="OnClassChange">
-                    <option value="">-- Chọn lớp --</option>
-                    @if (filteredClasses != null)
-                    {
-                        @foreach (var classItem in filteredClasses)
-                        {
-                            <option value="@classItem.Id" selected="@(selectedClass?.Id == classItem.Id)">
-                                @classItem.Class_Name
-                            </option>
-                        }
-                    }
-                </select>
-            </div>
-
-
         </div>
     </div>
+
 
     @if (selectedClass != null)
     {
@@ -306,8 +295,6 @@
                     <div class="modal-body">
                         <EditForm Model="@currentStudent" OnValidSubmit="SaveStudent">
                             <DataAnnotationsValidator />
-                            <ValidationSummary />
-
                             <div class="row">
                                 <!-- Phần upload ảnh đại diện -->
                                 <div class="col-md-4 mb-3 text-center">
@@ -326,23 +313,38 @@
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Họ tên <span class="text-danger">*</span></label>
-                                            <InputText @bind-Value="currentStudent.Full_Name" class="form-control" required />
+                                            <InputText @bind-Value="currentStudent.Full_Name" 
+                                            oninvalid="this.setCustomValidity('Vui lòng nhập họ tên')"
+                                            oninput="this.setCustomValidity('')" class="form-control" required />
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Tài khoản <span class="text-danger">*</span></label>
-                                            <InputText @bind-Value="currentStudent.User_Name" class="form-control" required />
+                                            <InputText @bind-Value="currentStudent.User_Name" class="form-control" required
+                                                       oninvalid="this.setCustomValidity('Vui lòng nhập tài khoản')"
+                                                       oninput="this.setCustomValidity('')" />
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
-                                            <InputText @bind-Value="currentStudent.User_Pass" type="password" class="form-control" required />
+                                            <InputText @bind-Value="currentStudent.User_Pass" type="password" class="form-control" required
+                                                       oninvalid="this.setCustomValidity('Vui lòng nhập mật khẩu')"
+                                                       oninput="this.setCustomValidity('')" />
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Email</label>
-                                            <InputText @bind-Value="currentStudent.Email" class="form-control" />
+                                            <label for="email" class="form-label">Email</label>
+                                            <InputText type="email" @bind-Value="currentStudent.Email" id="email" class="form-control" required
+                                                       oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
+                                                       oninput="this.setCustomValidity('')"  />
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Số điện thoại</label>
-                                            <InputText @bind-Value="currentStudent.Phone_Number" class="form-control" />
+                                            <InputText class="form-control" id="Phone"
+                                                       @bind-Value="currentStudent.Phone_Number"
+                                                       inputmode="numeric"
+                                                       pattern="0[0-9]{9}"
+                                                       required
+                                                       oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ, bắt đầu bằng 0 và đủ 10 chữ số')"
+                                                       oninput="this.setCustomValidity(''); this.value=this.value.replace(/[^0-9]/g,'');" />
+
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Ngày sinh <span class="text-danger">*</span></label>
@@ -350,8 +352,10 @@
                                             class="form-control"
                                             format="yyyy-MM-dd"
                                             max="@MaxBirthDate.ToString("yyyy-MM-dd")"
-                                            min="@MinBirthDate.ToString("yyyy-MM-dd")" />
-                                            <ValidationMessage For="@(() => birthDate)" />
+                                            min="@MinBirthDate.ToString("yyyy-MM-dd")"
+                                                       oninvalid="this.setCustomValidity('Vui lòng chọn ngày sinh')"
+                                                       oninput="this.setCustomValidity('')" />
+                                            <ValidationMessage For="@(() => birthDate)" required />
                                             @if (birthDate > MaxBirthDate)
                                             {
                                                 <span class="text-danger">Ngày sinh không thể ở tương lai</span>
@@ -364,7 +368,9 @@
                                         </div>
                                         <div class="col-md-12 mb-3">
                                             <label class="form-label">Địa chỉ</label>
-                                            <InputText @bind-Value="currentStudent.Address" class="form-control" />
+                                            <InputText @bind-Value="currentStudent.Address" class="form-control"
+                                                       oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
+                                                       oninput="this.setCustomValidity('')" required />
                                         </div>
                                     </div>
                                 </div>
@@ -421,11 +427,18 @@
                             <ValidationSummary />
                             <div class="mb-3">
                                 <label class="form-label">Tên lớp</label>
-                                <InputText @bind-Value="model.ClassName" class="form-control" required />
+                                <InputText @bind-Value="model.ClassName"
+                                           class="form-control"
+                                           required
+                                           pattern="[1-9][A-Za-z]"
+                                           oninvalid="this.setCustomValidity('Vui lòng nhập tên lớp hợp lệ, ví dụ: 6A')"
+                                           oninput="this.setCustomValidity('')" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Giáo viên chủ nhiệm</label>
-                                <select class="form-control" @bind="model.TeacherId" required>
+                                <select class="form-control" @bind="model.TeacherId" required
+                                        oninvalid="this.setCustomValidity('Vui lòng chọn giáo viên chủ nhiệm')"
+                                        oninput="this.setCustomValidity('')">
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var teacher in teacherDisplayList)
                                     {
@@ -625,8 +638,6 @@
     private User selectedStudent;
     private Grade selectedGrade;
     private bool isLoading = true;
-    private string errorMessage;
-    private string successMessage;
     private List<Summary> summaries = new();
     private int selectedSummaryId = 0;
     public ClassWithTeacherModel model = new ClassWithTeacherModel();
@@ -768,7 +779,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi tải danh sách khối: {ex.Message}";
+            toastService.ShowError($"Lỗi khi tải danh sách khối:ex.Message");
             await JSRuntime.InvokeVoidAsync("console.log", $"Error loading grades: {ex}");
         }
     }
@@ -782,7 +793,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi tải danh sách lớp: {ex.Message}";
+            toastService.ShowError($"Lỗi khi tải danh sách lớp: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("console.log", $"Error loading classes: {ex}");
             throw;
         }
@@ -866,7 +877,7 @@
     {
         if (selectedGrade == null)
         {
-            errorMessage = "Vui lòng chọn khối trước khi thêm lớp.";
+            toastService.ShowWarning("Vui lòng chọn khối trước khi thêm lớp.");
             return;
         }
 
@@ -987,20 +998,20 @@
             var success = await ClassService.CreateClassWithTeacherAsync(model);
             if (success)
             {
-                successMessage = $"Đã tạo lớp {model.ClassName} thành công.";
+               toastService.ShowSuccess($"Đã tạo lớp {model.ClassName} thành công.");
                 await LoadClasses();
                 FilterClasses();
             }
             else
             {
-                errorMessage = "Không thể tạo lớp. Vui lòng thử lại.";
+                toastService.ShowError("Không thể tạo lớp. Vui lòng thử lại.");
             }
 
             showAddClassModal = false;
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi tạo lớp: {ex.Message}";
+            toastService.ShowError($"Lỗi khi tạo lớp: {ex.Message}");
             showAddClassModal = false;
         }
     }
@@ -1015,14 +1026,14 @@
         var result = await ClassService.DeleteClassAsync(selectedClass.Id);
         if (result)
         {
-            successMessage = $"Đã xoá lớp {selectedClass.Class_Name} thành công.";
+            toastService.ShowSuccess($"Đã xoá lớp {selectedClass.Class_Name} thành công.");
             selectedClass = null;
             await LoadClasses();
             FilterClasses();
         }
         else
         {
-            errorMessage = "Không thể xoá lớp. Vui lòng thử lại.";
+            toastService.ShowError("Không thể xoá lớp. Vui lòng thử lại.");
         }
 
         showDeleteClassConfirm = false;
@@ -1065,7 +1076,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi tải danh sách học sinh: {ex.Message}";
+            toastService.ShowError($"Lỗi khi tải danh sách học sinh: {ex.Message}");
             await JSRuntime.InvokeVoidAsync("console.log", $"Error in LoadClassStudents: {ex}");
         }
         finally
@@ -1087,7 +1098,7 @@
 
             if (studentEntity == null)
             {
-                errorMessage = "Không tìm thấy thông tin học sinh trong bảng Student.";
+                toastService.ShowError("Không tìm thấy thông tin học sinh trong bảng Student.");
                 studentScores = new List<Score>();
                 return;
             }
@@ -1112,7 +1123,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi tải bảng điểm: {ex.Message}";
+            toastService.ShowError($"Lỗi khi tải bảng điểm: {ex.Message}");
         }
     }
 
@@ -1177,7 +1188,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi tải thông tin học sinh: {ex.Message}";
+            toastService.ShowError($"Lỗi khi tải thông tin học sinh: {ex.Message}");
             showStudentModal = false;
         }
     }
@@ -1212,7 +1223,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi xóa học sinh: {ex.Message}";
+            toastService.ShowError($"Lỗi khi xóa học sinh: {ex.Message}");
         }
         finally
         {
@@ -1225,20 +1236,17 @@
     {
         try
         {
-            errorMessage = null;
-            successMessage = null;
-
             if (string.IsNullOrWhiteSpace(currentStudent.Full_Name) ||
                 string.IsNullOrWhiteSpace(currentStudent.User_Name) ||
                 string.IsNullOrWhiteSpace(currentStudent.User_Pass))
             {
-                errorMessage = "Vui lòng nhập đầy đủ thông tin bắt buộc.";
+                toastService.ShowWarning("Vui lòng nhập đầy đủ thông tin bắt buộc.");
                 return;
             }
 
             if (!birthDate.HasValue || birthDate.Value.Year < 1900)
             {
-                errorMessage = "Ngày sinh không hợp lệ.";
+                toastService.ShowWarning("Ngày sinh không hợp lệ.");
                 return;
             }
 
@@ -1255,11 +1263,11 @@
                 success = await ClassService.UpdateStudent(currentStudent.Id, currentStudent, selectedFile);
                 if (success)
                 {
-                    successMessage = $"Đã cập nhật thông tin học sinh {currentStudent.Full_Name} thành công.";
+                    toastService.ShowSuccess($"Đã cập nhật thông tin học sinh {currentStudent.Full_Name} thành công.");
                 }
                 else
                 {
-                    errorMessage = "Không thể cập nhật học sinh.";
+                    toastService.ShowError("Không thể cập nhật học sinh.");
                     return;
                 }
             }
@@ -1269,7 +1277,7 @@
                 var studentId = await ClassService.CreateStuent(currentStudent, selectedFile);
                 if (studentId == null)
                 {
-                    errorMessage = "Không thể tạo học sinh mới.";
+                    toastService.ShowError( "Không thể tạo học sinh mới.");
                     return;
                 }
 
@@ -1278,15 +1286,15 @@
                     success = await ClassService.AddStudentToClass(studentId.Value, selectedClass.Id);
                     if (!success)
                     {
-                        errorMessage = "Không thể thêm học sinh vào lớp.";
+                        toastService.ShowError("Không thể thêm học sinh vào lớp.");
                         return;
                     }
 
-                    successMessage = $"Đã thêm học sinh {currentStudent.Full_Name} vào lớp {selectedClass.Class_Name} thành công!";
+                    toastService.ShowSuccess($"Đã thêm học sinh {currentStudent.Full_Name} vào lớp {selectedClass.Class_Name} thành công!");
                 }
                 else
                 {
-                    successMessage = $"Đã thêm học sinh {currentStudent.Full_Name} thành công!";
+                    toastService.ShowSuccess($"Đã thêm học sinh {currentStudent.Full_Name} thành công!");
                 }
             }
 
@@ -1295,7 +1303,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi lưu học sinh: {ex.Message}";
+            toastService.ShowError($"Lỗi khi lưu học sinh: {ex.Message}");
         }
     }
 
@@ -1304,7 +1312,6 @@
     private void CloseStudentModal()
     {
         showStudentModal = false;
-        errorMessage = null;
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
@@ -1316,13 +1323,13 @@
         {
             if (selectedFile.Size > 2 * 1024 * 1024) // 2MB
             {
-                errorMessage = "Kích thước file quá lớn. Vui lòng chọn file có kích thước nhỏ hơn 2MB.";
+                toastService.ShowWarning("Kích thước file quá lớn. Vui lòng chọn file có kích thước nhỏ hơn 2MB.");
                 return;
             }
 
             if (!selectedFile.ContentType.StartsWith("image/"))
             {
-                errorMessage = "Vui lòng chọn file ảnh (jpg, png, etc).";
+                toastService.ShowWarning("Vui lòng chọn file ảnh (jpg, png, etc).");
                 return;
             }
 
@@ -1358,7 +1365,7 @@
         {
             if (selectedClass == null)
             {
-                errorMessage = "Vui lòng chọn lớp.";
+                toastService.ShowWarning("Vui lòng chọn lớp.");
                 return;
             }
 
@@ -1445,7 +1452,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi hiển thị tổng kết: {ex.Message}";
+            toastService.ShowError($"Lỗi khi hiển thị tổng kết: {ex.Message}");
         }
     }
 
@@ -1460,7 +1467,7 @@
 
             if (studentEntity == null)
             {
-                errorMessage = "Không tìm thấy học sinh.";
+                toastService.ShowWarning("Không tìm thấy học sinh.");
                 return;
             }
 
@@ -1542,7 +1549,7 @@
         }
         catch (Exception ex)
         {
-            errorMessage = $"Lỗi khi lấy bảng điểm học sinh: {ex.Message}";
+            toastService.ShowError($"Lỗi khi lấy bảng điểm học sinh: {ex.Message}");
         }
     }
 

@@ -1,4 +1,4 @@
-﻿@* @page "/teacher-managements"
+﻿@page "/teacher-managements"
 @layout TeacherLayout
 @using Blazor_Server.Services
 @using Data_Base.Models.S
@@ -15,13 +15,18 @@
             <i class="bi bi-plus-circle"></i> Thêm giáo viên
         </button>
     }
-    <input type="text" class="form-control w-25 ms-auto" @bind="searchText" @bind:event="oninput" placeholder="Tìm kiếm theo tên hoặc bộ môn..." />
+    <div class="input-group w-25 ms-auto">
+        <span class="input-group-text bg-white border-end-0">
+            <i class="bi bi-search"></i>
+        </span>
+        <input type="text" class="form-control border-start-0" @bind="searchText" @bind:event="oninput" placeholder="Tìm kiếm theo tên hoặc số điện thoại..." />
+    </div>
+
 </div>
 
 <div class="card card-custom p-4 mb-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="section-title">Danh sách giáo viên</h5>
-        <button class="btn btn-outline-primary" @onclick="ExportToExcel"><i class="fas fa-file-export"></i> Xuất Excel</button>
     </div>
     <div class="table-container" id="tableContainer">
         <div class="table-responsive">
@@ -35,7 +40,6 @@
                         <th scope="col">Số điện thoại</th>
                         <th scope="col">Ngày sinh</th>
                         <th scope="col">Địa chỉ</th>
-                        <th scope="col">Bộ môn</th>
                         <th scope="col">Chức vụ</th>
                         <th scope="col">Hành động</th>
                     </tr>
@@ -56,21 +60,18 @@
                             <td>@item.teacher.Phone_Number</td>
                             <td>@item.teacher.date_of_bith.ToString("dd/MM/yyyy")</td>
                             <td class="text-truncate" style="max-width: 180px;">@item.teacher.Address</td>
-                            <td><span class="badge bg-info bg-opacity-10 text-info fw-normal">@item.teacher.Name_subject</span></td>
                             <td>
                                 <span class="badge rounded-pill
                             @(item.teacher.Status switch
                               {
                                   1 => "bg-success",
                                   2 => "bg-warning text-dark",
-                                  3 => "bg-secondary",
                                   _ => "bg-light text-dark"
                               })">
                                     @(item.teacher.Status switch
                                     {
                                         1 => "Quản lý",
-                                        2 => "Giáo viên chủ nhiệm",
-                                        3 => "Giáo viên bộ môn",
+                                        2 => "Giáo viên bộ môn",
                                         _ => "Không xác định"
                                     })
                                 </span>
@@ -138,9 +139,9 @@
     </div>
     <div class="offcanvas-body">
         <EditForm Model="currentTeacher" OnValidSubmit="@(isReadOnly ? null : SaveTeacher)">
-            @*         <DataAnnotationsValidator />
-            <ValidationSummary /> *@
-            @* <div class="mb-3 d-flex align-items-start gap-3">
+                    <DataAnnotationsValidator />
+            <ValidationSummary />
+            <div class="mb-3 d-flex align-items-start gap-3">
                 @if (!isReadOnly)
                 {
                     <div>
@@ -199,9 +200,15 @@
 
             <div class="mb-3">
                 <label for="Phone" class="form-label">Số điện thoại</label>
-                <InputText class="form-control" id="Phone" @bind-Value="currentTeacher.Phone_Number" disabled="@isReadOnly" required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ')"
-                           oninput="this.setCustomValidity('')" />
+                <InputText class="form-control" id="Phone"
+                           @bind-Value="currentTeacher.Phone_Number"
+                           disabled="@isReadOnly"
+                           inputmode="numeric"
+                           pattern="0[0-9]{9}"
+                           required
+                           oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ, bắt đầu bằng 0 và đủ 10 chữ số')"
+                           oninput="this.setCustomValidity(''); this.value=this.value.replace(/[^0-9]/g,'');" />
+
             </div>
 
             <div class="mb-3">
@@ -217,20 +224,6 @@
                            oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
                            oninput="this.setCustomValidity('')" />
             </div>
-
-            <div class="mb-3">
-                <label for="SubjectName" class="form-label">Bộ môn</label>
-                <InputSelect class="form-select" id="SubjectName" @bind-Value="currentTeacher.Idsubject" disabled="@isReadOnly" required
-                             oninvalid="this.setCustomValidity('Vui lòng chọn bộ môn')"
-                             oninput="this.setCustomValidity('')">
-                    <option value="">-- Chọn bộ môn --</option>
-                    @foreach (var subject in allSubject)
-                    {
-                        <option value="@subject.Id">@subject.Subject_Name</option>
-                    }
-                </InputSelect>
-            </div>
-
             <div class="mb-3">
                 <label for="Status" class="form-label">Chức vụ</label>
                 <InputSelect class="form-select" id="Status" @bind-Value="currentTeacher.Status" disabled="@isReadOnly" required
@@ -238,18 +231,9 @@
                              oninput="this.setCustomValidity('')">
                     <option value="">-- Chọn chức vụ --</option>
                     <option value="1">Quản lý</option>
-                    <option value="2">Giáo viên chủ nhiệm</option>
-                    <option value="3">Giáo viên bộ môn</option>
+                    <option value="2">Giáo viên bộ môn</option>
                 </InputSelect>
             </div>
-            @if (!isEditing && !isReadOnly)
-            {
-                <hr />
-                <div class="mb-3">
-                    <label for="excelFile" class="form-label">Nhập danh sách từ Excel</label>
-                    <input type="file" class="form-control" id="excelFile" @onchange="OnFileSelected" />
-                </div>
-            }
             @if (!isReadOnly)
             {
                 <div class="d-flex justify-content-end">
@@ -258,208 +242,201 @@
             }
         </EditForm>
     </div>
-</div> *@
+</div>
 @code {
-    // int CurrentPage = 1;
-    // int PageSize = 6;
-    // int TotalPages => (int)Math.Ceiling((double)FilteredTeachers.Count / PageSize);
-    // void ChangePage(int page)
-    // {
-    //     if (page < 1 || page > TotalPages)
-    //         return;
+    int CurrentPage = 1;
+    int PageSize = 6;
+    int TotalPages => (int)Math.Ceiling((double)FilteredTeachers.Count / PageSize);
+    void ChangePage(int page)
+    {
+        if (page < 1 || page > TotalPages)
+            return;
 
-    //     CurrentPage = page;
-    // }
-    // List<listteacher> PaginatedTeachers => FilteredTeachers
-    // .Skip((CurrentPage - 1) * PageSize)
-    // .Take(PageSize)
-    // .ToList();
-    // private bool isFormVisible = false;
-    // private bool isEditing = false;
-    // private bool isReadOnly => status == "2" || status == "3";
-    // private listteacher currentTeacher = new listteacher();
-    // private List<listteacher> allTeachers = new List<listteacher>();
-    // private List<Subject> allSubject = new List<Subject>();
-    // private string searchText = "";
-    // private string status;
-    // private List<listteacher> FilteredTeachers => string.IsNullOrWhiteSpace(searchText)
-    //  ? allTeachers
-    //  : allTeachers.Where(t =>
-    //      t.Full_Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-    //      t.Name_subject.Contains(searchText, StringComparison.OrdinalIgnoreCase)
-    //  ).ToList();
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     try
-    //     {
-    //         var result = await SessionStorage.GetAsync<string>("Status");
-    //         status = result.Success ? result.Value : string.Empty;
-    //         allTeachers = await TeacherMangersee.GetAllTeacher();
-    //         allSubject = await TeacherMangersee.GetAllSubject();
-    //     }
-    //     catch
-    //     {
+        CurrentPage = page;
+    }
+    List<listteacher> PaginatedTeachers => FilteredTeachers
+    .Skip((CurrentPage - 1) * PageSize)
+    .Take(PageSize)
+    .ToList();
+    private bool isFormVisible = false;
+    private bool isEditing = false;
+    private bool isReadOnly => status == "2";
+    private listteacher currentTeacher = new listteacher();
+    private List<listteacher> allTeachers = new List<listteacher>();
+    private List<Subject> allSubject = new List<Subject>();
+    private string searchText = "";
+    private string status;
+    private List<listteacher> FilteredTeachers => string.IsNullOrWhiteSpace(searchText)
+     ? allTeachers
+     : allTeachers.Where(t =>
+         t.Full_Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)||
+         t.Phone_Number.Contains(searchText, StringComparison.OrdinalIgnoreCase)
+     ).ToList();
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await SessionStorage.GetAsync<string>("Status");
+            status = result.Success ? result.Value : string.Empty;
+            allTeachers = await TeacherMangersee.GetAllTeacher();
+            allSubject = await TeacherMangersee.GetAllSubject();
+        }
+        catch
+        {
 
-    //     }
-    // }
+        }
+    }
 
-    // private void ToggleForm()
-    // {
-    //     isFormVisible = !isFormVisible;
-    //     if (!isFormVisible)
-    //     {
-    //         avatarPreview = null;
-    //         currentTeacher = new listteacher();
-    //         isEditing = false;
-    //     }
-    // }
+    private void ToggleForm()
+    {
+        isFormVisible = !isFormVisible;
+        if (!isFormVisible)
+        {
+            avatarPreview = null;
+            currentTeacher = new listteacher();
+            isEditing = false;
+        }
+    }
 
-    // private void ShowAddForm()
-    // {
-    //     currentTeacher = new listteacher();
-    //     avatarPreview = null;
-    //     currentTeacher.date_of_bith = DateTime.Now;
-    //     isEditing = false;
-    //     isFormVisible = true;
-    // }
+    private void ShowAddForm()
+    {
+        currentTeacher = new listteacher();
+        avatarPreview = null;
+        currentTeacher.date_of_bith = DateTime.Now;
+        isEditing = false;
+        isFormVisible = true;
+    }
 
-    // private void EditTeacher(int id)
-    // {
-    //     currentTeacher = allTeachers.FirstOrDefault(t => t.Id == id);
-    //     if (currentTeacher != null)
-    //     {
-    //         avatarPreview = currentTeacher.Avatar;
-    //         var subject = allSubject.FirstOrDefault(s => s.Subject_Name == currentTeacher.Name_subject);
-    //         if (subject != null)
-    //         {
-    //             currentTeacher.Idsubject = subject.Id;
-    //         }
+    private void EditTeacher(int id)
+    {
+        currentTeacher = allTeachers.FirstOrDefault(t => t.Id == id);
+        if (currentTeacher != null)
+        {
+            avatarPreview = currentTeacher.Avatar;
+            isEditing = true;
+            isFormVisible = true;
+        }
+    }
+    private IBrowserFile selectedFile;
+    private string? avatarPreview;
+    private string? avatarBase64;
+    private void ClearAvatar()
+    {
+        avatarPreview = null;
+        currentTeacher.Avatar = null;
+    }
+    private async Task HandleAvatarUpload(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        if (selectedFile != null)
+        {
+            using var stream = selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
 
-    //         isEditing = true;
-    //         isFormVisible = true;
-    //     }
-    // }
-    // private IBrowserFile selectedFile;
-    // private string? avatarPreview;
-    // private string? avatarBase64;
-    // private void ClearAvatar()
-    // {
-    //     avatarPreview = null;
-    //     currentTeacher.Avatar = null;
-    // }
-    // private async Task HandleAvatarUpload(InputFileChangeEventArgs e)
-    // {
-    //     selectedFile = e.File;
-    //     if (selectedFile != null)
-    //     {
-    //         using var stream = selectedFile.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
-    //         using var ms = new MemoryStream();
-    //         await stream.CopyToAsync(ms);
-    //         var bytes = ms.ToArray();
+            avatarBase64 = Convert.ToBase64String(bytes);
+            avatarPreview = $"data:{selectedFile.ContentType};base64,{avatarBase64}";
 
-    //         avatarBase64 = Convert.ToBase64String(bytes);
-    //         avatarPreview = $"data:{selectedFile.ContentType};base64,{avatarBase64}";
+            currentTeacher.Avatar = avatarBase64;
+        }
+    }
 
-    //         currentTeacher.Avatar = avatarBase64;
-    //     }
-    // }
+    private async Task SaveTeacher()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(currentTeacher.Phone_Number) ||
+                currentTeacher.Phone_Number.Length != 10 ||
+                !currentTeacher.Phone_Number.All(char.IsDigit))
+            {
+                await notification.ShowSweetAlert("Số điện thoại không hợp lệ! Phải gồm đúng 10 chữ số.", "error");
+                return;
+            }
 
-    // private async Task SaveTeacher()
-    // {
-    //     try
-    //     {
-    //         if (string.IsNullOrWhiteSpace(currentTeacher.Phone_Number) ||
-    //             currentTeacher.Phone_Number.Length != 10 ||
-    //             !currentTeacher.Phone_Number.All(char.IsDigit))
-    //         {
-    //             await notification.ShowSweetAlert("Số điện thoại không hợp lệ! Phải gồm đúng 10 chữ số.", "error");
-    //             return;
-    //         }
+            var today = DateTime.Today;
+            if (currentTeacher.date_of_bith > today)
+            {
+                await notification.ShowSweetAlert("Ngày sinh không được ở tương lai!", "error");
+                return;
+            }
+            var age = today.Year - currentTeacher.date_of_bith.Year;
+            if (currentTeacher.date_of_bith.Date > today.AddYears(-age)) age--;
 
-    //         var today = DateTime.Today;
-    //         if (currentTeacher.date_of_bith > today)
-    //         {
-    //             await notification.ShowSweetAlert("Ngày sinh không được ở tương lai!", "error");
-    //             return;
-    //         }
-    //         var age = today.Year - currentTeacher.date_of_bith.Year;
-    //         if (currentTeacher.date_of_bith.Date > today.AddYears(-age)) age--;
+            if (age < 18)
+            {
+                await notification.ShowSweetAlert("Giáo viên phải ít nhất 18 tuổi!", "warning");
+                return;
+            }
+            else if (age > 100)
+            {
+                await notification.ShowSweetAlert("Ngày sinh không hợp lệ (quá 100 tuổi)!", "warning");
+                return;
+            }
 
-    //         if (age < 18)
-    //         {
-    //             await notification.ShowSweetAlert("Giáo viên phải ít nhất 18 tuổi!", "warning");
-    //             return;
-    //         }
-    //         else if (age > 100)
-    //         {
-    //             await notification.ShowSweetAlert("Ngày sinh không hợp lệ (quá 100 tuổi)!", "warning");
-    //             return;
-    //         }
+            if (isEditing)
+            {
+                var updateResult = await TeacherMangersee.UpdateTeacherAsync(currentTeacher.Id, currentTeacher, selectedFile);
+                if (updateResult)
+                {
+                    await notification.ShowSweetAlert($"Cập nhật giáo viên {currentTeacher.Full_Name} thành công!", "success");
+                    allTeachers = await TeacherMangersee.GetAllTeacher();
+                }
+                else
+                {
+                    await notification.ShowSweetAlert("Cập nhật giáo viên thất bại.", "error");
+                    allTeachers = await TeacherMangersee.GetAllTeacher();
+                }
+            }
+            else
+            {
+                var result = await TeacherMangersee.CreateTeacherAsync(currentTeacher, selectedFile);
 
-    //         if (isEditing)
-    //         {
-    //             var updateResult = await TeacherMangersee.UpdateTeacherAsync(currentTeacher.Id, currentTeacher, selectedFile, currentTeacher.Idsubject);
-    //             if (updateResult)
-    //             {
-    //                 await notification.ShowSweetAlert($"Cập nhật giáo viên {currentTeacher.Full_Name} thành công!", "success");
-    //                 allTeachers = await TeacherMangersee.GetAllTeacher();
-    //             }
-    //             else
-    //             {
-    //                 await notification.ShowSweetAlert("Cập nhật giáo viên thất bại.", "error");
-    //                 allTeachers = await TeacherMangersee.GetAllTeacher();
-    //             }
-    //         }
-    //         else
-    //         {
-    //             int id = currentTeacher.Idsubject;
-    //             var result = await TeacherMangersee.CreateTeacherAsync(currentTeacher, selectedFile, id);
-
-    //             if (result != null)
-    //             {
-    //                 await notification.ShowSweetAlert($"Đã thêm giáo viên {currentTeacher.Full_Name} thành công!", "success");
-    //                 allTeachers = await TeacherMangersee.GetAllTeacher();
-    //             }
-    //             else
-    //             {
-    //                 await notification.ShowSweetAlert("Không thể thêm giáo viên mới", "error");
-    //             }
-    //         }
-    //         isFormVisible = false;
-    //         currentTeacher = new listteacher();
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         await notification.ShowSweetAlert($"Có lỗi xảy ra: {ex.Message}", "error");
-    //     }
-    // }
+                if (result != null)
+                {
+                    await notification.ShowSweetAlert($"Đã thêm giáo viên {currentTeacher.Full_Name} thành công!", "success");
+                    allTeachers = await TeacherMangersee.GetAllTeacher();
+                }
+                else
+                {
+                    await notification.ShowSweetAlert("Không thể thêm giáo viên mới", "error");
+                }
+            }
+            isFormVisible = false;
+            currentTeacher = new listteacher();
+        }
+        catch (Exception ex)
+        {
+            await notification.ShowSweetAlert($"Có lỗi xảy ra: {ex.Message}", "error");
+        }
+    }
 
 
 
-    // private async Task ConfirmDelete(int id)
-    // {
-    //     try
-    //     {
-    //         var delete = await TeacherMangersee.DeleteTeacher(id);
-    //         if (delete != null)
-    //         {
-    //             await notification.ShowSweetAlert("Xóa giáo viên thành công!", "success");
-    //             allTeachers = await TeacherMangersee.GetAllTeacher();
-    //         }
-    //         else
-    //         {
-    //             await notification.ShowSweetAlert("Xóa giáo viên thất bại!", "error");
-    //         }
-    //     }
-    //     catch { }
-    // }
-    // private void OnFileSelected(ChangeEventArgs e)
-    // {
-    //     // Handle file import
-    // }
+    private async Task ConfirmDelete(int id)
+    {
+        try
+        {
+            var delete = await TeacherMangersee.DeleteTeacher(id);
+            if (delete != null)
+            {
+                await notification.ShowSweetAlert("Xóa giáo viên thành công!", "success");
+                allTeachers = await TeacherMangersee.GetAllTeacher();
+            }
+            else
+            {
+                await notification.ShowSweetAlert("Xóa giáo viên thất bại!", "error");
+            }
+        }
+        catch { }
+    }
+    private void OnFileSelected(ChangeEventArgs e)
+    {
+        // Handle file import
+    }
 
-    // private void ExportToExcel()
-    // {
-    //     // Handle export logic
-    // }
+    private void ExportToExcel()
+    {
+        // Handle export logic
+    }
 }
