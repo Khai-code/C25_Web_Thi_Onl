@@ -16,64 +16,62 @@
 @inject Blazor_Server.Services.HisService his
 @inject Blazored.Toast.Services.IToastService toastService
 
+<h2 class="text-center text-primary mb-4">🎓 KẾT QUẢ BÀI THI</h2>
 
-<h2>KẾT QUẢ BÀI THI</h2>
-
-@if(v_Test != null){
-<div class="info">
-    <label>Họ tên học sinh:</label>
-    <span>@v_Test.Full_Name</span>
-</div>
-
-<div class="info">
-    <label>Lớp:</label>
-    <span>@v_Test.Class_Name</span>
-</div>
-
-<div class="info">
-    <label>Môn:</label>
-    <span>@v_Test.Subject_Name</span>
-</div>
-
-<div class="info">
-    <label>Mã bài thi:</label>
-    <span>@v_Test.Test_Code</span>
-</div>
-
-<div class="info">
-    <label>Mã gói đề:</label>
-    <span>@v_Test.Package_Code</span>
-</div>
-
-<div class="info">
-    <label>Thời gian làm bài:</label>
-    <span>@v_Test.Actual_Execution_Time</span>
-</div>
-@if (PackageTypeId != 1)
+@if (v_Test != null)
 {
-    <div class="info">
-        <label>Điểm số:</label>
-        <span>@v_Test.Score</span>
-    </div>
+    <div class="card shadow p-4 mb-4">
+        <div class="row mb-3">
+            <div class="col-md-6 mb-2">
+                <strong>👤 Họ tên học sinh:</strong>
+                <div class="text-muted">@v_Test.Full_Name</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong>🏫 Lớp:</strong>
+                <div class="text-muted">@v_Test.Class_Name</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong>📘 Môn:</strong>
+                <div class="text-muted">@v_Test.Subject_Name</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong>📝 Mã bài thi:</strong>
+                <div class="text-muted">@v_Test.Test_Code</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong>📦 Mã gói đề:</strong>
+                <div class="text-muted">@v_Test.Package_Code</div>
+            </div>
+            <div class="col-md-6 mb-2">
+                <strong>⏱️ Thời gian làm bài:</strong>
+                <div class="text-muted">@v_Test.Actual_Execution_Time phút</div>
+            </div>
 
-    <div class="info">
-        <label>Số câu đúng:</label>
-        <span>@correct</span>
-    </div>
-
-    <div class="info">
-        <label>Số câu sai:</label>
-        <span>@wrong</span>
+            @if (PackageTypeId != 1)
+            {
+                <div class="col-md-4 mb-2">
+                    <strong>⭐ Điểm số:</strong>
+                    <div class="text-success fw-bold">@v_Test.Score</div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <strong>✅ Số câu đúng:</strong>
+                    <div class="text-success">@correct</div>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <strong>❌ Số câu sai:</strong>
+                    <div class="text-danger">@wrong</div>
+                </div>
+            }
+        </div>
     </div>
 }
 
-}
-
-
-
-<div style="margin-top: 20px;">
-    <button class="btn btn-secondary" @onclick="Exit">Thoát</button>
+<div class="text-center">
+    <button class="btn btn-outline-secondary px-4" @onclick="Exit">
+        <i class="bi bi-box-arrow-left"></i> Thoát
+    </button>
 </div>
+
 
 @code {
     public V_Test v_Test = new V_Test();

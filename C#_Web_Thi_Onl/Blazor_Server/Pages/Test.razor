@@ -17,88 +17,100 @@
 @inject Blazor_Server.Services.Test TestService
 @inject Blazored.Toast.Services.IToastService toastService
 
-
-@if (histDTO != null && histDTO.Questions != null)
+@if (isLoading)
 {
-    <div class="text-center mb-3">
-        <h3 class="fw-bold text-uppercase">BÀI KIỂM TRA</h3>
-        <h5 class="text-muted">Môn: @histDTO.SubjectName – Lớp: @histDTO.ClassName</h5>
-        <div class="fst-italic">(Thời gian làm bài: @poi phút)</div>
-        <div class="text-danger fw-semibold">Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
-    </div>
-
-    <!-- Test Info -->
-    <div class="row mb-4 text-dark">
-        <div class="col-md-4"><strong>Mã gói đề:</strong> @histDTO.PackageId</div>       
-        <div class="col-md-4"><strong>Tên gói đề:</strong> @histDTO.PackageName</div>
-        <div class="col-md-4"><strong>Loại đề:</strong> @histDTO.PackageType</div>
-        <div class="col-md-4"><strong>Mã bài thi:</strong> @histDTO.TestCode</div>
-    </div>
-
-    if (histDTO.PackageTypeId == 1)
-    {
-        @foreach (var Que in histDTO.Questions)
-        {
-            var answer = listAnswers.FirstOrDefault(x => x.QuesId == Que.QuestionId);
-            if (answer != null)
-            {
-                <div class="mb-4 p-3 border rounded bg-white">
-                    <div class="mb-2 fw-bold">
-                        Câu hỏi @Que.QuestionId: @Que.QuestionName (@Que.MaximumScore)
-                    </div>
-                    <textarea @bind="answer.Name" class="form-control" rows="5"></textarea>
-                </div>
-            }
-        }
-        <div class="mt-3">
-            <button type="submit" class="btn btn-success" @onclick="() =>SaveAllAnswers()">Kết thúc bài thi</button>
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
         </div>
-    }
-    else
+        <p>Đang tải dữ liệu bài thi...</p>
+    </div>
+}
+else
+{
+    @if (histDTO != null && histDTO.Questions != null)
     {
+        <div class="text-center mb-3">
+            <h3 class="fw-bold text-uppercase">BÀI KIỂM TRA</h3>
+            <h5 class="text-muted">Môn: @histDTO.SubjectName – Lớp: @histDTO.ClassName</h5>
+            <div class="fst-italic">(Thời gian làm bài: @poi phút)</div>
+            <div class="text-danger fw-semibold">Thời gian còn lại: @FormatTime(timeInSecondsMinute)</div>
+        </div>
 
-        @foreach (var QueTN in histDTO.Questions)
+        <!-- Test Info -->
+        <div class="row mb-4 text-dark">
+            <div class="col-md-4"><strong>Mã gói đề:</strong> @histDTO.PackageId</div>
+            <div class="col-md-4"><strong>Tên gói đề:</strong> @histDTO.PackageName</div>
+            <div class="col-md-4"><strong>Loại đề:</strong> @histDTO.PackageType</div>
+            <div class="col-md-4"><strong>Mã bài thi:</strong> @histDTO.TestCode</div>
+        </div>
+
+        if (histDTO.PackageTypeId == 1)
         {
-            <div class="mb-4 p-3 border rounded bg-white">
-                <div class="mb-2 fw-bold">Câu hỏi @QueTN.QuestionId: @QueTN.QuestionName</div>
-
-                @if (QueTN.Type == 1 || QueTN.Type == 2) // Radio
+            @foreach (var Que in histDTO.Questions)
+            {
+                var answer = listAnswers.FirstOrDefault(x => x.QuesId == Que.QuestionId);
+                if (answer != null)
                 {
-                    foreach (var a in QueTN.Answers)
-                    {
-                        <div class="input-group mb-2">
-                            <span class="input-group-text">
-                                <input type="radio"
-                                name="answer_@QueTN.QuestionId"
-                                @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
-                            </span>
-                            <label class="form-control">@a.AnswersName</label>
+                    <div class="mb-4 p-3 border rounded bg-white">
+                        <div class="mb-2 fw-bold">
+                            Câu hỏi @Que.QuestionId: @Que.QuestionName (@Que.MaximumScore)
                         </div>
-                    }
+                        <textarea @bind="answer.Name" class="form-control" rows="5"></textarea>
+                    </div>
                 }
-                else if (QueTN.Type == 3) // Checkbox
-                {
-                    foreach (var a in QueTN.Answers)
-                    {
-                        <div class="input-group mb-2">
-                            <span class="input-group-text">
-                                <input type="checkbox"
-                                @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
-                            </span>
-                            <label class="form-control">@a.AnswersName</label>
-                        </div>
-                    }
-                }
+            }
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success" @onclick="() =>SaveAllAnswers()">Kết thúc bài thi</button>
             </div>
         }
-        <div class="mt-3">
-            <button type="submit" class="btn btn-success" @onclick="() =>CreateStudentAns(selectedAnsIds)">Kết thúc bài thi</button>
-        </div>
-    }
+        else
+        {
 
+            @foreach (var QueTN in histDTO.Questions)
+            {
+                <div class="mb-4 p-3 border rounded bg-white">
+                    <div class="mb-2 fw-bold">Câu hỏi @QueTN.QuestionId: @QueTN.QuestionName</div>
+
+                    @if (QueTN.Type == 1 || QueTN.Type == 2) // Radio
+                    {
+                        foreach (var a in QueTN.Answers)
+                        {
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">
+                                    <input type="radio"
+                                           name="answer_@QueTN.QuestionId"
+                                           @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
+                                </span>
+                                <label class="form-control">@a.AnswersName</label>
+                            </div>
+                        }
+                    }
+                    else if (QueTN.Type == 3) // Checkbox
+                    {
+                        foreach (var a in QueTN.Answers)
+                        {
+                            <div class="input-group mb-2">
+                                <span class="input-group-text">
+                                    <input type="checkbox"
+                                           @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
+                                </span>
+                                <label class="form-control">@a.AnswersName</label>
+                            </div>
+                        }
+                    }
+                </div>
+            }
+            <div class="mt-3">
+                <button type="submit" class="btn btn-success" @onclick="() =>CreateStudentAns(selectedAnsIds)">Kết thúc bài thi</button>
+            </div>
+        }
+
+    }
 }
 
 @code {
+    private bool isLoading = true;
     private int minutes;
     private int seconds;
     private bool isTimeUp;
@@ -241,6 +253,7 @@
             }
             _ = StartCountdown();
 
+            isLoading = false;
         }
         catch (Exception ex)
         {

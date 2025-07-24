@@ -485,9 +485,11 @@ namespace ASP.NET.Controllers.G
         private async Task<IActionResult> HandleVPackageFilter(Dictionary<string, string> filters)
         {
             int? packageCode = filters.ContainsKey("Package_Code") ? int.Parse(filters["Package_Code"]) : null;
+            int? classId = filters.ContainsKey("Class_Id") ? int.Parse(filters["Class_Id"]) : null;
 
             var result = await _repository.GetWithFilterAsync<V_Package>(a => 
-                (!packageCode.HasValue || a.Package_Code == packageCode)
+                (!packageCode.HasValue || a.Package_Code == packageCode) &&
+                (!classId.HasValue || a.Class_Id == classId)
             );
 
             return Ok(result);

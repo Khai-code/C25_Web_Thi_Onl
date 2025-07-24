@@ -40,9 +40,10 @@ namespace Data_Base.V_Model
 
         public int Teacher_Id { get; set; }
         public string Teacher_Code { get; set; }
-
+        public int Class_Id { get; set; }
         public string Class_Code { get; set; }
         public string Class_Name { get; set; }
+        public int Number { get; set; }
 
         public int Exam_Room_Package_Id { get; set; }
         public int Exam_Room_Teacher_Id { get; set; }

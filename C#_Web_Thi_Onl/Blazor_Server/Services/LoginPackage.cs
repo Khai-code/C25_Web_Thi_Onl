@@ -66,12 +66,16 @@ namespace Blazor_Server.Services
                     },
             };
 
-            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Package/common/get", filterPackage);
+            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterPackage);
 
             if (!lstPackages.IsSuccessStatusCode)
                 return false;
 
-            var packages = (await lstPackages.Content.ReadFromJsonAsync<List<Data_Base.Models.P.Package>>()).SingleOrDefault();
+            var packages = (await lstPackages.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Package>>()).SingleOrDefault();
+            if (packages.Status == 2)
+            {
+                return false;
+            }
 
             #endregion
 
@@ -117,7 +121,7 @@ namespace Blazor_Server.Services
             TimeSpan duration = currentTime - ConvertLong.ConvertLongToDateTime(examroom.Start_Time);
             if (examroom.Start_Time > time)
             {
-                Console.WriteLine("Chưa đến thời gian làm bài thi1.");
+                Console.WriteLine("Chưa đến thời gian làm bài thi.");
                 return false;
             }
             else if (examroom.End_Time < time)
@@ -125,7 +129,18 @@ namespace Blazor_Server.Services
                 Console.WriteLine("Đã hết thời gian thi.");
                 return false;
             }
-            else if (examroom.Start_Time <= time && duration.TotalSeconds > 1500 && examroom.End_Time > time)
+            else if (examroom.Start_Time <= time 
+                && examroom.End_Time > time
+                && (packages.Point_Type_Id == 1 || packages.Point_Type_Id == 2)
+                && duration.TotalSeconds > 300)
+            {
+                Console.WriteLine("Đã quá thời gian vào thi.");
+                return false;
+            }
+            else if (examroom.Start_Time <= time
+                && examroom.End_Time > time
+                && (packages.Point_Type_Id == 3 || packages.Point_Type_Id == 4 || packages.Point_Type_Id == 5)
+                && duration.TotalSeconds > 1500)
             {
                 Console.WriteLine("Đã quá thời gian vào thi.");
                 return false;
@@ -148,6 +163,7 @@ namespace Blazor_Server.Services
             if (exs != null)
                 return false;
 
+
             Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
             test.Test_Code = string.Empty;
             test.Package_Id = packages.Id;
@@ -159,7 +175,62 @@ namespace Blazor_Server.Services
             if (!testReport.IsSuccessStatusCode)
                 return false;
 
-            var testId = (await testReport.Content.ReadFromJsonAsync<Data_Base.Models.T.Test>()).Id;
+            var filterTest = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Id", packages.Id.ToString() }
+                    },
+            };
+
+            var testRep = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/common/get", filterTest);
+
+            if (!testRep.IsSuccessStatusCode) return false;
+
+            var lstTest = (await testRep.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>()).ToList();
+
+            if (lstTest != null && lstTest.Count > 0 && lstTest.Count < packages.Number)
+            {
+                Data_Base.Models.P.Package packageModel = new Data_Base.Models.P.Package();
+                packageModel.Id = packages.Id;
+                packageModel.Package_Code = packages.Package_Code;
+                packageModel.Create_Time = packageModel.Create_Time;
+                packageModel.Number_Of_Questions = packages.Number_Of_Questions;
+                packageModel.ExecutionTime = packageModel.ExecutionTime;
+                packageModel.Status = 1;
+                packageModel.Subject_Id = packages.Subject_Id;
+                packageModel.Class_Id = packages.Class_Id;
+                packageModel.Package_Type_Id = packages.Package_Type_Id;
+                packageModel.Point_Type_Id = packages.Point_Type_Id;
+
+                var UpdatePackage = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
+                if (!UpdatePackage.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+            }
+            else if (lstTest != null && lstTest.Count > 0 && lstTest.Count == packages.Number)
+            {
+                Data_Base.Models.P.Package packageModel = new Data_Base.Models.P.Package();
+                packageModel.Id = packages.Id;
+                packageModel.Package_Code = packages.Package_Code;
+                packageModel.Create_Time = packageModel.Create_Time;
+                packageModel.Number_Of_Questions = packages.Number_Of_Questions;
+                packageModel.ExecutionTime = packageModel.ExecutionTime;
+                packageModel.Status = 2;
+                packageModel.Subject_Id = packages.Subject_Id;
+                packageModel.Class_Id = packages.Class_Id;
+                packageModel.Package_Type_Id = packages.Package_Type_Id;
+                packageModel.Point_Type_Id = packages.Point_Type_Id;
+
+                var UpdatePackage = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
+                if (!UpdatePackage.IsSuccessStatusCode)
+                {
+                    return false;
+                }
+            }    
+
+             var testId = (await testReport.Content.ReadFromJsonAsync<Data_Base.Models.T.Test>()).Id;
 
             Exam_Room_Student ERStudent = new Exam_Room_Student();
 

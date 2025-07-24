@@ -54,7 +54,7 @@ namespace Blazor_Server.Services
             var userDict = lstUser.ToDictionary(u => u.Id);
 
             var result = lstPackage
-                .Where(p => p.Status == 0)
+                .Where(p => p.Status == 0 || p.Status == 1)
                 .Select(p =>
                 {
                     var examRoomPackage = lstExamRoomPackage.FirstOrDefault(x => x.Package_Id == p.Id);
@@ -78,6 +78,7 @@ namespace Blazor_Server.Services
                         PackageTypeId = p.Package_Type_Id,
                         SubjectId = p.Subject_Id,
                         ClassId = p.Class_Id,
+                        Status = p.Status,
                         PackageTypeName = PackageTypeDict.TryGetValue(p.Package_Type_Id, out var pt) ? pt.Package_Type_Name : "N/A",
                         SubjectName = subjectDict.TryGetValue(p.Subject_Id, out var sub) ? sub.Subject_Name : "N/A",
                         ClassName = classDict.TryGetValue(p.Class_Id, out var cl) ? cl.Class_Name : "N/A",
@@ -765,6 +766,7 @@ namespace Blazor_Server.Services
             public int ClassNub { get; set; }
             public long StartTime { get; set; }
             public long EndTime { get; set; }
+            public int Status { get; set; }
         }
     }
 }
