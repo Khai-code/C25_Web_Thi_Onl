@@ -72,7 +72,7 @@
                         @foreach (var noti in review_Tests.Where(rt => rt.status == 2 || rt.status == 3))
                         {
                             <li>
-                                <a class="dropdown-item small py-2" href="/student-exam-history">
+                                <a class="dropdown-item small py-2" href="/student-exam-history?testCode=@noti.Test_code">
                                     <div class="d-flex align-items-start">
                                         <span class="me-2">
                                             @(noti.status == 2 ? "✅" : "❌")

@@ -8,6 +8,8 @@
 @inject ProtectedSessionStorage SessionStorage
 @inject Blazored.Toast.Services.IToastService toastService
 @layout StudentLayout
+@inject NavigationManager Navigation
+
 <div class="container-fluid" style="margin-top:100px">
     <h3 class="mb-4 text-primary">Lịch sử bài thi của @studentFullName</h3>
 
@@ -424,6 +426,33 @@
         {
             subjectList = await HistoriesExam.getallsubjects();
         }
+
+        // Lấy testCode từ query string
+        var uri = new Uri(Navigation.Uri);
+        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var testCode = query["testCode"];
+
+        if (!string.IsNullOrEmpty(testCode))
+        {
+            var testDetail = await HistoriesExam.GetTestByCodeAsync(testCode, studentCode);
+            if (testDetail != null)
+            {
+                // Gọi lịch sử package theo subject để hiển thị danh sách
+                packagess = await HistoriesExam.GetAllHistoriesForStudent(studentCode, 0, DateTime.Now.AddYears(-1), DateTime.Now);
+
+                // Chọn package chứa test
+                selectedExamId = testDetail.Idpackage;
+
+                // Lấy danh sách test trong package
+                await GetTests(testDetail.Idpackage);
+
+                // Tự động filter theo testCode
+                studentSearch = testCode;
+
+                StateHasChanged();
+            }
+        }
+
         isLoading = false;
     }
     private async Task Getreview(int idstudent,int idtest,int? status,int idreview){

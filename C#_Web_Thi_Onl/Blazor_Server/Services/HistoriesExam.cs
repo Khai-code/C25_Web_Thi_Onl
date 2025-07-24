@@ -673,6 +673,45 @@ namespace Blazor_Server.Services
 
             }
         }
+
+        public async Task<listTest> GetTestByCodeAsync(string testCode, string studentCode)
+        {
+            // Lấy tất cả bài test của học sinh (có thể tối ưu bằng API riêng nếu server hỗ trợ)
+            var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
+            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+            if (student == null) return null;
+
+            var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+            var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+            var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+            var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
+
+            var test = tests.FirstOrDefault(t => t.Test_Code == testCode);
+            if (test == null) return null;
+
+            var examStudent = examRoomStudents.FirstOrDefault(e => e.Test_Id == test.Id && e.Student_Id == student.Id);
+            if (examStudent == null) return null;
+
+            var reviewTest = reviewTests.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student.Id);
+            var examHistory = examHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == examStudent.Id);
+
+            return new listTest
+            {
+                Id = test.Id,
+                studnetid = student.Id,
+                IdReview = reviewTest?.Id ?? 0,
+                Idpackage = test.Package_Id,
+                Test_Code = test.Test_Code,
+                Status = test.Status,
+                statustest = reviewTest?.Status ?? 0,
+                Name_Student = student.Student_Code,
+                score = examHistory?.Score ?? 0,
+                Check_Time = ConvertLong.ConvertLongToDateTime(examStudent.Check_Time),
+                End_Time = examHistory != null ? ConvertLong.ConvertLongToDateTime(examHistory.Create_Time) : DateTime.MinValue
+            };
+        }
+
+
         public class Test_Review
         {
             public int status { get; set; }
