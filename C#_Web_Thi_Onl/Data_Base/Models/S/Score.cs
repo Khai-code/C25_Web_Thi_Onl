@@ -35,7 +35,7 @@ namespace Data_Base.Models.S
         [ForeignKey("Test_Id")]
         [JsonIgnore]
         public Test? Tests { get; set; }
-        public int Test_Id { get; set; }
+        public int? Test_Id { get; set; }
         public double Point { get; set; }
     }
 }

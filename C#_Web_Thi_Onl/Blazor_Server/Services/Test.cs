@@ -445,9 +445,9 @@ namespace Blazor_Server.Services
                                 var filterAns = new CommonFilterRequest
                                 {
                                     Filters = new Dictionary<string, string>
-                            {
-                                 { "Question_Id", questionId.ToString() },
-                            }
+                                    {
+                                         { "Question_Id", questionId.ToString() },
+                                    }
                                 };
 
                                 var ansResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
@@ -472,21 +472,41 @@ namespace Blazor_Server.Services
 
                             pointPerQuestion = 10.0 / totalQuestions * correctCount;
 
-                            DateTime currentTime = DateTime.Now;
-                            int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
+                            var filterExamRoom = new CommonFilterRequest
+                            {
+                                Filters = new Dictionary<string, string>
+                                {
+                                     { "Exam_Room_Student_Id", ers.Id.ToString() }
+                                }
+                            };
 
-                            Exam_HisTory examHistory = new Exam_HisTory();
-                            examHistory.Score = pointPerQuestion; /// điểm
-                            examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                            examHistory.Exam_Room_Student_Id = ers.Id;
-                            examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
-
-                            var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
-
-                            if (!checkExHis.IsSuccessStatusCode)
+                            var responseHisTory = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/common/get", filterExamRoom);
+                            if (!lstHis.IsSuccessStatusCode)
                             {
                                 return false;
                             }
+
+                            var hisTory = (await responseHisTory.Content.ReadFromJsonAsync<List<Exam_HisTory>>()).SingleOrDefault();
+
+                            if (hisTory == null)
+                            {
+                                DateTime currentTime = DateTime.Now;
+                                int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
+
+                                Exam_HisTory examHistory = new Exam_HisTory();
+                                examHistory.Score = pointPerQuestion; /// điểm
+                                examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
+                                examHistory.Exam_Room_Student_Id = ers.Id;
+                                examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
+
+                                var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
+
+                                if (!checkExHis.IsSuccessStatusCode)
+                                {
+                                    return false;
+                                }
+                            }
+                            
                         }
                     }
                 }
@@ -603,293 +623,53 @@ namespace Blazor_Server.Services
 
                         if (lstHis.IsSuccessStatusCode)
                         {
-                            DateTime currentTime = DateTime.Now;
-                            int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
+                            var filterExamRoom = new CommonFilterRequest
+                            {
+                                Filters = new Dictionary<string, string>
+                                {
+                                     { "Exam_Room_Student_Id", ers.Id.ToString() }
+                                }
+                            };
 
-                            Exam_HisTory examHistory = new Exam_HisTory();
-                            examHistory.Score = 0;
-                            examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                            examHistory.Exam_Room_Student_Id = ers.Id;
-                            examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
-
-                            var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
-
-                            if (!checkExHis.IsSuccessStatusCode)
+                            var responseHisTory = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/common/get", filterExamRoom);
+                            if (!lstHis.IsSuccessStatusCode)
                             {
                                 return false;
                             }
 
-                        }
-                    }
-                }
+                            var hisTory = (await responseHisTory.Content.ReadFromJsonAsync<List<Exam_HisTory>>()).SingleOrDefault();
 
-                return s;
-            }
-            catch (Exception ex)
-            {
-                s = false;
-                return s;
-            }
-        }
-        public async Task<bool> CreateAnswerStudentAnsCancel(List<Ans> lstAns, string studentCode, int testId) /// tự luận
-        {
-            bool s = true;
-            try
-            {
-                if (lstAns == null && lstAns.Count <= 0 && studentCode != null & testId > 0)
-                {
-                    s = false;
-                    return s;
-                }
-
-                var filterStudent = new CommonFilterRequest
-                {
-                    Filters = new Dictionary<string, string>
-                    {
-                        { "Student_Code", studentCode }
-                    }
-                };
-
-                var repStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
-
-                if (!repStudent.IsSuccessStatusCode)
-                {
-                    return false;
-                }
-
-                Data_Base.Models.S.Student student = (await repStudent.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault();
-
-                List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory> lstExamRoomStudentAnsHt = new List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory>();
-                List<Data_Base.Models.A.Answers> lstAnswersADO = new List<Data_Base.Models.A.Answers>();
-                var filter = new CommonFilterRequest
-                {
-                    Filters = new Dictionary<string, string>
-                        {
-                             { "Student_Id", student.Id.ToString() },
-                             { "Test_Id", testId.ToString()}
-                        }
-                };
-
-                var response = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filter);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    s = false;
-                    return s;
-                }
-
-                var ers = (await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
-
-
-                foreach (var item in lstAns)
-                {
-                    Data_Base.Models.A.Answers ans = new Data_Base.Models.A.Answers();
-                    ans.Answers_Name = item.Name;
-                    ans.Question_Id = item.QuesId;
-                    ans.Right_Answer = 1;
-
-                    lstAnswersADO.Add(ans);
-                }
-
-                if (lstAnswersADO != null)
-                {
-                    var answersRep = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/PostList", lstAnswersADO);
-
-                    if (!answersRep.IsSuccessStatusCode)
-                    {
-                        s = false;
-                        return s;
-                    }
-
-                    var lstAnswersId = (await answersRep.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>()).Select(o => o.Id).ToList();
-
-                    foreach (var item in lstAnswersId)
-                    {
-                        Data_Base.Models.E.Exam_Room_Student_Answer_HisTory examRoomStudentAnsHt = new Data_Base.Models.E.Exam_Room_Student_Answer_HisTory();
-                        examRoomStudentAnsHt.Answer_Id = item;
-                        examRoomStudentAnsHt.Exam_Room_Student_Id = ers.Id;
-
-                        lstExamRoomStudentAnsHt.Add(examRoomStudentAnsHt);
-                    }
-
-                    if (lstExamRoomStudentAnsHt != null && lstExamRoomStudentAnsHt.Count > 0)
-                    {
-                        var lstHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/PostList", lstExamRoomStudentAnsHt);
-
-                        if (lstHis.IsSuccessStatusCode)
-                        {
-                            DateTime currentTime = DateTime.Now;
-                            int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
-
-                            Exam_HisTory examHistory = new Exam_HisTory();
-                            examHistory.Score = 0;
-                            examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                            examHistory.Exam_Room_Student_Id = ers.Id;
-                            examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
-                        }
-                    }
-                }
-
-                return s;
-            }
-            catch (Exception ex)
-            {
-                s = false;
-                return s;
-            }
-        }
-        public async Task<bool> CreateStudentAnswercancel(List<int> lstAns, string studentCode, int testId) // trắc nghiệm
-        {
-            double pointPerQuestion = 0;
-            try
-            {
-                if (studentCode == null || testId <= 0)
-                {
-                    return false;
-                }
-
-                var filterStudent = new CommonFilterRequest
-                {
-                    Filters = new Dictionary<string, string>
-                    {
-                        { "Student_Code", studentCode }
-                    }
-                };
-
-                var repStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
-
-                if (!repStudent.IsSuccessStatusCode)
-                {
-                    return false;
-                }
-
-                Data_Base.Models.S.Student student = (await repStudent.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault();
-
-                List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory> lstExamRoomStudentAnsHt = new List<Data_Base.Models.E.Exam_Room_Student_Answer_HisTory>();
-
-                var filter = new CommonFilterRequest
-                {
-                    Filters = new Dictionary<string, string>
-                        {
-                             { "Student_Id", student.Id.ToString() },
-                             { "Test_Id", testId.ToString()}
-                        }
-                };
-
-                var response = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filter);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    return false;
-                }
-
-                var ers = (await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
-                if (lstAns != null || lstAns.Count > 0)
-                {
-                    foreach (var item in lstAns)
-                    {
-                        Data_Base.Models.E.Exam_Room_Student_Answer_HisTory examRoomStudentAnsHt = new Data_Base.Models.E.Exam_Room_Student_Answer_HisTory();
-                        examRoomStudentAnsHt.Answer_Id = item;
-                        examRoomStudentAnsHt.Exam_Room_Student_Id = ers.Id;
-
-                        lstExamRoomStudentAnsHt.Add(examRoomStudentAnsHt);
-                    }
-
-                    if (lstExamRoomStudentAnsHt != null && lstExamRoomStudentAnsHt.Count > 0)
-                    {
-                        var lstHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/PostList", lstExamRoomStudentAnsHt);
-
-                        if (lstHis.IsSuccessStatusCode)
-                        {
-                            var studentAnswers = await lstHis.Content.ReadFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>();
-
-                            var filterTQ = new CommonFilterRequest
+                            if (hisTory == null)
                             {
-                                Filters = new Dictionary<string, string>
-                            {
-                                 { "Test_Id", testId.ToString()}
-                            }
-                            };
+                                DateTime currentTime = DateTime.Now;
+                                int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
 
-                            var TQ = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/common/get", filter);
+                                Exam_HisTory examHistory = new Exam_HisTory();
+                                examHistory.Score = 0;
+                                examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
+                                examHistory.Exam_Room_Student_Id = ers.Id;
+                                examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
 
-                            List<Test_Question> lstTQ = await TQ.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test_Question>>();
+                                var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
 
-                            int totalQuestions = lstTQ.Count;
-
-                            int correctCount = 0;
-                            foreach (var testQuestion in lstTQ)
-                            {
-                                int questionId = testQuestion.Question_Id;
-
-                                // 3.1. Lấy đáp án đúng của câu hỏi từ API Answer
-                                var filterAns = new CommonFilterRequest
+                                if (!checkExHis.IsSuccessStatusCode)
                                 {
-                                    Filters = new Dictionary<string, string>
-                            {
-                                 { "Question_Id", questionId.ToString() },
+                                    return false;
+                                }
                             }
-                                };
-
-                                var ansResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
-                                if (!ansResponse.IsSuccessStatusCode) continue;
-
-                                var answers = await ansResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.A.Answers>>();
-                                if (answers == null) continue;
-
-                                var correctAnswerIds = answers.Where(a => a.Right_Answer == 1).Select(a => a.Id).ToList();
-
-                                // 3.2. Lấy các đáp án học sinh đã chọn cho câu hỏi hiện tại
-                                var studentSelectedIds = studentAnswers.Where(sa => answers.Any(a => a.Id == sa.Answer_Id)).Select(sa => sa.Answer_Id).ToList();
-
-                                // 3.3. So sánh: học sinh chọn đúng hết và không dư thừa
-                                bool isCorrect =
-                                    studentSelectedIds.Count == correctAnswerIds.Count &&
-                                    !studentSelectedIds.Except(correctAnswerIds).Any();
-
-                                if (isCorrect)
-                                    correctCount++;
-                            }
-
-                            pointPerQuestion = 10.0 / totalQuestions * correctCount;
-
-                            DateTime currentTime = DateTime.Now;
-                            int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
-
-                            Exam_HisTory examHistory = new Exam_HisTory();
-                            examHistory.Score = pointPerQuestion; /// điểm
-                            examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                            examHistory.Exam_Room_Student_Id = ers.Id;
-                            examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
                         }
                     }
                 }
-                else
-                {
-                    DateTime currentTime = DateTime.Now;
-                    int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
 
-                    Exam_HisTory examHistory = new Exam_HisTory();
-                    examHistory.Score = pointPerQuestion; /// điểm
-                    examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                    examHistory.Exam_Room_Student_Id = ers.Id;
-                    examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
-
-                    var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
-
-                    if (!checkExHis.IsSuccessStatusCode)
-                    {
-                        return false;
-                    }
-                }
-
-                return true;
+                return s;
             }
             catch (Exception ex)
             {
-                return false;
+                s = false;
+                return s;
             }
         }
+ 
         public class Ans
         {
             public int QuesId { get; set; }

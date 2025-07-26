@@ -72,6 +72,7 @@ namespace Blazor_Server.Services
                         score.Point_Type_Id = vTesst.Point_Type_Id;
                         score.Point = vTesst.Score;
                         score.Summary_Id = summary.Id;
+                        score.Test_Id = vTesst.Id;
 
                         var checkScore = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Score/Pus/{lstScore.Id}", score);
 

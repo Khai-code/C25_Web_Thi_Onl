@@ -291,6 +291,7 @@ namespace Blazor_Server.Services
                                     Subject_Id = pts.Subject_Id,
                                     Point_Type_Id = pts.Point_Type_Id,
                                     Summary_Id = summary.Id,
+                                    Test_Id = null,
                                     Point = 0,
                                 };
 

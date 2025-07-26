@@ -56,7 +56,12 @@ else
                         <div class="mb-2 fw-bold">
                             Câu hỏi @Que.QuestionId: @Que.QuestionName (@Que.MaximumScore)
                         </div>
-                        <textarea @bind="answer.Name" class="form-control" rows="5"></textarea>
+                        <textarea value="@answer.Name"
+                                  @oninput="(e) => AutoSaveAnswer(Que.QuestionId, ((ChangeEventArgs)e).Value?.ToString())"
+                                  class="form-control"
+                                  rows="5">
+                    </textarea>
+                        @* <textarea @bind="answer.Name" class="form-control" rows="5"></textarea> *@
                     </div>
                 }
             }
@@ -158,15 +163,24 @@ else
         {
             // Gian lận thật
             if (histDTO.PackageTypeId == 1)
-                await SaveAllAnswersCancel();
+                await SaveAllAnswers();
             else
-                await CreateStudentAnsCancel(selectedAnsIds);
+                await CreateStudentAns(selectedAnsIds);
 
-            // Navigation.NavigateTo("/His");
             toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");
+            Navigation.NavigateTo("/His");
             return true;
         }
         return false;
+    }
+
+    private async Task AutoSaveAnswer(int questionId, string value)
+    {
+        var answer = listAnswers.FirstOrDefault(x => x.QuesId == questionId);
+        if (answer != null)
+        {
+            answer.Name = value;
+        }
     }
 
     
@@ -399,50 +413,5 @@ else
         int secs = seconds % 60;
         return $"{minutes:D2}:{secs:D2}";
     }
-    public async Task CreateStudentAnsCancel(List<int>? lstAnsId) // lưu trắc nghiệm
-    {
-        try
-        {
-            if (!isSubmitted)
-            {
-                bool checkAns = await TestService.CreateStudentAnswercancel(lstAnsId, studentCode, histDTO.TestId);
-                if (checkAns)
-                {
-                    isSubmitted = true;
-                    toastService.ShowSuccess("Đã lưu bài thi");
-
-                    await SessionStorage.SetAsync("TestId", histDTO.TestId);
-                    await SessionStorage.SetAsync("PackageTypeId", histDTO.PackageTypeId);
-                    Navigation.NavigateTo("/His");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            toastService.ShowError("Lỗi: " + ex);
-        }
-    }
-    private async Task SaveAllAnswersCancel()// lưu tự luận
-    {
-        try
-        {
-            if (listAnswers != null && listAnswers.Count > 0 && !isSubmitted)
-            {
-                bool checkAns = await TestService.CreateAnswerStudentAnsCancel(listAnswers, studentCode, histDTO.TestId);
-                if (checkAns)
-                {
-                    isSubmitted = true;
-                    toastService.ShowSuccess("Lưu bài thành công");
-
-                    await SessionStorage.SetAsync("TestId", histDTO.TestId);
-                    await SessionStorage.SetAsync("PackageTypeId", histDTO.PackageTypeId);
-                    Navigation.NavigateTo("/His");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            toastService.ShowError("Lỗi: " + ex.Message);
-        }
-    }
+ 
 }
