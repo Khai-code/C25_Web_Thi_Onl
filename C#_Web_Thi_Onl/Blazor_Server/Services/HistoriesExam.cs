@@ -632,6 +632,55 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+        public async Task<List<Test_Review>> GetinforTeacher()
+        {
+            try
+            {
+                var getallreview = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+                var reviewTests = getallreview?
+                    .Where(x => x.Status == 1)
+                    .ToList();
+
+                if (reviewTests == null || reviewTests.Count == 0)
+                {
+                    Console.WriteLine("Không có đánh giá nào cho học sinh này.");
+                    return null;
+                }
+
+                var getalltest = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+                var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
+                var getallcclass = await _httpClient.GetFromJsonAsync<List<Class>>("/api/Class/Get");
+                var getallsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
+
+                var data = new List<Test_Review>();
+
+                foreach (var review in reviewTests)
+                {
+                    var test = getalltest?.FirstOrDefault(t => t.Id == review.Test_Id);
+                    if (test == null) continue;
+
+                    var package = getallpackage?.FirstOrDefault(p => p.Id == test.Package_Id);
+                    if (package == null) continue;
+
+                    var subject = getallsubject?.FirstOrDefault(s => s.Id == package.Subject_Id);
+                    var classs = getallcclass?.FirstOrDefault(c => c.Id == package.Class_Id);
+                    data.Add(new Test_Review
+                    {
+                        status = review.Status,
+                        classname = classs?.Class_Name ?? "N/A",
+                        Name_subject = subject?.Subject_Name ?? "N/A",
+                        Test_code = test.Test_Code ?? "N/A"
+                    });
+                }
+
+                return data;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi lấy thông tin đánh giá: {ex.Message}");
+                return null;
+            }
+        }
         public async Task<List<Test_Review>> Getinfor(int id)
         {
             try
@@ -753,6 +802,7 @@ namespace Blazor_Server.Services
         public class Test_Review
         {
             public int status { get; set; }
+            public string classname { get; set; }
             public string Name_subject { get; set; }
             public string Test_code { get; set; }
         }
