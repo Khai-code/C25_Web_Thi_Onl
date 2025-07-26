@@ -194,16 +194,17 @@ namespace Blazor_Server.Services
                 Data_Base.Models.P.Package packageModel = new Data_Base.Models.P.Package();
                 packageModel.Id = packages.Id;
                 packageModel.Package_Code = packages.Package_Code;
-                packageModel.Create_Time = packageModel.Create_Time;
+                packageModel.Package_Name = packages.Package_Name;
+                packageModel.Create_Time = packages.Create_Time;
                 packageModel.Number_Of_Questions = packages.Number_Of_Questions;
-                packageModel.ExecutionTime = packageModel.ExecutionTime;
+                packageModel.ExecutionTime = packages.ExecutionTime;
                 packageModel.Status = 1;
                 packageModel.Subject_Id = packages.Subject_Id;
                 packageModel.Class_Id = packages.Class_Id;
                 packageModel.Package_Type_Id = packages.Package_Type_Id;
                 packageModel.Point_Type_Id = packages.Point_Type_Id;
 
-                var UpdatePackage = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
+                var UpdatePackage = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
                 if (!UpdatePackage.IsSuccessStatusCode)
                 {
                     return false;
@@ -223,7 +224,7 @@ namespace Blazor_Server.Services
                 packageModel.Package_Type_Id = packages.Package_Type_Id;
                 packageModel.Point_Type_Id = packages.Point_Type_Id;
 
-                var UpdatePackage = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
+                var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
                 if (!UpdatePackage.IsSuccessStatusCode)
                 {
                     return false;

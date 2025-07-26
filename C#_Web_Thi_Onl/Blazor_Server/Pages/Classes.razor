@@ -1294,12 +1294,15 @@
                 }
                 else
                 {
-                    toastService.ShowSuccess($"Đã thêm học sinh {currentStudent.Full_Name} thành công!");
+                    toastService.ShowError("Không thể thêm học sinh vào lớp.");
                 }
             }
-
-            await LoadClassStudents(); // Load lại danh sách
             showStudentModal = false;
+            await LoadClasses();             // Reload toàn bộ danh sách lớp
+            selectedClass = classes.FirstOrDefault(c => c.Id == selectedClass.Id);
+            await LoadClassTeacherName();    // Cập nhật tên giáo viên
+            await LoadClassStudents();       // Cập nhật danh sách học sinh
+            StateHasChanged();
         }
         catch (Exception ex)
         {
@@ -1559,7 +1562,7 @@
         learningSummaryList.Clear();
         summarySubjects.Clear();
 
-        await LoadClassStudents(); // Reload lại danh sách học sinh
+        await LoadClassStudents(); 
     }
     private async Task CloseScoreMessageBox()
     {
@@ -1567,7 +1570,7 @@
         selectedStudent = null;
         learningSummaryList.Clear();
         summarySubjects.Clear();
-        await LoadClassStudents(); // Reload lại danh sách cho sạch
+        await LoadClassStudents();
     }
 
     private async Task OpenStudentDetailScoreModal()
@@ -1613,7 +1616,10 @@
             {
                 toastService.ShowSuccess("Thêm dữ liệu thành công!");
                 showStudentModal = false;
-                await LoadClassStudents();
+                await LoadClasses();             // Reload toàn bộ danh sách lớp
+                selectedClass = classes.FirstOrDefault(c => c.Id == selectedClass.Id);
+                await LoadClassTeacherName();    // Cập nhật tên giáo viên
+                await LoadClassStudents();       // Cập nhật danh sách học sinh
                 StateHasChanged();
             }
             else

@@ -46,8 +46,8 @@ namespace Data_Base.Models.P
         public Package_Type? Package_Types { get; set; }
         public int Package_Type_Id { get; set; }
         [JsonIgnore]
-        public ICollection<Question> Questions { get; set; } = new List<Question>();
+        public ICollection<Question>? Questions { get; set; } = new List<Question>();
         [JsonIgnore]
-        public ICollection<Exam_Room_Package> Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
+        public ICollection<Exam_Room_Package>? Exam_Room_Packages { get; set; } = new List<Exam_Room_Package>();
     }
 }
