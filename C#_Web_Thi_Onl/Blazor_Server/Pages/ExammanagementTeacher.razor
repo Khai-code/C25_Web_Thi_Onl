@@ -10,6 +10,7 @@
 @inject Package_Test_ERP Pack
 @inject Blazored.Toast.Services.IToastService toastService
 @using Data_Base.Models.E
+@using static Blazor_Server.Services.HistoriesExam
 <div class="split-container">
     <div class="left-panel px-2">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
@@ -177,15 +178,6 @@
 
                                 </div>
                             </div>
-                            @if (student.status.StartsWith("Đã phát hiện gian lận"))
-                            {
-                                <button class="btn btn-success btn-sm d-flex align-items-center"
-                                        title="Kích hoạt lại bài thi sau khi phát hiện gian lận">
-                                    <i class="fas fa-redo me-1"></i> Kích hoạt lại bài thi
-                                </button>
-                            }
-                            else
-                            {
                                 <button class="btn btn-sm d-flex align-items-center
                                          @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
                                         @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
@@ -193,9 +185,6 @@
                                         title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
                                     <i class="fas fa-times me-1"></i> Hủy thi
                                 </button>
-                            }
-
-
                         </li>
 
 
@@ -288,15 +277,15 @@
                                 {
                                     <li class="mb-3">
                                         <div class="fw-semibold mb-1">
-                                            <span class="text-primary">Câu @questionIndex:</span> @q.Question.Question_Name
-                                            <span class="text-muted">(Tối đa: @q.Question.Maximum_Score điểm)</span>
+                                            <span class="text-primary">Câu @questionIndex:</span> @q.Questions.Question_Name
+                                            <span class="text-muted">(Tối đa: @q.Questions.Maximum_Score điểm)</span>
                                         </div>
                                         <ul class="list-group">
                                             @foreach (var ans in q.Answers)
                                             {
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     <span>@ans.Answers_Name</span>
-                                                    <input type="number" min="0" max="@q.Question.Maximum_Score" step="0.01"
+                                                    <input type="number" min="0" max="@q.Questions.Maximum_Score" step="0.01"
                                                            class="form-control form-control-sm border-2 border-primary "
                                                            style="width: 100px;"
                                                            @bind="ans.Points_Earned" />
@@ -336,7 +325,7 @@
     private int CurrentGradingPackageId;
     private string CurrentGradingPackageName = "";
     private List<Data_Base.Models.T.Test> TestsOfPackage = new();
-    private List<ExammanagementService.QuestionWithAnswers> QuestionsWithAnswers = new();
+    private List<listquestion> QuestionsWithAnswers = new();
     [Inject] IJSRuntime JS { get; set; }
     private List<(int Id, string Label)> timeOptions = new()
 {

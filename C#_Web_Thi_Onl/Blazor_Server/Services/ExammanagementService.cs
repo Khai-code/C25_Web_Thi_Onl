@@ -11,7 +11,9 @@ using Data_Base.Models.T;
 using Data_Base.Models.U;
 using System.ComponentModel.DataAnnotations;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using static Blazor_Server.Services.HistoriesExam;
 namespace Blazor_Server.Services
 {
     public class ExammanagementService
@@ -415,23 +417,97 @@ namespace Blazor_Server.Services
         }
 
 
-        public async Task<List<QuestionWithAnswers>> GetFullQuestionsByTest(int testId)
+        public async Task<List<listquestion>> GetFullQuestionsByTest(int testId)
         {
-            var testQuestions = await GetTestQuestionsByTest(testId);
-            var questionIds = testQuestions.Select(q => q.Question_Id).ToList();
-            var questions = await GetQuestionsByIds(questionIds);
+            // Lấy danh sách Test_Question theo testId
+            var testQuestions = await _httpClient.GetFromJsonAsync<List<Test_Question>>("/api/Test_Question/Get");
+            var testQuestionsFiltered = testQuestions?
+                .Where(x => x.Test_Id == testId)
+                .ToList();
+            var Review_Test = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+            var reviewTest = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Status;
+            // Lấy danh sách Question liên quan đến Test
+            var questions = await _httpClient.GetFromJsonAsync<List<Question>>("/api/Question/Get");
+            var questionsFiltered = questions?
+                .Where(q => testQuestionsFiltered.Any(tq => tq.Question_Id == q.Id))
+                .ToList();
 
-            var questionWithAnswers = new List<QuestionWithAnswers>();
-            foreach (var question in questions)
+            // Lấy loại câu hỏi
+            var question_type = await _httpClient.GetFromJsonAsync<List<Question_Type>>("/api/Question_Type/Get");
+            var question_typeFiltered = question_type?
+                .Where(qt => questionsFiltered.Any(q => q.Question_Type_Id == qt.Id))
+                .ToList();
+
+            // Lấy mức độ câu hỏi
+            var question_level = await _httpClient.GetFromJsonAsync<List<Question_Level>>("/api/Question_Level/Get");
+            var question_levelFiltered = question_level?
+                .Where(ql => questionsFiltered.Any(q => q.Question_Level_Id == ql.Id))
+                .ToList();
+
+            // Lấy danh sách học sinh tham gia thi
+            var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+            var examRoomStudentFiltered = examRoomStudents?
+                .Where(ers => ers.Test_Id == testId)
+                .ToList();
+
+            // Lấy lịch sử trả lời của học sinh
+            var histories = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>("/api/Exam_Room_Student_Answer_HisTory/Get");
+            var historiesFiltered = histories?
+                .Where(h => examRoomStudentFiltered.Any(a => a.Id == h.Exam_Room_Student_Id))
+                .ToList();
+
+            // Lấy các đáp án có liên quan tới câu hỏi và nằm trong lịch sử
+            var answers = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
+
+            List<Answers> relatedAnswers = new();
+            List<Exam_Room_Student_Answer_HisTory> relatedHistories = new();
+            // Tạo danh sách kết quả
+            var result = new List<listquestion>();
+
+            foreach (var question in questionsFiltered)
             {
-                var answers = await GetAnswersByQuestion(question.Id);
-                questionWithAnswers.Add(new QuestionWithAnswers
+                var type = question_typeFiltered?.FirstOrDefault(qt => qt.Id == question.Question_Type_Id);
+                var level = question_levelFiltered?.FirstOrDefault(ql => ql.Id == question.Question_Level_Id);
+                if (type.Id == 4 || type.Id == 5)
                 {
-                    Question = question,
-                    Answers = answers
+                    var answersFiltered = answers
+                .Where(a => historiesFiltered.Any(h => h.Answer_Id == a.Id) &&
+                            questionsFiltered.Any(q => q.Id == a.Question_Id))
+                .ToList();
+                    relatedAnswers = answersFiltered
+                     .Where(a => a.Question_Id == question.Id)
+                     .ToList();
+
+                    relatedHistories = historiesFiltered
+                        .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
+                        .ToList();
+                }
+                else
+                {
+                    var answersFiltered = answers?
+                .Where(a => questionsFiltered.Any(q => q.Id == a.Question_Id))
+                .ToList();
+                    relatedAnswers = answersFiltered
+                        .Where(a => a.Question_Id == question.Id)
+                        .ToList();
+                    relatedHistories = historiesFiltered
+                        .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
+                        .ToList();
+                }
+
+                result.Add(new listquestion
+                {
+                    Id = question.Id,
+                    statuss = reviewTest,
+                    question_type = type?.Package_Type_Id ?? 0,
+                    question_lever = level?.Question_Level_Name ?? "",
+                    Questions = question,
+                    Answers = relatedAnswers,
+                    Exam_Room_Student_Answer_HisTories = relatedHistories
                 });
             }
-            return questionWithAnswers;
+
+            return result;
         }
 
 

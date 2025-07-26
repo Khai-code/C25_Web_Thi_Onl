@@ -224,16 +224,6 @@
         return "?";
     }
     private int notificationCount =0;
-    private List<NotificationItem> notifications = new()
-        {
-            new NotificationItem { Message = "Bạn có bài thi cần xem lại", Link = "/Review" },
-            new NotificationItem { Message = "Lịch thi mới đã được cập nhật", Link = "/Schedule" }
-        };
-
-    public class NotificationItem
-    {
-        public string Message { get; set; }
-        public string Link { get; set; }
-    }
+   
 
 }
