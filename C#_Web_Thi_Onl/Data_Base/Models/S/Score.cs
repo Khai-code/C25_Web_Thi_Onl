@@ -1,4 +1,5 @@
 ﻿using Data_Base.Models.P;
+using Data_Base.Models.T;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -31,9 +32,10 @@ namespace Data_Base.Models.S
         [JsonIgnore]
         public Summary? Summaries { get; set; }
         public int Summary_Id { get; set; }
+        [ForeignKey("Test_Id")]
+        [JsonIgnore]
+        public Test? Tests { get; set; }
+        public int Test_Id { get; set; }
         public double Point { get; set; }
-        
-        
-        
     }
 }

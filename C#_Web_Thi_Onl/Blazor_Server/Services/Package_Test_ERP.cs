@@ -6,6 +6,7 @@ using Data_Base.Models.P;
 using Data_Base.Models.Q;
 using Data_Base.Models.R;
 using Data_Base.Models.S;
+using Data_Base.V_Model;
 using Microsoft.AspNetCore.Components.Forms;
 using static Blazor_Server.Services.ExamService;
 
@@ -130,7 +131,7 @@ namespace Blazor_Server.Services
             }
         }
 
-        public async Task<PackageTestADO> FillPackage(int packageId)
+        public async Task<V_Package> FillPackage(int packageId)
         {
             try
             {
@@ -139,9 +140,7 @@ namespace Blazor_Server.Services
                     return null;
                 }
 
-                var package = await _httpClient.GetFromJsonAsync<Data_Base.Models.P.Package>($"https://localhost:7187/api/Package/GetBy/{packageId}");
-
-                var filterExamRoomPackage = new CommonFilterRequest
+                var filterRequest = new CommonFilterRequest
                 {
                     Filters = new Dictionary<string, string>
                     {
@@ -149,41 +148,13 @@ namespace Blazor_Server.Services
                     },
                 };
 
-                var repoErp = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/common/get", filterExamRoomPackage);
-
-                if (!repoErp.IsSuccessStatusCode)
-                {
+                var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterRequest);
+                if (!packageGetResponse.IsSuccessStatusCode)
                     return null;
-                }
 
-                var examRoomPackage = (await repoErp.Content.ReadFromJsonAsync<List<Exam_Room_Package>>()).FirstOrDefault();
+                var package = (await packageGetResponse.Content.ReadFromJsonAsync<List<V_Package>>()).SingleOrDefault();
 
-                var examRoom = await _httpClient.GetFromJsonAsync<Exam_Room>($"https://localhost:7187/api/Exam_Room/GetBy/{examRoomPackage.Exam_Room_Id}");
-
-                var filterExamRoomTacher = new CommonFilterRequest
-                {
-                    Filters = new Dictionary<string, string>
-                    {
-                        { "Exam_Room_Id", examRoomPackage.Exam_Room_Id.ToString() },
-                    },
-                };
-
-                var repoErt = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/common/get", filterExamRoomPackage);
-
-                if (!repoErt.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-
-                var examRoomTeacher = (await repoErt.Content.ReadFromJsonAsync<List<Exam_Room_Teacher>>()).FirstOrDefault();
-
-                return new PackageTestADO
-                {
-                    Package = package,
-                    Exam_Room = examRoom,
-                    Exam_Room_Package = examRoomPackage,
-                    Exam_Room_Teacher = examRoomTeacher
-                };
+                return package;
             }
             catch (Exception ex)
             {
@@ -191,7 +162,7 @@ namespace Blazor_Server.Services
             }
         }
 
-        public async Task<bool> UpdatePackage(PackageTestADO packageTestADO) 
+        public async Task<bool> UpdatePackage(V_Package packageTestADO) 
         {
             try
             {
@@ -199,15 +170,43 @@ namespace Blazor_Server.Services
                 {
                     return false;
                 }
-                var packageModel = packageTestADO.Package;
-                var examroomModel = packageTestADO.Exam_Room;
-                var examRoomPackageModel = packageTestADO.Exam_Room_Package;
-                var examRoomTeacherModel = packageTestADO.Exam_Room_Teacher;
 
-                var package = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
-                var examroom = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room/Pus/{examroomModel.Id}", examroomModel);
-                var examRoomPackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Package/Pus/{examRoomPackageModel.Id}", examRoomPackageModel);
-                var examRoomTeacher = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Teacher/Pus/{examRoomTeacherModel.Id}", examRoomTeacherModel);
+                Data_Base.Models.P.Package packageModel = new Data_Base.Models.P.Package();
+                packageModel.Id = packageTestADO.Id;
+                packageModel.Package_Code = packageTestADO.Package_Code;
+                packageModel.Package_Name = packageTestADO.Package_Name;
+                packageModel.Create_Time = packageTestADO.Create_Time;
+                packageModel.Number_Of_Questions = packageTestADO.Number_Of_Questions;
+                packageModel.ExecutionTime = packageTestADO.ExecutionTime;
+                packageModel.Status = packageTestADO.Status;
+                packageModel.Subject_Id = packageTestADO.Subject_Id;
+                packageModel.Class_Id = packageTestADO.Class_Id;
+                packageModel.Package_Type_Id = packageTestADO.Package_Type_Id;
+
+                var package = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageTestADO.Id}", packageModel);
+
+                Data_Base.Models.E.Exam_Room examRoomModel = new Exam_Room();
+                examRoomModel.Id = packageTestADO.Exam_Room_Id;
+                examRoomModel.Start_Time = packageTestADO.Start_Time;
+                examRoomModel.End_Time = packageTestADO.End_Time;
+                examRoomModel.Room_Id = packageTestADO.Room_Id;
+                examRoomModel.Exam_Id = packageTestADO.Exam_Id;
+
+                var examroom = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room/Pus/{packageTestADO.Exam_Room_Id}", examRoomModel);
+
+                Data_Base.Models.E.Exam_Room_Package examRoomPackageModel = new Exam_Room_Package();
+                examRoomPackageModel.Id = packageTestADO.Exam_Room_Package_Id;
+                examRoomPackageModel.Package_Id = packageTestADO.Id;
+                examRoomPackageModel.Exam_Room_Id = packageTestADO.Exam_Room_Id;
+
+                var examRoomPackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Package/Pus/{packageTestADO.Exam_Room_Package_Id}", examRoomPackageModel);
+
+                Data_Base.Models.E.Exam_Room_Teacher examRoomTeacherModel = new Exam_Room_Teacher();
+                examRoomTeacherModel.Id = packageTestADO.Exam_Room_Teacher_Id;
+                examRoomTeacherModel.Teacher_Id = packageTestADO.Teacher_Id;
+                examRoomTeacherModel.Exam_Room_Id = packageTestADO.Exam_Room_Id;
+
+                var examRoomTeacher = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Teacher/Pus/{packageTestADO.Exam_Room_Teacher_Id}", examRoomTeacherModel);
                 if (!package.IsSuccessStatusCode || !examroom.IsSuccessStatusCode || !examRoomPackage.IsSuccessStatusCode || !examRoomTeacher.IsSuccessStatusCode)
                 {
                     return false;
@@ -249,6 +248,21 @@ namespace Blazor_Server.Services
             return subjects;
         }
 
+        public SubjectViewModel GetSubjectOfExam(int subjectId)
+        {
+            var lstsubjects = _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get").GetAwaiter().GetResult();
+
+            var subjects = (from sub in lstsubjects
+                            where sub.Id == subjectId
+                            select new SubjectViewModel
+                            {
+                                Subject_Id = sub.Id,
+                                Subject_Name = sub.Subject_Name
+                            }).ToList().SingleOrDefault();
+
+            return subjects;
+        }
+
         public async Task<List<ClassViewModel>> GetClasses()
         {
             var lstclass = await _httpClient.GetFromJsonAsync<List<Class>>("https://localhost:7187/api/Class/Get");
@@ -286,7 +300,8 @@ namespace Blazor_Server.Services
                              select new ExamsViewModel
                              {
                                  Exams_Id = exam.Id,
-                                 Exams_Name = exam.Exam_Name
+                                 Exams_Name = exam.Exam_Name,
+                                 Subject_Id = exam.Subject_Id,
                              }).ToList();
 
             return exams;
@@ -343,6 +358,7 @@ namespace Blazor_Server.Services
         {
             public int Exams_Id { get; set; }
             public string Exams_Name { get; set; }
+            public int Subject_Id { get; set; }
         }
 
         public class RoomViewModel

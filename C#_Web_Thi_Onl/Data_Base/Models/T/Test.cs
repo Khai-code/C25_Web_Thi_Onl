@@ -35,5 +35,7 @@ namespace Data_Base.Models.T
         public ICollection<Exam_Room_Student> Exam_Room_Students { get; set; } = new List<Exam_Room_Student>();
         [JsonIgnore]
         public ICollection<Review_Test> Review_Tests { get; set; } = new List<Review_Test>();
+        [JsonIgnore]
+        public ICollection<Score> Scores { get; set; } = new List<Score>();
     }
 }
