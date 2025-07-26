@@ -49,6 +49,7 @@ namespace Data_Base.V_Model
 
         public int Exam_Room_Id { get; set; }
         public long Start_Time { get; set; }
+        public long End_Time { get; set; }
 
         public int Exam_Id { get; set; }
         public string Exam_Name { get; set; }
