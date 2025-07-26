@@ -204,7 +204,7 @@ namespace Blazor_Server.Services
                 packageModel.Package_Type_Id = packages.Package_Type_Id;
                 packageModel.Point_Type_Id = packages.Point_Type_Id;
 
-                var UpdatePackage = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
+                var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
                 if (!UpdatePackage.IsSuccessStatusCode)
                 {
                     return false;

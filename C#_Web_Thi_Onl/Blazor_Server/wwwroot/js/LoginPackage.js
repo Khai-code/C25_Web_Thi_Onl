@@ -3,6 +3,12 @@
 };
 
 window.startPersistentFullscreen = function () {
+
+    if (window.location.pathname !== "/Test") {
+        console.log("Không phải trang /Test → bỏ qua fullscreen");
+        return;
+    }
+
     function goFullscreen() {
         const docEl = document.documentElement;
         if (docEl.requestFullscreen) {
@@ -207,6 +213,8 @@ function showWarningModal(message) {
 }
 document.addEventListener('DOMContentLoaded', () => {
     const intervalTime = 5000;
+    let intervalId;
+    let hasCheatingHandled = false; // Chỉ báo 1 lần
 
     const fetchData = async () => {
         try {
@@ -217,14 +225,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const result = await window.dotnetHelper.invokeMethodAsync("load");
             console.log("📥 Kết quả load:", result);
-            if (result === true) {
-                clearInterval(intervalTime);
+
+            // Nếu gian lận và chưa xử lý lần nào → xử lý và ngừng gọi
+            if (result === true && !hasCheatingHandled) {
+                hasCheatingHandled = true;  // đánh dấu đã xử lý
+                clearInterval(intervalId);  // dừng vòng lặp
             }
         } catch (error) {
             console.error("❌ Lỗi khi gọi load():", error);
         }
     };
 
-    fetchData(); // gọi lần đầu
-    setInterval(fetchData, intervalTime); // gọi lặp lại
+    fetchData(); // Gọi lần đầu
+    intervalId = setInterval(fetchData, intervalTime); // Gọi lặp lại
 });
+
+

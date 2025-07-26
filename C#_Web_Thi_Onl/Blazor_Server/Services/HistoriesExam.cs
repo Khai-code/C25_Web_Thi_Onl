@@ -124,13 +124,16 @@ namespace Blazor_Server.Services
                     result.Add(new listTest
                     {
                         Id = test.Id,
+                        IdReview = reviewTest?.Id ?? 0,
+                        comenteacher = reviewTest?.Reason_For_Refusal ?? "không có thông tin",
                         statustest = reviewTest?.Status ?? 0,
+                        comenttest = reviewTest?.Reason_For_Sending ?? "không có thông tin",
                         Idpackage = test.Package_Id,
                         Test_Code = test.Test_Code ?? "N/A",
                         Status = test.Status,
                         Name_Student = user?.Full_Name ?? "Không rõ",
                         score = examHistory?.Score ?? 0,
-                        Check_Time =ConvertLong.ConvertLongToDateTime(examRoomStudent.Check_Time),
+                        Check_Time = ConvertLong.ConvertLongToDateTime(examRoomStudent.Check_Time),
                         End_Time = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time)
                     });
                 }
@@ -146,7 +149,8 @@ namespace Blazor_Server.Services
             var testQuestionsFiltered = testQuestions?
                 .Where(x => x.Test_Id == testId)
                 .ToList();
-
+            var Review_Test = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+            var reviewTest = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Status;
             // Lấy danh sách Question liên quan đến Test
             var questions = await _httpClient.GetFromJsonAsync<List<Question>>("/api/Question/Get");
             var questionsFiltered = questions?
@@ -179,7 +183,7 @@ namespace Blazor_Server.Services
 
             // Lấy các đáp án có liên quan tới câu hỏi và nằm trong lịch sử
             var answers = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
-            
+
             List<Answers> relatedAnswers = new();
             List<Exam_Room_Student_Answer_HisTory> relatedHistories = new();
             // Tạo danh sách kết quả
@@ -206,12 +210,12 @@ namespace Blazor_Server.Services
                 else
                 {
                     var answersFiltered = answers?
-                .Where(a =>questionsFiltered.Any(q => q.Id == a.Question_Id))
+                .Where(a => questionsFiltered.Any(q => q.Id == a.Question_Id))
                 .ToList();
                     relatedAnswers = answersFiltered
                         .Where(a => a.Question_Id == question.Id)
                         .ToList();
-                    relatedHistories= historiesFiltered
+                    relatedHistories = historiesFiltered
                         .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
                         .ToList();
                 }
@@ -219,6 +223,7 @@ namespace Blazor_Server.Services
                 result.Add(new listquestion
                 {
                     Id = question.Id,
+                    statuss = reviewTest,
                     question_type = type?.Package_Type_Id ?? 0,
                     question_lever = level?.Question_Level_Name ?? "",
                     Questions = question,
@@ -282,7 +287,7 @@ namespace Blazor_Server.Services
                 Console.WriteLine("Không tìm thấy package");
                 return false;
             }
-    
+
             var getallsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
             var subjectList = getallsubject
                 .Where(s => packageList.Any(p => p.Subject_Id == s.Id))
@@ -318,7 +323,7 @@ namespace Blazor_Server.Services
 
             var getallscore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
             var scoreList = getallscore
-                .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id)&& subjectList.Any(sj=>sj.Id==s.Subject_Id)&& examRoomStudentList.Any(exstd=>exstd.Student_Id==s.Student_Id))
+                .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id) && subjectList.Any(sj => sj.Id == s.Subject_Id) && examRoomStudentList.Any(exstd => exstd.Student_Id == s.Student_Id))
                 .ToList();
 
             if (!scoreList.Any())
@@ -361,7 +366,7 @@ namespace Blazor_Server.Services
                     continue;
                 }
 
-                answer.Points_Earned =Convert.ToDouble( score);
+                answer.Points_Earned = Convert.ToDouble(score);
 
                 var updateResponse = await _httpClient.PutAsJsonAsync($"/api/Answers/Pus/{answerId}", answer);
                 if (!updateResponse.IsSuccessStatusCode)
@@ -549,16 +554,49 @@ namespace Blazor_Server.Services
             return result;
         }
 
-        public async Task<Review_Test> Getinforreview(int idstudent,int idtest)
+        public async Task<Review_Test> Getinforreview(int idstudent, int idtest)
         {
-            var result=await _httpClient.GetFromJsonAsync<List<Review_Test>>($"/api/Review_Tests/Get");
-            return  result.FirstOrDefault(x => x.Student_Id == idstudent && x.Test_Id == idtest);
+            var result = await _httpClient.GetFromJsonAsync<List<Review_Test>>($"/api/Review_Tests/Get");
+            return result.FirstOrDefault(x => x.Student_Id == idstudent && x.Test_Id == idtest);
 
         }
         public async Task<Student> GetStudentByUserIdAsync(int userId)
         {
             var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
             return students.FirstOrDefault(s => s.User_Id == userId); // hoặc s.Id == userId, tuỳ DB
+        }
+        public async Task<bool> UpdateReviewforteacher(int id, int status, string reply, int userid)
+        {
+            try
+            {
+                var getallTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get");
+                var teacher = getallTeacher.FirstOrDefault(t => t.User_Id == userid).Id;
+                if (teacher == null) return false;
+                var reviewTest = await _httpClient.GetFromJsonAsync<Review_Test>($"/api/Review_Tests/GetBy/{id}");
+                if (reviewTest == null)
+                {
+                    Console.WriteLine("Không tìm thấy bản ghi cần cập nhật.");
+                    return false;
+                }
+                reviewTest.Status = status;
+                reviewTest.Reason_For_Refusal = reply;
+                reviewTest.Teacher_Id = teacher;
+                var response = await _httpClient.PutAsJsonAsync($"/api/Review_Tests/Pus/{id}", reviewTest);
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Cập nhật thất bại: {response.StatusCode}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi cập nhật đánh giá: {ex.Message}");
+                return false;
+            }
         }
         public async Task<bool> UpdateReviewAsync(int id, int status)
         {
@@ -732,7 +770,7 @@ namespace Blazor_Server.Services
         public class lispackage
         {
             public int Id { get; set; }
-            public int countReview { get; set; } 
+            public int countReview { get; set; }
             public string Name_package { get; set; }
             public string Name_Package_Type { get; set; }
         }
@@ -740,6 +778,8 @@ namespace Blazor_Server.Services
         {
             public int Id { get; set; }
             public int IdReview { get; set; }
+            public string comenttest { get; set; }
+            public string comenteacher { get; set; }
             public int studnetid { get; set; }
             public int Idpackage { get; set; }
             public string Test_Code { get; set; }
@@ -753,6 +793,7 @@ namespace Blazor_Server.Services
         public class listquestion
         {
             public int Id { get; set; }
+            public int? statuss { get; set; }
             public int question_type { get; set; }
             public string question_lever { get; set; }
             public Question Questions { get; set; }

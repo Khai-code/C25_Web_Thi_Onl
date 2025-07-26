@@ -134,6 +134,7 @@ else
     private DotNetObjectReference<Test>? dotnetHelper;
     private string plainText;
     private int index = 0;
+    private bool isSubmittedNormally = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -141,30 +142,33 @@ else
         {
             dotnetHelper = DotNetObjectReference.Create(this);
             await JSRuntime.InvokeVoidAsync("registerDotnetHelper", dotnetHelper);
+
+            // Gọi fullscreen sau khi JS chắc chắn load
+            await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
         }
     }
   
     [JSInvokable]
     public async Task<bool> load()
     {
+        if (isSubmittedNormally) return false; // bỏ qua gian lận nếu kết thúc hợp lệ
+
         bool abc = await TestService.GetExamHis(histDTO.TestId);
         if (abc == true)
         {
+            // Gian lận thật
             if (histDTO.PackageTypeId == 1)
-            {
                 await SaveAllAnswersCancel();
-            }
             else
-            {
                 await CreateStudentAnsCancel(selectedAnsIds);
-            }
 
+            // Navigation.NavigateTo("/His");
             toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");
-            Navigation.NavigateTo("/His");  // Điều hướng đến trang lịch sử // ✅ Bắt đầu countdown và chờ chạy xong
             return true;
         }
         return false;
     }
+
     
     [JSInvokable]
     public async Task ResetExamTime()
@@ -300,6 +304,7 @@ else
     {
         try
         {
+            isSubmittedNormally = true;
             if (listAnswers != null && listAnswers.Count > 0 && !isSubmitted)
             {
                 bool checkAns = await TestService.CreateAnswerStudentAns(listAnswers, studentCode, histDTO.TestId);
@@ -324,6 +329,7 @@ else
     {
         try
         {
+            isSubmittedNormally = true;
             if (!isSubmitted)
             {
                 bool checkAns = await TestService.CreateStudentAnswer(lstAnsId, studentCode, histDTO.TestId);
