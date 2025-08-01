@@ -61,10 +61,10 @@
                     </div>
                     <div class="dropdown">
                         <span class=" text-white d-flex align-items-center dropdown-toggle"
-                              type="button" id="filterDropdown"
-                              data-bs-toggle="dropdown" aria-expanded="false"
-                              title="Lọc loại gói đề"
-                              style="position: relative;">
+                        type="button" id="filterDropdown"
+                        data-bs-toggle="dropdown" aria-expanded="false"
+                        title="Lọc loại gói đề"
+                        style="position: relative;">
                             <i class="bi bi-funnel-fill me-1"></i> <span>Lọc</span>
                         </span>
                         <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filterDropdown" style="min-width: 250px;">
@@ -78,10 +78,10 @@
                             {
                                 <li class="form-check mb-1">
                                     <input class="form-check-input"
-                                           type="checkbox"
-                                           id="@type"
-                                           checked="@selectedTypes.Contains(type)"
-                                           @onchange="@(() => ToggleFilter(type))" />
+                                    type="checkbox"
+                                    id="@type"
+                                    checked="@selectedTypes.Contains(type)"
+                                    @onchange="@(() => ToggleFilter(type))" />
                                     <label class="form-check-label" for="@type">@type</label>
                                 </li>
                             }
@@ -94,7 +94,7 @@
                     @foreach (var exam in FilteredPackages)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center list-hover"
-                            @onclick="() => SelectExam(exam.Id)">
+                        @onclick="() => SelectExam(exam.Id)">
                             <div>
                                 <i class="bi bi-journal-text me-2 text-primary"></i>@exam.Name_package (@exam.Name_Package_Type)
                             </div>
@@ -119,7 +119,7 @@
 
                     <div class="card-body">
                         <input type="text" class="form-control mb-3" placeholder="🔍 Tìm kiếm bài thi..."
-                               @bind="studentSearch" />
+                        @bind="studentSearch" />
 
                         @if (listTests.Any(r => r.Idpackage == selectedExamId && MatchesSearch(r.Test_Code)))
                         {
@@ -137,12 +137,12 @@
                                         @foreach (var r in listTests)
                                         {
                                             <tr class="@((selectedStudent == r.Id ? "table-info" : "")) text-center"
-                                                @onclick="() => SelectStudent(r.Id)">
+                                            @onclick="() => SelectStudent(r.Id)">
                                                 <td>@r.Name_Student</td>
                                                 <td>@r.Test_Code</td>
-                                                <td>@r.score</td>
+                                                <td>@($"{r.score:0.00}")</td>
                                                 <td class="text-center">
-                                                    @if (r.Status == 1)
+                                                    @if (r.Status == 0)
                                                     {
                                                         if (r.statustest == 1)
                                                         {
@@ -185,16 +185,15 @@
                                                             <div class="@(hasReview ? "col-md-6" : "col-md-12") mb-3">
                                                                 <div class="border rounded p-3 shadow-sm bg-white h-100">
                                                                     <h6 class="fw-bold text-primary mb-3">Thông tin bài làm</h6>
-                                                                    <p><strong>Điểm:</strong> @r.score</p>
+                                                                    <p><strong>Điểm:</strong> @($"{r.score:0.00}")</p>
                                                                     <p><strong>Thời gian bắt đầu:</strong> @r.Check_Time</p>
                                                                     <p><strong>Thời gian kết thúc:</strong> @r.End_Time</p>
 
-                                                                    @if (r.Status == 1)
-                                                                    {
+                                                                  
                                                                         <button @onclick="() => ShowQuestions(r.Id)" class="btn btn-sm btn-primary mt-2">
                                                                             <i class="bi bi-eye"></i> Xem chi tiết
                                                                         </button>
-                                                                    }
+                                                                    
                                                                 </div>
                                                             </div>
 
@@ -208,6 +207,13 @@
                                                                         <p class="mb-3">@r.comenttest</p>
 
                                                                         <p><strong>Phản hồi của giáo viên:</strong></p>
+
+                                                                        @if (r.statustest == 2 && r.score != r.Point)
+                                                                        {
+                                                                            <div class="alert alert-info mt-2">
+                                                                                Điểm của học sinh đã được phúc khảo từ <strong>@($"{r.score:0.00}")</strong> sang <strong>@($"{r.Point:0.00}")</strong>
+                                                                            </div>
+                                                                        }
 
                                                                         @if (isWaitingReview)
                                                                         {
@@ -268,6 +274,24 @@
                         <div class="mb-3 border p-3 rounded shadow-sm">
                             <p><strong>Câu hỏi:</strong> @item.Questions.Question_Name</p>
 
+                            @if (item.question_type == 2)
+                            {
+                                @if (item.statuss == 1)
+                                {
+                                    <button class="btn btn-warning btn-sm"
+                                            @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
+                                        Sửa
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-warning btn-sm" disabled>
+                                        Sửa
+                                    </button>
+                                }
+                            }
+
+
                             <div class="mb-2">
                                 <span class="badge bg-info me-2">Độ khó: @item.question_lever</span>
                                 <span class="badge bg-warning text-dark">Điểm tối đa: @item.Questions.Maximum_Score</span>
@@ -306,19 +330,19 @@
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhập điểm</label>
                                                                 <input type="number"
-                                                                       min="0"
-                                                                       max="@item.Questions.Maximum_Score"
-                                                                       step="0.1"
-                                                                       value="@ans.Points_Earned"
-                                                                       oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString()))"
-                                                                       class="form-control form-control-sm" />
+                                                                min="0"
+                                                                max="@item.Questions.Maximum_Score"
+                                                                step="0.1"
+                                                                value="@ans.Points_Earned"
+                                                                oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString()))"
+                                                                class="form-control form-control-sm" />
                                                             </div>
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhận xét</label>
                                                                 <input type="text"
-                                                                       @bind="answerComments[item.Questions.Id]"
-                                                                       class="form-control form-control-sm"
-                                                                       placeholder="Nhận xét tại đây..." />
+                                                                @bind="answerComments[item.Questions.Id]"
+                                                                class="form-control form-control-sm"
+                                                                placeholder="Nhận xét tại đây..." />
                                                             </div>
                                                         </div>
                                                     }
@@ -345,19 +369,12 @@
                                                 if (item.Questions.Question_Type_Id == 1 || item.Questions.Question_Type_Id == 2)
                                                 {
                                                     <div class="d-flex align-items-center">
-                                                        <input type="radio"
-                                                               class="form-check-input me-2"
-                                                               name="quang"
-                                                               checked="@isChosen" />
                                                         <span>@ans.Answers_Name</span>
                                                     </div>
                                                 }
                                                 else
                                                 {
                                                     <div class="d-flex align-items-center">
-                                                        <input type="checkbox"
-                                                               class="form-check-input me-2"
-                                                               checked="@isChosen" />
                                                         <span>@ans.Answers_Name</span>
                                                     </div>
                                                 }
@@ -365,10 +382,6 @@
                                             else
                                             {
                                                 <div class="d-flex align-items-center">
-                                                    <input type="radio"
-                                                           class="form-check-input me-2"
-                                                           disabled
-                                                           checked="@isChosen" />
                                                     <span>@ans.Answers_Name</span>
                                                 </div>
                                             }
@@ -403,6 +416,85 @@
     </div>
 }
 
+@if (isEditing && lstQuesAns != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-4 border-0 position-relative">
+                <!-- Nút đóng (X) -->
+                <button type="button"
+                        class="btn-close position-absolute top-0 end-0 m-3"
+                        aria-label="Close"
+                        @onclick="CancelEdit">
+                </button>
+                <form onsubmit="return false" class="p-4">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold fs-5">Câu hỏi:</label>
+                        <input type="text" class="form-control form-control-lg"
+                               @bind="lstQuesAns.QuestionName"
+                               placeholder="Nhập nội dung câu hỏi..." />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold fs-5">Danh sách đáp án:</label>
+                        @for (int i = 0; i < lstQuesAns.Answers.Count; i++)
+                        {
+                            int index = i;
+                            <div class="d-flex mb-3 align-items-center">
+                                <span class="me-2 fw-bold">@((char)(65 + i)).</span>
+                                <input type="text"
+                                       class="form-control me-3"
+                                       value="@lstQuesAns.Answers[i].AnswersName"/>
+                                @if (lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               name="correctAnswer"
+                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                               @onclick="() => SetCorrectAnswer(index)" />
+                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
+                                    </div>
+                                }
+                                else if (lstQuesAns.QuestionTypeId == 3)
+                                {
+                                    <div class="form-check">
+                                        <input class="form-check-input"
+                                               type="checkbox"
+                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                               @onclick="() => ToggleCorrectAnswer(index)" />
+                                        <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(validationMessage))
+                    {
+                        <div class="alert alert-danger mb-3">
+                            @validationMessage
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-end mt-4">
+                        <button type="button"
+                                class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill"
+                                @onclick="CancelEdit">
+                            ❌ Hủy
+                        </button>
+                        <button type="button"
+                                class="btn btn-primary px-4 py-2 rounded-pill"
+                                @onclick="SaveEditedQuestion">
+                            💾 Lưu
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+
 @code
 {
     private List<lispackage> packagess = new List<lispackage>();
@@ -420,6 +512,116 @@
     private double totalScore = 0;
     private Dictionary<int, string> answerComments = new();
     private string comment;
+    public List<ListQuesAnsReview> lstQues = new List<ListQuesAnsReview>();
+    public ListQuesAnsReview lstQuesAns = new ListQuesAnsReview();
+    private bool isEditing = false;
+    public List<int> selectedQuestionIds = new List<int>();
+    private string validationMessage = "";
+
+    private ListQuesAnsReview MapToListQuesAnsReview(listquestion item)
+    {
+        return new ListQuesAnsReview
+            {
+                QuestionId = item.Questions.Id,
+                QuestionName = item.Questions.Question_Name,
+                QuestionTypeId = item.question_type,
+                PackageId = item.Questions.Package_Id,
+                MaximumScore = item.Questions.Maximum_Score,
+                // Leva = item.question_lever,
+                Answers = item.Answers?.Select(a => new AnswerReview
+                {
+                    AnswerId = a.Id,
+                    AnswersName = a.Answers_Name,
+                    Right_Answer = a.Right_Answer,
+                    QuestionId = a.Question_Id
+                }).ToList() ?? new List<AnswerReview>()
+            };
+    }
+
+
+    private void StartEditQuestion(ListQuesAnsReview question)
+    {
+        lstQuesAns = new ListQuesAnsReview
+            {
+                QuestionId = question.QuestionId,
+                QuestionName = question.QuestionName,
+                QuestionTypeId = question.QuestionTypeId,
+                PackageId = question.PackageId,
+                MaximumScore = question.MaximumScore,
+                Leva = question.Leva,
+                Answers = question.Answers.Select(a => new AnswerReview
+                {
+                    AnswerId = a.AnswerId,
+                    AnswersName = a.AnswersName,
+                    Right_Answer = a.Right_Answer,
+                    QuestionId = a.QuestionId
+                }).ToList()
+            };
+        validationMessage = "";
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        isEditing = false;
+        lstQuesAns = null;
+        validationMessage = "";
+    }
+
+    private void SetCorrectAnswer(int index)
+    {
+        // Reset tất cả về 0
+        for (int i = 0; i < lstQuesAns.Answers.Count; i++)
+        {
+            lstQuesAns.Answers[i].Right_Answer = 0;
+        }
+        // Set đáp án được chọn thành 1
+        lstQuesAns.Answers[index].Right_Answer = 1;
+
+        // Clear validation message khi user thực hiện action
+        validationMessage = "";
+
+        // Trigger re-render
+        StateHasChanged();
+    }
+
+    private void ToggleCorrectAnswer(int index)
+    {
+        lstQuesAns.Answers[index].Right_Answer = lstQuesAns.Answers[index].Right_Answer == 1 ? 0 : 1;
+
+        // Clear validation message khi user thực hiện action
+        validationMessage = "";
+
+        // Trigger re-render
+        StateHasChanged();
+    }
+
+    private async Task SaveEditedQuestion()
+    {
+        try
+        {
+
+            bool check = await HistoriesExam.UpdateReviewedQuestionAns(lstQuesAns);
+            if (check)
+            {
+                isEditing = false;
+                lstQuesAns = null;
+                validationMessage = "";
+                toastService.ShowSuccess("Update thành công");
+                // await GetLstQues(packageId, packageTypeId);
+            }
+            else
+            {
+                toastService.ShowError("Update thất bại");
+                return;
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
+        }
+    }
+
     private double GetQuestionTotalScore(dynamic questionItem)
     {
         if (questionItem?.Answers == null) return 0;
@@ -437,6 +639,13 @@
         return sum;
     }
 
+    private async Task LoadListTests(int examId)
+    {
+        listTests = await HistoriesExam.GetTests(examId);
+        StateHasChanged();
+    }
+
+
     private async Task updateReview(int id, int status)
     {
         try
@@ -449,6 +658,10 @@
             if (respon != null)
             {
                 Console.WriteLine("✅ Cập nhật thành công");
+                if (selectedExamId.HasValue)
+                {
+                    await LoadListTests(selectedExamId.Value); 
+                }
             }
             else
             {
@@ -572,6 +785,14 @@
             toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
         }
     }
+
+    private async Task<bool> UpdateScoreByTestId(int testId, double totalScore)
+    {
+        // Gọi đúng API update Score với TestId truyền vào
+        var result = await HistoriesExam.SaveAllScoresByTestId(testId, totalScore);
+        return result;
+    }
+
     private async Task updateexamhis(int id, double score)
     {
         if (score > 10)
@@ -580,9 +801,9 @@
             return;
         }
 
-        var respon = await HistoriesExam.updateExamHis(id, score);
-        await HistoriesExam.UpdateAllAnswerScores(answerScores);
+        var respon = await UpdateScoreByTestId(id, score); // Chỉ gọi update Score
         var resspon = await SubmitComments();
+
         if (respon && resspon)
         {
             toastService.ShowSuccess("✅ Cập nhật điểm thành công!");
@@ -592,6 +813,8 @@
             toastService.ShowError("❌ Cập nhật điểm thất bại! Vui lòng thử lại.");
         }
     }
+
+
     private async Task<bool> SubmitComments()
     {
         foreach (var entry in answerComments)

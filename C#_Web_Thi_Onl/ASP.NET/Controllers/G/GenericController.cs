@@ -551,12 +551,14 @@ namespace ASP.NET.Controllers.G
             int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
             int? pointTypeId = filters.ContainsKey("Point_Type_Id") ? int.Parse(filters["Point_Type_Id"]) : null;
             int? summaryId = filters.ContainsKey("Summary_Id") ? int.Parse(filters["Summary_Id"]) : null;
+            int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.S.Score>(a =>
                 (!studentId.HasValue || a.Student_Id == studentId) &&
                 (!subjectId.HasValue || a.Subject_Id == subjectId) &&
                 (!pointTypeId.HasValue || a.Point_Type_Id == pointTypeId) &&
-                (!summaryId.HasValue || a.Summary_Id == summaryId) 
+                (!summaryId.HasValue || a.Summary_Id == summaryId) &&
+                (!testId.HasValue || a.Test_Id == testId)
             );
 
             return Ok(result);

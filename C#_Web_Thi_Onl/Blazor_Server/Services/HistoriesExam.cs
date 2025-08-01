@@ -1,4 +1,5 @@
 ﻿using Blazor_Server.Pages;
+using Data_Base.Filters;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.C;
@@ -13,6 +14,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.WebSockets;
 using static Blazor_Server.Services.ExammanagementService;
+using static Blazor_Server.Services.PackageManager;
 
 namespace Blazor_Server.Services
 {
@@ -119,6 +121,9 @@ namespace Blazor_Server.Services
                     var student = getStudents.FirstOrDefault(s => s.Id == examRoomStudent.Student_Id);
                     var user = getusers.FirstOrDefault(u => u.Id == student?.User_Id);
                     var examHistory = getexamHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == examRoomStudent.Id);
+                    var getallScore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
+                    var scoreRecord = getallScore?.FirstOrDefault(s =>
+                        s.Student_Id == student.Id && s.Test_Id == test.Id);
                     var reviewTest = getreviewTests?.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student?.Id);
 
                     result.Add(new listTest
@@ -133,6 +138,7 @@ namespace Blazor_Server.Services
                         Status = test.Status,
                         Name_Student = user?.Full_Name ?? "Không rõ",
                         score = examHistory?.Score ?? 0,
+                        Point = scoreRecord?.Point ?? 0,
                         Check_Time = ConvertLong.ConvertLongToDateTime(examRoomStudent.Check_Time),
                         End_Time = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time)
                     });
@@ -344,41 +350,28 @@ namespace Blazor_Server.Services
 
             return true;
         }
-        public async Task<bool> UpdateAllAnswerScores(Dictionary<int, string> answerScores)
+        public async Task<bool> SaveAllScoresByTestId(int testId, double totalScore)
         {
-            var allAnswers = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
-
-            if (allAnswers == null || !allAnswers.Any())
+            // Lấy Score với TestId
+            var filterScore = new CommonFilterRequest
             {
-                Console.WriteLine("❌ Không lấy được danh sách câu trả lời từ API.");
-                return false;
-            }
-
-            foreach (var entry in answerScores)
-            {
-                int answerId = entry.Key;
-                string score = entry.Value;
-
-                var answer = allAnswers.FirstOrDefault(a => a.Id == answerId);
-                if (answer == null)
-                {
-                    Console.WriteLine($"⚠ Không tìm thấy câu trả lời với ID {answerId}");
-                    continue;
-                }
-
-                answer.Points_Earned = Convert.ToDouble(score);
-
-                var updateResponse = await _httpClient.PutAsJsonAsync($"/api/Answers/Pus/{answerId}", answer);
-                if (!updateResponse.IsSuccessStatusCode)
-                {
-                    Console.WriteLine($"❌ Cập nhật điểm thất bại cho Answer ID {answerId}: {(int)updateResponse.StatusCode} - {updateResponse.ReasonPhrase}");
-                    return false;
-                }
-            }
-
-            Console.WriteLine("✅ Đã cập nhật điểm thành phần cho tất cả câu trả lời.");
-            return true;
+                Filters = new Dictionary<string, string>
+        {
+            { "Test_Id", testId.ToString() }
         }
+            };
+            var scoreRep = await _httpClient.PostAsJsonAsync("/api/Score/common/get", filterScore);
+            if (!scoreRep.IsSuccessStatusCode) return false;
+
+            var scoreToUpdate = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).SingleOrDefault();
+            if (scoreToUpdate == null) return false;
+
+            scoreToUpdate.Point = totalScore;
+            var updateScoreResp = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{scoreToUpdate.Id}", scoreToUpdate);
+
+            return updateScoreResp.IsSuccessStatusCode;
+        }
+
 
         public async Task<bool> updatecomemt(int id, string? text)
         {
@@ -579,7 +572,7 @@ namespace Blazor_Server.Services
                     return false;
                 }
                 reviewTest.Status = status;
-                reviewTest.Reason_For_Refusal = reply;
+                reviewTest.Reason_For_Refusal = reply ?? "   ";
                 reviewTest.Teacher_Id = teacher;
                 var response = await _httpClient.PutAsJsonAsync($"/api/Review_Tests/Pus/{id}", reviewTest);
                 if (response.IsSuccessStatusCode)
@@ -798,6 +791,156 @@ namespace Blazor_Server.Services
             };
         }
 
+        public async Task<bool> UpdateReviewedQuestionAns(ListQuesAnsReview ado)
+        {
+            try
+            {
+                if (ado == null || ado.Answers == null || !ado.Answers.Any())
+                {
+                    Console.WriteLine("Không có dữ liệu câu trả lời để cập nhật.");
+                    return false;
+                }
+
+                // Bước 1: Cập nhật từng câu trả lời
+                foreach (var answer in ado.Answers)
+                {
+                    var answerToUpdate = new Data_Base.Models.A.Answers
+                    {
+                        Id = answer.AnswerId,
+                        Answers_Name = answer.AnswersName,
+                        Right_Answer = answer.Right_Answer,
+                        Question_Id = ado.QuestionId // Đảm bảo có QuestionId nếu cần
+                    };
+
+                    var answerResponse = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Answers/Pus/{answer.AnswerId}", answerToUpdate);
+
+                    if (!answerResponse.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Cập nhật câu trả lời thất bại cho AnswerId {answer.AnswerId}");
+                        return false;
+                    }
+                }
+
+                // Bước 2: Kiểm tra lại Test và Package tương ứng sau khi cập nhật đáp án
+                var packageId = ado.PackageId;  // Đã có từ ado
+                var packageResponse = await _httpClient.GetFromJsonAsync<Data_Base.Models.P.Package>($"https://localhost:7187/api/Package/GetBy/{packageId}");
+
+                if (packageResponse == null)
+                {
+                    Console.WriteLine("Không tìm thấy thông tin về Package.");
+                    return false;
+                }
+
+                int subjectId = packageResponse.Subject_Id;  // Lấy SubjectId từ Package
+                int pointTypeId = packageResponse.Point_Type_Id;  // Lấy PointTypeId từ Package
+                var testsInPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>($"/api/Test/Get");
+                var tests = testsInPackage.Where(t => t.Package_Id == packageId).ToList();
+
+                if (!tests.Any())
+                {
+                    Console.WriteLine("Không tìm thấy bài Test nào thuộc Package.");
+                    return false;
+                }
+
+                // Bước 3: Cập nhật điểm cho học sinh sau khi sửa đáp án
+                foreach (var test in tests)
+                {
+                    // 1. Lấy học sinh của bài thi này
+                    var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                    var examRoomStudent = examRoomStudents.FirstOrDefault(e => e.Test_Id == test.Id);
+                    if (examRoomStudent == null) continue;
+                    int studentId = examRoomStudent.Student_Id;
+
+                    // 2. Lấy toàn bộ lịch sử câu trả lời
+                    var allHis = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>("/api/Exam_Room_Student_Answer_HisTory/Get");
+                    var studentHis = allHis.Where(h => h.Exam_Room_Student_Id == examRoomStudent.Id).ToList();
+
+                    // 3. Lấy danh sách câu hỏi thuộc Test này
+                    var filterTQ = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
+        {
+            { "Test_Id", test.Id.ToString() }
+        }
+                    };
+                    var TQ = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/common/get", filterTQ);
+                    var lstTQ = await TQ.Content.ReadFromJsonAsync<List<Test_Question>>();
+                    int totalQuestions = lstTQ.Count;
+
+                    int correctCount = 0;
+                    foreach (var testQuestion in lstTQ)
+                    {
+                        int questionId = testQuestion.Question_Id;
+
+                        // 4. Lấy đáp án đúng
+                        var filterAns = new CommonFilterRequest
+                        {
+                            Filters = new Dictionary<string, string>
+            {
+                { "Question_Id", questionId.ToString() }
+            }
+                        };
+                        var ansResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
+                        var answers = await ansResponse.Content.ReadFromJsonAsync<List<Answers>>();
+                        var correctAnswerIds = answers.Where(a => a.Right_Answer == 1).Select(a => a.Id).ToList();
+
+                        // 5. Lấy các đáp án học sinh đã chọn cho câu hỏi hiện tại
+                        var studentSelectedIds = studentHis
+                            .Where(sa => answers.Any(a => a.Id == sa.Answer_Id && a.Question_Id == questionId))
+                            .Select(sa => sa.Answer_Id)
+                            .ToList();
+
+                        // 6. So sánh
+                        bool isCorrect =
+                            studentSelectedIds.Count == correctAnswerIds.Count &&
+                            !studentSelectedIds.Except(correctAnswerIds).Any();
+
+                        if (isCorrect) correctCount++;
+                    }
+
+                    double pointsPerQuestion = totalQuestions == 0 ? 0 : 10.0 / totalQuestions;
+                    double newPoints = pointsPerQuestion * correctCount;
+
+                    // 7. Lọc Score cần update
+                    var filterScore = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
+        {
+            { "Student_Id", studentId.ToString() },
+            { "Test_Id", test.Id.ToString() }
+        }
+                    };
+
+                    var responseScore = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Score/common/get", filterScore);
+                    var score = (await responseScore.Content.ReadFromJsonAsync<List<Score>>()).SingleOrDefault();
+                    if (score == null)
+                    {
+                        Console.WriteLine("Không tìm thấy điểm cho học sinh và bài thi này.");
+                        continue;
+                    }
+
+                    // 8. Update điểm cho Score
+                    score.Point = newPoints;
+                    var scoreUpdateResponse = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{score.Id}", score);
+                    if (!scoreUpdateResponse.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Cập nhật điểm thất bại cho Test {test.Id} của học sinh {studentId}");
+                        continue;
+                    }
+                }
+
+
+                Console.WriteLine("✅ Cập nhật đáp án và điểm số thành công.");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi cập nhật đáp án và điểm số: {ex.Message}");
+                return false;
+            }
+        }
+
+
 
         public class Test_Review
         {
@@ -837,6 +980,7 @@ namespace Blazor_Server.Services
             public int Status { get; set; }
             public string Name_Student { get; set; }
             public double score { get; set; }
+            public double Point { get; set; }
             public DateTime Check_Time { get; set; }
             public DateTime End_Time { get; set; }
         }
@@ -850,5 +994,29 @@ namespace Blazor_Server.Services
             public List<Answers> Answers { get; set; }
             public List<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; }
         }
+
+        public class ListQuesAnsReview
+        {
+            public int QuestionId { get; set; }
+            public int? QuestionTypeId { get; set; }
+            public int PackageId { get; set; }
+            public string QuestionName { get; set; }
+            public double? MaximumScore { get; set; }
+            public int Leva { get; set; }
+            public List<AnswerReview>? Answers { get; set; }
+        }
+        public class AnswerReview
+        {
+            public int AnswerId { get; set; }
+            public string AnswersName { get; set; }
+            public int? Right_Answer { get; set; }
+            public int? QuestionId { get; set; }
+            public bool IsCorrect
+            {
+                get => Right_Answer == 1;
+                set => Right_Answer = value ? 1 : 0;
+            }
+        }
+
     }
 }

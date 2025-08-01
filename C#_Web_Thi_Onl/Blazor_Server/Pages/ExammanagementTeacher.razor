@@ -21,7 +21,7 @@
                 </button>
                 <div class="dropdown">
                     <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center gap-1"
-                            type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                    type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         <i class="bi bi-funnel-fill"></i> Lọc
                     </button>
 
@@ -30,12 +30,12 @@
                         {
                             <li class="form-check mb-2">
                                 <input class="form-check-input"
-                                       type="radio"
-                                       id="@option.Id"
-                                       name="timeFilter"
-                                       value="@option.Id"
-                                       checked="@(_selectedTimeFilter == option.Id)"
-                                       @onchange="@(() => OnTimeOptionChanged(option.Id))" />
+                                type="radio"
+                                id="@option.Id"
+                                name="timeFilter"
+                                value="@option.Id"
+                                checked="@(_selectedTimeFilter == option.Id)"
+                                @onchange="@(() => OnTimeOptionChanged(option.Id))" />
                                 <label class="form-check-label ms-1" for="@option.Id" style="cursor: pointer;">@option.Label</label>
                             </li>
                         }
@@ -178,13 +178,13 @@
 
                                 </div>
                             </div>
-                                <button class="btn btn-sm d-flex align-items-center
+                            <button class="btn btn-sm d-flex align-items-center
                                          @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
-                                        @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
-                                        disabled="@(student.status.StartsWith("Đã hoàn thành"))"
-                                        title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
-                                    <i class="fas fa-times me-1"></i> Hủy thi
-                                </button>
+                            @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
+                            disabled="@(student.status.StartsWith("Đã hoàn thành"))"
+                            title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
+                                <i class="fas fa-times me-1"></i> Hủy thi
+                            </button>
                         </li>
 
 
@@ -209,16 +209,16 @@
                             <div class="mb-3">
                                 <label for="examName" class="form-label">Tên bài thi</label>
                                 <InputText id="examName" class="form-control" @bind-Value="model.ExamName"
-                                           required
-                                           oninvalid="this.setCustomValidity('Vui lòng nhập tên bài thi')"
-                                           oninput="this.setCustomValidity('')" />
+                                required
+                                oninvalid="this.setCustomValidity('Vui lòng nhập tên bài thi')"
+                                oninput="this.setCustomValidity('')" />
                             </div>
                             <div class="mb-3">
                                 <label for="subjectId" class="form-label">Môn học</label>
                                 <InputSelect id="subjectId" class="form-control" @bind-Value="model.SubjectId"
-                                             required
-                                             oninvalid="this.setCustomValidity('Vui lòng chọn môn học')"
-                                             oninput="this.setCustomValidity('')">
+                                required
+                                oninvalid="this.setCustomValidity('Vui lòng chọn môn học')"
+                                oninput="this.setCustomValidity('')">
                                     <option value=" ">-- Chọn gói môn --</option>
                                     @foreach (var subj in subjectViewModel)
                                     {
@@ -257,9 +257,16 @@
                             {
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <span class="fw-medium">@test.Test_Code</span>
-                                    <button class="btn btn-outline-info btn-sm" @onclick="() => LoadQuestionsForTest(test.Id)">
-                                        Bắt đầu chấm điểm
-                                    </button>
+                                    @if (test.Status != 1)
+                                    {
+                                        <button class="btn btn-outline-info btn-sm" @onclick="() => LoadQuestionsForTest(test.Id)">
+                                            Bắt đầu chấm điểm
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-success fw-bold">Đã chấm điểm</span>
+                                    }
                                 </li>
                             }
                         </ul>
@@ -286,9 +293,9 @@
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     <span>@ans.Answers_Name</span>
                                                     <input type="number" min="0" max="@q.Questions.Maximum_Score" step="0.01"
-                                                           class="form-control form-control-sm border-2 border-primary "
-                                                           style="width: 100px;"
-                                                           @bind="ans.Points_Earned" />
+                                                    class="form-control form-control-sm border-2 border-primary "
+                                                    style="width: 100px;"
+                                                    @bind="ans.Points_Earned" />
                                                 </li>
                                             }
                                         </ul>
@@ -326,6 +333,7 @@
     private string CurrentGradingPackageName = "";
     private List<Data_Base.Models.T.Test> TestsOfPackage = new();
     private List<listquestion> QuestionsWithAnswers = new();
+    private int CurrentGradingTestId = 0;
     [Inject] IJSRuntime JS { get; set; }
     private List<(int Id, string Label)> timeOptions = new()
 {
@@ -356,11 +364,11 @@
     }
 
     private DateTime? from = null;
-   private DateTime? to = null;
+    private DateTime? to = null;
 
     private async Task ApplyDateFilter()
     {
-        
+
 
         switch (_selectedTimeFilter)
         {
@@ -410,11 +418,11 @@
 
         if (from.HasValue && to.HasValue)
         {
-        
+
             Listpackages = new List<listpackage>();
             listStudents = new List<listStudent>();
             exams = await exammanagement.SeachExam(from.Value, to.Value);
-            
+
         }
 
         else
@@ -455,7 +463,7 @@
     {
         IsAddExamModalOpen = false;
         model.ExamName = null;
-       model.SubjectId = 0;
+        model.SubjectId = 0;
     }
 
     public async Task CreateExam()
@@ -482,14 +490,14 @@
                 toastService.ShowWarning("Bạn chưa chọn môn học!");
                 return;
             } 
-          
+
             await exammanagement.AddExam(exam);
             toastService.ShowSuccess("Tạo bài thi thành công");
             model.ExamName = string.Empty;
             model.SubjectId = 0;
             exams = await exammanagement.GetallExam();
             IsAddExamModalOpen = false;
-            
+
         }
         catch (Exception ex)
         {
@@ -498,7 +506,7 @@
     }
 
     public async Task Subject()
-    
+
     {
         try
         {
@@ -586,6 +594,7 @@
 
     private async Task LoadQuestionsForTest(int testId)
     {
+        CurrentGradingTestId = testId;
         QuestionsWithAnswers = await exammanagement.GetFullQuestionsByTest(testId);
         StateHasChanged();
     }
@@ -597,15 +606,19 @@
             toastService.ShowError("Không tìm thấy Exam_Room_Student tương ứng để lưu điểm!");
             return;
         }
-        // Giả sử bạn chỉ có 1 học sinh chấm điểm 1 lần (nếu nhiều hơn thì cần chọn cụ thể)
         var examRoomStudentId = listExamRoomStudents.First().Id;
         // Gom hết các answer từ QuestionsWithAnswers
         var allAnswers = QuestionsWithAnswers.SelectMany(q => q.Answers).ToList();
 
-        var result = await exammanagement.SaveAllScores(examRoomStudentId, allAnswers);
+        var result = await exammanagement.SaveAllScores(CurrentGradingTestId, allAnswers);
 
         if (result)
+        {
             toastService.ShowSuccess("Lưu toàn bộ điểm thành công!");
+            TestsOfPackage = await exammanagement.GetTestsByPackage(CurrentGradingPackageId);
+            StateHasChanged();
+            
+        }
         else
             toastService.ShowError("Lưu điểm thất bại!");
     }

@@ -332,58 +332,27 @@ namespace Blazor_Server.Services
             return tests ?? new List<Data_Base.Models.T.Test>();
         }
 
-        public async Task<List<Test_Question>> GetTestQuestionsByTest(int testId)
+        public async Task<Exam_Room_Student?> GetExamRoomStudentByTestId(int testId)
         {
-            var request = new CommonFilterRequest
+            var filter = new CommonFilterRequest
             {
                 Filters = new Dictionary<string, string>
         {
             { "Test_Id", testId.ToString() }
         }
             };
-            var response = await _httpClient.PostAsJsonAsync("/api/Test_Question/common/get", request);
+
+            var response = await _httpClient.PostAsJsonAsync("/api/Exam_Room_Student/common/get", filter);
             if (!response.IsSuccessStatusCode)
-                return new List<Test_Question>();
-            var testQuestions = await response.Content.ReadFromJsonAsync<List<Test_Question>>();
-            return testQuestions ?? new List<Test_Question>();
+                return null;
+
+            var data = await response.Content.ReadFromJsonAsync<List<Exam_Room_Student>>();
+            return data?.FirstOrDefault();
         }
 
-        public async Task<List<Question>> GetQuestionsByIds(List<int> questionIds)
-        {
-            var request = new CommonFilterRequest
-            {
-                Filters = new Dictionary<string, string>
-        {
-            { "Id", string.Join(",", questionIds) }
-        }
-            };
-            var response = await _httpClient.PostAsJsonAsync("/api/Question/common/get", request);
-            if (!response.IsSuccessStatusCode)
-                return new List<Question>();
-            var questions = await response.Content.ReadFromJsonAsync<List<Question>>();
-            return questions ?? new List<Question>();
-        }
-
-        public async Task<List<Answers>> GetAnswersByQuestion(int questionId)
-        {
-            var request = new CommonFilterRequest
-            {
-                Filters = new Dictionary<string, string>
-        {
-            { "Question_Id", questionId.ToString() }
-        }
-            };
-            var response = await _httpClient.PostAsJsonAsync("/api/Answers/common/get", request);
-            if (!response.IsSuccessStatusCode)
-                return new List<Answers>();
-            var answers = await response.Content.ReadFromJsonAsync<List<Answers>>();
-            return answers ?? new List<Answers>();
-        }
-
-        // Lấy lịch sử thi theo Exam_Room_Student_Id
         public async Task<Exam_HisTory?> GetExamHistoryByExamRoomStudentId(int examRoomStudentId)
         {
-            var request = new CommonFilterRequest
+            var filter = new CommonFilterRequest
             {
                 Filters = new Dictionary<string, string>
         {
@@ -391,11 +360,12 @@ namespace Blazor_Server.Services
         }
             };
 
-            var response = await _httpClient.PostAsJsonAsync("/api/Exam_HisTory/common/get", request);
-            if (!response.IsSuccessStatusCode) return null;
+            var response = await _httpClient.PostAsJsonAsync("/api/Exam_HisTory/common/get", filter);
+            if (!response.IsSuccessStatusCode)
+                return null;
 
-            var histories = await response.Content.ReadFromJsonAsync<List<Exam_HisTory>>();
-            return histories?.SingleOrDefault();
+            var data = await response.Content.ReadFromJsonAsync<List<Exam_HisTory>>();
+            return data?.FirstOrDefault();
         }
 
 
@@ -511,7 +481,7 @@ namespace Blazor_Server.Services
         }
 
 
-        public async Task<bool> SaveAllScores(int examRoomStudentId, List<Answers> updatedAnswers)
+        public async Task<bool> SaveAllScores(int testId, List<Answers> updatedAnswers)
         {
             // 1. Update từng Answer
             double totalScore = 0;
@@ -529,18 +499,18 @@ namespace Blazor_Server.Services
                 totalScore += answer.Points_Earned ?? 0;
             }
 
-            // 2. Update lại Score trong Exam_HisTory
-            var examHistory = await GetExamHistoryByExamRoomStudentId(examRoomStudentId);
+            var examRoomStudent = await GetExamRoomStudentByTestId(testId);
+            if (examRoomStudent == null) return false;
+
+            // Bước 2: Lấy duy nhất Exam_HisTory theo ExamRoomStudentId
+            var examHistory = await GetExamHistoryByExamRoomStudentId(examRoomStudent.Id);
+            if (examHistory == null) return false;
+
             if (examHistory != null)
             {
                 examHistory.Score = totalScore;
                 var updateHistoryResponse = await _httpClient.PutAsJsonAsync($"/api/Exam_HisTory/Pus/{examHistory.Id}", examHistory);
             }
-
-            // 3. Cập nhật vào bảng Score (chỉ update, không tạo mới)
-            // -- Lấy thông tin liên quan
-            var examRoomStudent = await _httpClient.GetFromJsonAsync<Exam_Room_Student>($"/api/Exam_Room_Student/GetBy/{examRoomStudentId}");
-            if (examRoomStudent == null) return false;
 
             int studentId = examRoomStudent.Student_Id;
             var examRoomPackage = await _httpClient.GetFromJsonAsync<Exam_Room_Package>($"/api/Exam_Room_Package/GetBy/{examRoomStudent.Exam_Room_Package_Id}");
@@ -583,12 +553,29 @@ namespace Blazor_Server.Services
                 Subject_Id = subjectId,
                 Point_Type_Id = pointTypeId,
                 Point = totalScore,
-                Summary_Id = summaryId
+                Summary_Id = summaryId,
+                Test_Id = testId
             };
 
             var checkScore = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{lstScore.Id}", score);
             if (!checkScore.IsSuccessStatusCode)
                 return false;
+
+            var testResp = await _httpClient.GetAsync($"/api/Test/GetBy/{testId}");
+            if (testResp.IsSuccessStatusCode)
+            {
+                var test = await testResp.Content.ReadFromJsonAsync<Data_Base.Models.T.Test>();
+                if (test != null)
+                {
+                    test.Status = 1;
+                    var updateTestResp = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{testId}", test);
+       
+                    if (!updateTestResp.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Cập nhật status cho Test {testId} thất bại.");
+                    }
+                }
+            }
 
             return true;
 
