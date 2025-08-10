@@ -403,7 +403,7 @@ namespace Blazor_Server.Services
                 }
 
                 var ers = (await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
-                if (lstAns != null || lstAns.Count > 0)
+                if (lstAns != null && lstAns.Count > 0)
                 {
                     foreach (var item in lstAns)
                     {

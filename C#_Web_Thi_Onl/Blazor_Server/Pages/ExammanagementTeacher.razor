@@ -601,12 +601,12 @@
 
     private async Task SaveAllScores()
     {
-        if (listExamRoomStudents == null || !listExamRoomStudents.Any())
-        {
-            toastService.ShowError("Không tìm thấy Exam_Room_Student tương ứng để lưu điểm!");
-            return;
-        }
-        var examRoomStudentId = listExamRoomStudents.First().Id;
+        // if (listExamRoomStudents == null || !listExamRoomStudents.Any())
+        // {
+        //     toastService.ShowError("Không tìm thấy Exam_Room_Student tương ứng để lưu điểm!");
+        //     return;
+        // }
+        // var examRoomStudentId = listExamRoomStudents.First().Id;
         // Gom hết các answer từ QuestionsWithAnswers
         var allAnswers = QuestionsWithAnswers.SelectMany(q => q.Answers).ToList();
 

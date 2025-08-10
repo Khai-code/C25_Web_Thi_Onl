@@ -160,34 +160,37 @@
                                                     <td>
                                                         @if (r.Status == 0)
                                                         {
-
+                                                            <span class="badge bg-success">Đã thi</span>
+                                                        }
+                                                        else if (r.Status == 1)
+                                                        {
+                                                            
                                                             if (r.statustest == 1)
                                                             {
                                                                 <span class="badge bg-secondary">⏳ Đã gửi yêu cầu phúc khảo, đang chờ xem xét</span>
                                                             }
                                                             else if (r.statustest == 2)
                                                             {
-                                                                <span class="badge bg-success">
-                                                                    Yêu cầu phúc khảo của bạn đã được xét duyệt.
-                                                                </span>
+                                                                <span class="badge bg-success">Yêu cầu phúc khảo của bạn đã được xét duyệt.</span>
                                                             }
                                                             else if (r.statustest == 3 || r.statustest == 5)
                                                             {
-                                                                <span class="badge bg-danger">
-                                                                    Yêu cầu phúc khảo đã bị từ chối.
-                                                                </span>
-                                                            }else if(r.statustest==4){
+                                                                <span class="badge bg-danger">Yêu cầu phúc khảo đã bị từ chối.</span>
+                                                            }
+                                                            else if (r.statustest == 4)
+                                                            {
                                                                 <span class="badge bg-info">Đã phúc khảo thành công</span>
                                                             }
-                                                            else{
-                                                                <span class="badge bg-success">Đã thi</span>
+                                                            else
+                                                            {
+                                                                <span class="badge bg-success">Đã chấm điểm</span>
                                                             }
                                                         }
-
                                                         else
                                                         {
                                                             <span class="badge bg-warning text-dark">Chưa thi</span>
                                                         }
+
                                                     </td>
 
                                                     <td>@r.score</td>
@@ -205,7 +208,7 @@
                                                                     <i class="bi bi-envelope"></i> Thông tin phản hồi
                                                                 </button>
                                                             }
-                                                            else if (r.statustest == 0)
+                                                            else if (r.statustest == 0 && r.Status==1)
                                                             {
                                                                 @if (r.Check_Time >= DateTime.Now.AddMonths(-1))
                                                                 {
@@ -331,7 +334,7 @@
                                 @foreach (var ans in item.Answers)
                                 {
                                     var isChosen = item.Exam_Room_Student_Answer_HisTories.Any(h => h.Answer_Id == ans.Id);
-                                    bool isCorrect = ans.Right_Answer == 1;
+                                    bool isCorrect = ans.Right_Answer == 9999999999;
 
                                     string cssClass = "p-3 mb-3 rounded";
                                     if (isChosen && isCorrect)
@@ -340,7 +343,7 @@
                                     }
                                     else if (isChosen && !isCorrect)
                                     {
-                                        cssClass += " bg-light text-danger border border-5 border-danger";
+                                        cssClass += " bg-light text-success border border-5 border-success";
                                     }
                                     else if (!isChosen && isCorrect)
                                     {
@@ -358,7 +361,20 @@
                                             <div>
                                                 @if (item.Questions.Question_Type_Id == 1 || item.Questions.Question_Type_Id == 2 || item.Questions.Question_Type_Id == 3)
                                                 {
-                                                    <strong>@letter.</strong> @ans.Answers_Name
+                                                    @if(ans.Answers_Name=="1"){
+                                                        <strong>@letter.</strong><span>Đúng</span>
+                                                    }
+                                                    else if (ans.Answers_Name == "0")
+                                                    {
+                                                        <strong>@letter.</strong> <span>Sai</span>
+
+                                                       
+                                                    }
+                                                    else
+                                                    {
+                                                        <strong>@letter.</strong> @ans.Answers_Name
+                                                    }
+                                                    
                                                 }
                                                 else if (item.Questions.Question_Type_Id == 4 || item.Questions.Question_Type_Id == 5)
                                                 {

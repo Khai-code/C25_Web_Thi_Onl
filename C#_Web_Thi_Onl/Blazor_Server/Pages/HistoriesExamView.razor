@@ -144,6 +144,10 @@
                                                 <td class="text-center">
                                                     @if (r.Status == 0)
                                                     {
+                                                        <span class="badge bg-success">Đã thi</span>
+                                                    }
+                                                    else if (r.Status == 1)
+                                                    {
                                                         if (r.statustest == 1)
                                                         {
                                                             <span class="badge bg-warning">có yêu cầu phúc khảo</span>
@@ -162,7 +166,7 @@
                                                         }
                                                         else
                                                         {
-                                                            <span class="badge bg-success">Đã thi</span>
+                                                            <span class="badge bg-success">Đã chấm điểm</span>
                                                         }
 
                                                     }
@@ -189,11 +193,11 @@
                                                                     <p><strong>Thời gian bắt đầu:</strong> @r.Check_Time</p>
                                                                     <p><strong>Thời gian kết thúc:</strong> @r.End_Time</p>
 
-                                                                  
-                                                                        <button @onclick="() => ShowQuestions(r.Id)" class="btn btn-sm btn-primary mt-2">
-                                                                            <i class="bi bi-eye"></i> Xem chi tiết
-                                                                        </button>
-                                                                    
+
+                                                                    <button @onclick="() => ShowQuestions(r.Id)" class="btn btn-sm btn-primary mt-2">
+                                                                        <i class="bi bi-eye"></i> Xem chi tiết
+                                                                    </button>
+
                                                                 </div>
                                                             </div>
 
@@ -259,7 +263,7 @@
 @if (showQuestionModal && selectedQuestions != null)
 {
     bool hasEssayQuestion = selectedQuestions.Any(q => q.question_type == 1);
-
+    bool isEssayQuestion = selectedQuestions.Any(q => q.statuss == 1);
     <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
@@ -279,7 +283,7 @@
                                 @if (item.statuss == 1)
                                 {
                                     <button class="btn btn-warning btn-sm"
-                                            @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
+                                    @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
                                         Sửa
                                     </button>
                                 }
@@ -334,7 +338,7 @@
                                                                 max="@item.Questions.Maximum_Score"
                                                                 step="0.1"
                                                                 value="@ans.Points_Earned"
-                                                                oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString()))"
+                                                                oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value.ToString()))"
                                                                 class="form-control form-control-sm" />
                                                             </div>
                                                             <div class="col-md-6 mb-2">
@@ -405,9 +409,13 @@
                 <div class="modal-footer">
                     @if (hasEssayQuestion)
                     {
-                        <button type="submit" class="btn btn-primary" @onclick="() => updateexamhis(idtest, totalScore)">
-                            Lưu chấm điểm
-                        </button>
+                        if (isEssayQuestion)
+                        {
+                             <button type="submit" class="btn btn-primary" @onclick="() => updateexamhis(idtest, totalScore)">
+                                Lưu chấm điểm
+                            </button>
+                        }
+                       
                     }
                     <button class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
                 </div>
@@ -423,16 +431,16 @@
             <div class="modal-content shadow-lg rounded-4 border-0 position-relative">
                 <!-- Nút đóng (X) -->
                 <button type="button"
-                        class="btn-close position-absolute top-0 end-0 m-3"
-                        aria-label="Close"
-                        @onclick="CancelEdit">
+                class="btn-close position-absolute top-0 end-0 m-3"
+                aria-label="Close"
+                @onclick="CancelEdit">
                 </button>
                 <form onsubmit="return false" class="p-4">
                     <div class="mb-4">
                         <label class="form-label fw-bold fs-5">Câu hỏi:</label>
                         <input type="text" class="form-control form-control-lg"
-                               @bind="lstQuesAns.QuestionName"
-                               placeholder="Nhập nội dung câu hỏi..." />
+                        @bind="lstQuesAns.QuestionName"
+                        placeholder="Nhập nội dung câu hỏi..." />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-5">Danh sách đáp án:</label>
@@ -442,16 +450,16 @@
                             <div class="d-flex mb-3 align-items-center">
                                 <span class="me-2 fw-bold">@((char)(65 + i)).</span>
                                 <input type="text"
-                                       class="form-control me-3"
-                                       value="@lstQuesAns.Answers[i].AnswersName"/>
+                                class="form-control me-3"
+                                value="@lstQuesAns.Answers[i].AnswersName"/>
                                 @if (lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2)
                                 {
                                     <div class="form-check">
                                         <input class="form-check-input"
-                                               type="radio"
-                                               name="correctAnswer"
-                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
-                                               @onclick="() => SetCorrectAnswer(index)" />
+                                        type="radio"
+                                        name="correctAnswer"
+                                        checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                        @onclick="() => SetCorrectAnswer(index)" />
                                         <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
                                     </div>
                                 }
@@ -459,9 +467,9 @@
                                 {
                                     <div class="form-check">
                                         <input class="form-check-input"
-                                               type="checkbox"
-                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
-                                               @onclick="() => ToggleCorrectAnswer(index)" />
+                                        type="checkbox"
+                                        checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                        @onclick="() => ToggleCorrectAnswer(index)" />
                                         <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
                                     </div>
                                 }
@@ -478,13 +486,13 @@
 
                     <div class="d-flex justify-content-end mt-4">
                         <button type="button"
-                                class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill"
-                                @onclick="CancelEdit">
+                        class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill"
+                        @onclick="CancelEdit">
                             ❌ Hủy
                         </button>
                         <button type="button"
-                                class="btn btn-primary px-4 py-2 rounded-pill"
-                                @onclick="SaveEditedQuestion">
+                        class="btn btn-primary px-4 py-2 rounded-pill"
+                        @onclick="SaveEditedQuestion">
                             💾 Lưu
                         </button>
                     </div>
@@ -629,15 +637,22 @@
         double sum = 0;
         foreach (var ans in questionItem.Answers)
         {
-            double score = 0;
-            if (answerScores.ContainsKey(ans.Id) &&
-                double.TryParse(answerScores[ans.Id], out score))
+            double score = ans.Points_Earned; // Lấy điểm mặc định
+
+            if (answerScores.ContainsKey(ans.Id))
             {
-                sum += score;
+                double updatedScore = 0; // ✅ Gán giá trị mặc định
+                if (double.TryParse(answerScores[ans.Id], out updatedScore))
+                {
+                    score = updatedScore;
+                }
             }
+
+            sum += score;
         }
         return sum;
     }
+
 
     private async Task LoadListTests(int examId)
     {
@@ -657,7 +672,7 @@
             var respon = await HistoriesExam.UpdateReviewforteacher(id, status, comment, int.Parse(iduser));
             if (respon != null)
             {
-                Console.WriteLine("✅ Cập nhật thành công");
+                toastService.ShowSuccess("✅ Cập nhật thành công");
                 if (selectedExamId.HasValue)
                 {
                     await LoadListTests(selectedExamId.Value); 
@@ -665,7 +680,7 @@
             }
             else
             {
-                Console.WriteLine("❌ Cập nhật thất bại");
+                toastService.ShowError("❌ Cập nhật thất bại");
             }
         }
         catch (Exception ex)
@@ -674,7 +689,7 @@
         }
     }
 
-    private void CalculateTotalScore()
+    private async Task CalculateTotalScore()
     {
         totalScore = 0;
         if (selectedQuestions == null) return;
@@ -683,7 +698,7 @@
         {
             totalScore += GetQuestionTotalScore(question);
         }
-        StateHasChanged(); // Cập nhật UI
+      StateHasChanged(); // Cập nhật UI
     }
     private async Task UpdateAnswerScore(int answerId, string score)
     {
@@ -697,7 +712,7 @@
         {
             answerScores.Add(answerId, score);
         }
-        CalculateTotalScore(); // Tự động tính lại tổng điểm khi có thay đổi
+       await CalculateTotalScore();
     }
     private string iduser;
     protected override async Task OnInitializedAsync()

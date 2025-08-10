@@ -87,7 +87,18 @@ else
                                            name="answer_@QueTN.QuestionId"
                                            @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
                                 </span>
-                                <label class="form-control">@a.AnswersName</label>
+                                @if(a.AnswersName=="1"){
+                                    <label class="form-control">Đúng</label>
+                                }
+                                else if (a.AnswersName == "0")
+                                {
+                                <label class="form-control">Sai</label>
+                                }
+                                else
+                                {
+                                    <label class="form-control">@a.AnswersName</label>
+                                }
+                                
                             </div>
                         }
                     }
