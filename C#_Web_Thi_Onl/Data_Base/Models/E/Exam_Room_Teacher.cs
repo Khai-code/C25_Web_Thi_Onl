@@ -23,5 +23,6 @@ namespace Data_Base.Models.E
         [JsonIgnore]
         public Exam_Room? Exam_Rooms { get; set; }
         public int Exam_Room_Id { get; set; }
+        public int Confirm_The_Test { get; set; }// xác nhận bài thi
     }
 }

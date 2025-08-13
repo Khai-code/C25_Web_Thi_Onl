@@ -45,14 +45,12 @@ namespace Blazor_Server.Services
             var filterStudent = new CommonFilterRequest
             {
                 Filters = new Dictionary<string, string>
-         {
-             { "Exam_Room_Student_Id", idExamStd.ToString() }
-         }
+                 {
+                     { "Exam_Room_Student_Id", idExamStd.ToString() }
+                 }
             };
-            var response = await _httpClient.PostAsJsonAsync(
-                "https://localhost:7187/api/Exam_HisTory/common/get",
-                filterStudent
-            );
+
+            var response = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/common/get",filterStudent);
 
             if (!response.IsSuccessStatusCode)
             {

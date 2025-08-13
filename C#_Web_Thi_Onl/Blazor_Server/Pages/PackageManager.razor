@@ -193,10 +193,12 @@
 
                                 <div>
                                     <label for="class" class="block font-medium text-green-700 mb-1">Lớp</label>
-                                    <select id="class" name="class" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Class_Id">
+                                    <select id="class" name="class" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400"
+                                    @onchange="OnClassChanged">
                                         <option value="">-- Chọn gói lớp --</option>
                                         @foreach (var classes in classViewModels)
                                         {
+                                            Homeroom_Teacher = classes.Homeroom_Teacher;
                                             <option value="@classes.Class_Id">@classes.Class_Name</option>
                                         }
                                     </select>
@@ -231,18 +233,39 @@
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
                                     <label for="subject" class="block font-medium text-green-700 mb-1">Môn thi</label>
-                                    <input id="subject"
-                                    name="subject"
-                                    class="w-full border border-green-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700"
-                                    value="@subjectViewModel?.Subject_Name"
-                                    readonly />
+                                    <input id="subject" name="subject" class="w-full border border-green-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700" value="@subjectViewModel?.Subject_Name" readonly />
                                 </div>
 
                                 <div>
-                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên coi thi</label>
-                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
+                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên coi thi 1(Chủ nhiệm)</label>
+                                    <input id="teachre" name="teachre" class="w-full border border-green-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700" value="@currteacher?.Teacher_Name" readonly />
+                                    @*                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
                                         <option value="">-- Chọn giáo viên coi thi --</option>
                                         @foreach (var tea in teacherViewModels)
+                                        {
+                                            <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                        }
+                                    </select> *@
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên gia đề</label>
+                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Teacher_Id">
+                                        <option value="">-- Chọn giáo viên coi thi --</option>
+                                        @foreach (var tea in teacherViewModels.Where(o => o.Subject_Id == SubjectId))
+                                        {
+                                            <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                        }
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên coi thi 2</label>
+                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="TeacherId">
+                                        <option value="">-- Chọn giáo viên coi thi --</option>
+                                        @foreach (var tea in teacherViewModels.Where(o => o.Teacher_Id != Homeroom_Teacher))
                                         {
                                             <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
                                         }
@@ -880,6 +903,8 @@
     public int packageTypeId { get; set; }
     public int ClassId { get; set; }
     public int SubjectId { get; set; }
+    public int Homeroom_Teacher { get; set; }
+    public int TeacherId { get; set; }
     public int CheckType { get; set; }
     public int time { get; set; } = 0;
     public int IsCheck { get; set; } = 0;
@@ -900,7 +925,8 @@
             Exam_Room = new Exam_Room(),
             Exam_Room_Package = new Exam_Room_Package(),
             Package = new Data_Base.Models.P.Package(),
-            Exam_Room_Teacher = new Exam_Room_Teacher()
+            lstExamRoomTeacher = new List<Exam_Room_Teacher>(),
+            lstTeacherId = new List<int>()
         };
 
     V_Package updatePackageTestADO = new V_Package();
@@ -911,6 +937,7 @@
         };
     Question question = new Question();
     SubjectViewModel subjectViewModel = new SubjectViewModel();
+    TeacherViewModel currteacher = new TeacherViewModel();
     List<PackageTypeViewModel> packageTypeViewModels = new List<PackageTypeViewModel>();      
     List<ClassViewModel> classViewModels = new List<ClassViewModel>();
     List<PointTypeViewModel> pointTypeViewModels = new List<PointTypeViewModel>();
@@ -1000,6 +1027,35 @@
                 packageTestADO.Exam_Room.Exam_Id = 0;
                 packageTestADO.Package.Subject_Id = 0;
                 subjectViewModel = null;
+            }
+
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
+        }
+    }
+
+    public async Task OnClassChanged(ChangeEventArgs e)
+    {
+        try
+        {
+            var selectedValue = e.Value?.ToString();
+            if (!string.IsNullOrEmpty(selectedValue))
+            {
+                packageTestADO.Package.Class_Id = int.Parse(selectedValue);
+
+                currteacher = await pm.GetTeacherOfClass(this.Homeroom_Teacher);
+
+                if (currteacher != null)
+                {
+                    packageTestADO.lstTeacherId.Add(currteacher.Teacher_Id);
+                }
+            }
+            else
+            {
+                this.Homeroom_Teacher = 0;
+                currteacher = null;
             }
 
         }
@@ -1523,6 +1579,21 @@
                 return;
             }
 
+            if (TeacherId == null || TeacherId == 0)
+            {
+                toastService.ShowError("Chưa chọn giám thị 2");
+                return;
+            }
+            else
+            {
+                packageTestADO.lstTeacherId.Add(TeacherId);
+            }
+
+            if(Homeroom_Teacher == null || Homeroom_Teacher == 0)
+            {
+                toastService.ShowError("Chưa chọn lớp tham ra thi");
+                return;
+            }
 
             var packageTestViewModel = await PTERP.AddPackageTestERP(packageTestADO);
             if (packageTestViewModel != null)

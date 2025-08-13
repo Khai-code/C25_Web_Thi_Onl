@@ -100,15 +100,22 @@ namespace Blazor_Server.Services
 
                 model.Exam_Room_Package.Exam_Room_Id = addedExam_Room.Id;
                 model.Exam_Room_Package.Package_Id = addedPackage.Id;
+                foreach (var item in model.lstTeacherId)
+                {
+                    Exam_Room_Teacher tea = new Exam_Room_Teacher();
+                    tea.Exam_Room_Id = addedExam_Room.Id;
+                    tea.Teacher_Id = item;
 
-                model.Exam_Room_Teacher.Exam_Room_Id = addedExam_Room.Id;
+                    model.lstExamRoomTeacher.Add(tea);
+                }
+                
 
                 var model_Exam_Room_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/Post", model.Exam_Room_Package);
 
                 if (!model_Exam_Room_Package.IsSuccessStatusCode)
                     return null;
 
-                var model_Exam_Room_Teacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/Post", model.Exam_Room_Teacher);
+                var model_Exam_Room_Teacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/PostList", model.lstExamRoomTeacher);
                 if (!model_Exam_Room_Teacher.IsSuccessStatusCode)
                 {
                     var errorContent = await model_Exam_Room_Teacher.Content.ReadAsStringAsync();
@@ -122,7 +129,8 @@ namespace Blazor_Server.Services
                     Package = addedPackage,
                     Exam_Room = addedExam_Room,
                     Exam_Room_Package = model.Exam_Room_Package,
-                    Exam_Room_Teacher = model.Exam_Room_Teacher,
+                    lstExamRoomTeacher = model.lstExamRoomTeacher,
+                    lstTeacherId = model.lstTeacherId
                 };
             }
             catch (Exception ex)
@@ -271,7 +279,8 @@ namespace Blazor_Server.Services
                            select new ClassViewModel
                            {
                                Class_Id = cla.Id,
-                               Class_Name = cla.Class_Name
+                               Class_Name = cla.Class_Name,
+                               Homeroom_Teacher = cla.Teacher_Id
                            }).ToList();
 
             return classes;
@@ -326,7 +335,8 @@ namespace Blazor_Server.Services
             public Data_Base.Models.P.Package Package { get; set; }
             public Exam_Room Exam_Room { get; set; }
             public Exam_Room_Package Exam_Room_Package { get; set; }
-            public Exam_Room_Teacher Exam_Room_Teacher { get; set; }
+            public List<Exam_Room_Teacher> lstExamRoomTeacher { get; set; }
+            public List<int> lstTeacherId { get; set; }
 
         }
 
@@ -346,6 +356,7 @@ namespace Blazor_Server.Services
         {
             public int Class_Id { get; set; }
             public string Class_Name { get; set; }
+            public int Homeroom_Teacher { get; set; }
         }
         
         public class PointTypeViewModel

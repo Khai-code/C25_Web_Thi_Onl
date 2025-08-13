@@ -1,6 +1,7 @@
 ﻿using Data_Base.Models.E;
 using Data_Base.Models.P;
 using Data_Base.Models.R;
+using Data_Base.Models.S;
 using Data_Base.Models.U;
 using System;
 using System.Collections.Generic;
@@ -23,6 +24,10 @@ namespace Data_Base.Models.T
         [JsonIgnore]
         public User? User { get; set; }
         public int User_Id { get; set; }
+        [ForeignKey("Subject_Id")]
+        [JsonIgnore]
+        public Subject? Subjects { get; set; }
+        public int Subject_Id { get; set; } // môn dạy
         [JsonIgnore]
         public ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]

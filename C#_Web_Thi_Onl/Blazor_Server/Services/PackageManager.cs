@@ -9,9 +9,12 @@ using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using System.ComponentModel;
+using System.Net.Http.Json;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
+using System.Threading.Tasks;
 using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.HistoriesExam;
 using static Blazor_Server.Services.Package_Test_ERP;
@@ -110,12 +113,51 @@ namespace Blazor_Server.Services
                 return new TeacherViewModel
                 {
                     Teacher_Id = t.Id,
-                    Teacher_Name = UserDict.TryGetValue(t.User_Id, out var use) ? use.Full_Name : "N/A"
+                    Teacher_Name = UserDict.TryGetValue(t.User_Id, out var use) ? use.Full_Name : "N/A",
+                    Subject_Id = t.Subject_Id
                 };
             }).ToList();
 
             return teacher;
         }
+
+        public async Task<TeacherViewModel> GetTeacherOfClass(int teacherId)
+        {
+            var lstTea = await _httpClient.GetFromJsonAsync<Teacher>($"https://localhost:7187/api/Class/GetBy/{teacherId}");
+
+            if (lstTea == null)
+                return new TeacherViewModel();
+
+            var filterAns = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                {
+                     { "Teacher_Id", string.Join(",", teacherId) },
+                },
+            };
+
+            var lstUser = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/User/common/get", filterAns);
+
+            if (!lstUser.IsSuccessStatusCode)
+            {
+                return new TeacherViewModel();
+            }
+
+            var user = (await lstUser.Content.ReadFromJsonAsync<List<Data_Base.Models.U.User>>()).First();
+
+            if (user == null)
+                return new TeacherViewModel();
+
+            var teacher = new TeacherViewModel
+            {
+                Teacher_Id = lstTea.Id,
+                Teacher_Name = user.Full_Name ?? "N/A",
+                Subject_Id = lstTea.Subject_Id
+            };
+
+            return teacher;
+        }
+
         public async Task<List<HistDTO>> GetQuesTL(int subjectId, int packageTypeId, int classId)
         {
             try
@@ -749,6 +791,7 @@ namespace Blazor_Server.Services
         {
             public int Teacher_Id { get; set; }
             public string Teacher_Name { get; set; }
+            public int Subject_Id { get; set; }
         }
         public class PackageInactive
         {

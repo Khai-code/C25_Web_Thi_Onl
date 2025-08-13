@@ -2,6 +2,7 @@
 using Data_Base.Models.E;
 using Data_Base.Models.Q;
 using Data_Base.Models.S;
+using Data_Base.Models.T;
 using Data_Base.Models.U;
 using Microsoft.Data.SqlClient.DataClassification;
 using System;
@@ -28,6 +29,7 @@ namespace Data_Base.Models.P
         public long Create_Time { get; set; }
         public int Number_Of_Questions { get; set; }
         public int ExecutionTime { get; set; }
+        public int Um_Lock { get; set; } = 0;
         public int Status { get; set; } = 0;
         [ForeignKey("Subject_Id")]
         [JsonIgnore]
@@ -45,6 +47,10 @@ namespace Data_Base.Models.P
         [JsonIgnore]
         public Package_Type? Package_Types { get; set; }
         public int Package_Type_Id { get; set; }
+        [ForeignKey("Teacher_Id")]
+        [JsonIgnore]
+        public Teacher? Teachers { get; set; }
+        public int Teacher_Id { get; set; }// giáo viên gia đề
         [JsonIgnore]
         public ICollection<Question>? Questions { get; set; } = new List<Question>();
         [JsonIgnore]
