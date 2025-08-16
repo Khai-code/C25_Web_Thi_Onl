@@ -62,16 +62,16 @@
                             <td class="text-truncate" style="max-width: 180px;">@item.teacher.Address</td>
                             <td>
                                 <span class="badge rounded-pill
-                            @(item.teacher.Status switch
+                            @(item.teacher.Position switch
                               {
-                                  1 => "bg-success",
-                                  2 => "bg-warning text-dark",
+                                  0 => "bg-success",
+                                  1 => "bg-warning text-dark",
                                   _ => "bg-light text-dark"
                               })">
-                                    @(item.teacher.Status switch
+                                    @(item.teacher.Position switch
                                     {
-                                        1 => "Quản lý",
-                                        2 => "Giáo viên bộ môn",
+                                        0 => "Quản lý",
+                                        1 => "Giáo viên bộ môn",
                                         _ => "Không xác định"
                                     })
                                 </span>

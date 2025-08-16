@@ -21,6 +21,7 @@ namespace Blazor_Server.Services
             _httpClient = httpClient;
         }
 
+        public string ErrorMes { get; set; }
         public async Task<bool> CheckPackage(PackageTestADO model)
         {
             bool success = true;
@@ -36,12 +37,15 @@ namespace Blazor_Server.Services
                    
                 var ExamRoomResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterRequest);
                 if (!ExamRoomResponse.IsSuccessStatusCode)
+                {
+                    ErrorMes = "Gọi API kiểm tra phòng thi thất bại";
                     return false;
+                }    
 
                 var lstExamRoom = await ExamRoomResponse.Content.ReadFromJsonAsync<List<Exam_Room>>();
 
-                if(lstExamRoom == null && lstExamRoom.Count <= 0)
-                    return false;
+                //if(lstExamRoom == null && lstExamRoom.Count <= 0)
+                //    return false;
 
                 if (lstExamRoom != null && lstExamRoom.Count > 0)
                 {
@@ -52,12 +56,11 @@ namespace Blazor_Server.Services
                             || (model.Exam_Room.Start_Time > item.End_Time && model.Exam_Room.End_Time > item.End_Time))
                         {
                             success = true;
-
                         }
                         else
                         {
+                            ErrorMes = string.Format("Trong khoảng thời gian từ (0) đến (1) tại phòng (2) đang có ca thi", model.Exam_Room.Start_Time, model.Exam_Room.End_Time, model.Exam_Room.Room_Id);
                             return success = false;
-
                         }
                     }
                 }
@@ -85,18 +88,20 @@ namespace Blazor_Server.Services
                     var errorContent = await model_Package.Content.ReadAsStringAsync();
                     Console.WriteLine("Lỗi khi gọi API Package/Post:");
                     Console.WriteLine(errorContent);
+                    ErrorMes = "Gọi API tạo gói đề thất bại";
                     return null;
                 }
 
                 var addedPackage = await model_Package.Content.ReadFromJsonAsync<Data_Base.Models.P.Package>();
-                if (addedPackage == null) return null;
 
                 var model_Exam_Room = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/Post", model.Exam_Room);
                 if (!model_Exam_Room.IsSuccessStatusCode)
+                {
+                    ErrorMes = "Gọi API tạo ca thi thất bại";
                     return null;
+                }    
 
                 var addedExam_Room = await model_Exam_Room.Content.ReadFromJsonAsync<Exam_Room>();
-                if (addedExam_Room == null) return null;
 
                 model.Exam_Room_Package.Exam_Room_Id = addedExam_Room.Id;
                 model.Exam_Room_Package.Package_Id = addedPackage.Id;
@@ -113,14 +118,18 @@ namespace Blazor_Server.Services
                 var model_Exam_Room_Package = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/Post", model.Exam_Room_Package);
 
                 if (!model_Exam_Room_Package.IsSuccessStatusCode)
+                {
+                    ErrorMes = "Gọi API tạo ca thi thất bại";
                     return null;
+                }   
 
                 var model_Exam_Room_Teacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/PostList", model.lstExamRoomTeacher);
                 if (!model_Exam_Room_Teacher.IsSuccessStatusCode)
                 {
                     var errorContent = await model_Exam_Room_Teacher.Content.ReadAsStringAsync();
-                    Console.WriteLine("Lỗi khi gọi API Package/Post:");
+                    Console.WriteLine("Lỗi khi gọi API Exam_Room_Teacher/PostList:");
                     Console.WriteLine(errorContent);
+                    ErrorMes = "Gọi API khiểm tra giảng viên coi thi thất bại";
                     return null;
                 }
 
@@ -135,6 +144,7 @@ namespace Blazor_Server.Services
             }
             catch (Exception ex)
             {
+                ErrorMes = ex.Message;
                 return null;
             }
         }
@@ -170,7 +180,7 @@ namespace Blazor_Server.Services
             }
         }
 
-        public async Task<bool> UpdatePackage(V_Package packageTestADO) 
+        public async Task<bool> UpdatePackage(V_Package packageTestADO)
         {
             try
             {
@@ -190,8 +200,15 @@ namespace Blazor_Server.Services
                 packageModel.Subject_Id = packageTestADO.Subject_Id;
                 packageModel.Class_Id = packageTestADO.Class_Id;
                 packageModel.Package_Type_Id = packageTestADO.Package_Type_Id;
+                packageModel.Teacher_Id = packageTestADO.TeacherPackage_Id;
 
                 var package = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageTestADO.Id}", packageModel);
+
+                if (!package.IsSuccessStatusCode)
+                {
+                    ErrorMes = "Cập nhập gói đề thất bại";
+                    return false;
+                }
 
                 Data_Base.Models.E.Exam_Room examRoomModel = new Exam_Room();
                 examRoomModel.Id = packageTestADO.Exam_Room_Id;
@@ -202,6 +219,12 @@ namespace Blazor_Server.Services
 
                 var examroom = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room/Pus/{packageTestADO.Exam_Room_Id}", examRoomModel);
 
+                if (!examroom.IsSuccessStatusCode)
+                {
+                    ErrorMes = "Cập nhập phòng thi thất bại";
+                    return false;
+                }
+
                 Data_Base.Models.E.Exam_Room_Package examRoomPackageModel = new Exam_Room_Package();
                 examRoomPackageModel.Id = packageTestADO.Exam_Room_Package_Id;
                 examRoomPackageModel.Package_Id = packageTestADO.Id;
@@ -209,14 +232,30 @@ namespace Blazor_Server.Services
 
                 var examRoomPackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Package/Pus/{packageTestADO.Exam_Room_Package_Id}", examRoomPackageModel);
 
-                Data_Base.Models.E.Exam_Room_Teacher examRoomTeacherModel = new Exam_Room_Teacher();
-                examRoomTeacherModel.Id = packageTestADO.Exam_Room_Teacher_Id;
-                examRoomTeacherModel.Teacher_Id = packageTestADO.Teacher_Id;
-                examRoomTeacherModel.Exam_Room_Id = packageTestADO.Exam_Room_Id;
-
-                var examRoomTeacher = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Exam_Room_Teacher/Pus/{packageTestADO.Exam_Room_Teacher_Id}", examRoomTeacherModel);
-                if (!package.IsSuccessStatusCode || !examroom.IsSuccessStatusCode || !examRoomPackage.IsSuccessStatusCode || !examRoomTeacher.IsSuccessStatusCode)
+                if (!examRoomPackage.IsSuccessStatusCode)
                 {
+                    ErrorMes = "Cập nhập gói đề thất bại";
+                    return false;
+                }
+
+                List<Data_Base.Models.E.Exam_Room_Teacher> CurrExamRoomTeacher = new List<Exam_Room_Teacher>();
+
+                Data_Base.Models.E.Exam_Room_Teacher examRoomTeacherModel1 = new Exam_Room_Teacher();
+                examRoomTeacherModel1.Id = packageTestADO.Exam_Room_Teacher1_Id;
+                examRoomTeacherModel1.Teacher_Id = packageTestADO.GV1_Id;
+                examRoomTeacherModel1.Exam_Room_Id = packageTestADO.Exam_Room_Id;
+                CurrExamRoomTeacher.Add(examRoomTeacherModel1);
+
+                Data_Base.Models.E.Exam_Room_Teacher examRoomTeacherModel2 = new Exam_Room_Teacher();
+                examRoomTeacherModel2.Id = packageTestADO.Exam_Room_Teacher2_Id;
+                examRoomTeacherModel2.Teacher_Id = packageTestADO.GV2_Id;
+                examRoomTeacherModel2.Exam_Room_Id = packageTestADO.Exam_Room_Id;
+                CurrExamRoomTeacher.Add(examRoomTeacherModel2);
+
+                var examRoomTeacher = await _httpClient.PutAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/PusList", CurrExamRoomTeacher);
+                if (!examRoomTeacher.IsSuccessStatusCode)
+                {
+                    ErrorMes = "Cập nhập giảng viên coi thi thất bại";
                     return false;
                 }
 
@@ -224,6 +263,7 @@ namespace Blazor_Server.Services
             }
             catch (Exception ex)
             {
+                ErrorMes = ex.Message;
                 return false;
             }
         }

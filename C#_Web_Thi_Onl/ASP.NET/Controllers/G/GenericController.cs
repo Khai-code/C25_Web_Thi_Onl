@@ -295,6 +295,19 @@ namespace ASP.NET.Controllers.G
             if (!updated) return NotFound();
             return NoContent();
         }
+
+        [HttpPut("PusList")]
+        public async Task<IActionResult> UpdateList([FromBody] List<T> entities)
+        {
+            if (entities == null || !entities.Any())
+                return BadRequest("Danh sách rỗng.");
+
+            var updated = await _repository.UpdateListAsync(entities);
+            if (!updated)
+                return NotFound("Không có entity nào được cập nhật.");
+
+            return NoContent();
+        }
         // 🔴 Delete
         [HttpDelete("Delete/{id}")]
         public async Task<IActionResult> Delete(int id)

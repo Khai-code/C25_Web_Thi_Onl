@@ -34,10 +34,11 @@ builder.Services.AddScoped<Learning_SummaryService>();
 builder.Services.AddScoped<LoginPackge>();
 builder.Services.AddScoped<ReviewExam>();
 builder.Services.AddScoped<ScoreServices>();
-//builder.Services.AddScoped<TeacherManagerService>();
+builder.Services.AddScoped<TeacherManagerService>();
 builder.Services.AddScoped<Test>();
 builder.Services.AddScoped<PackageManager>();
 builder.Services.AddScoped<HisService>();
+builder.Services.AddScoped<HistoriesExam>();
 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 var app = builder.Build();
 

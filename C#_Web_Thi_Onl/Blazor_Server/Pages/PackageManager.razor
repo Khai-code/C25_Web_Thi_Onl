@@ -26,7 +26,7 @@
             <!-- Hàng 2: Bộ lọc bên trái, nút thêm bài thi bên phải -->
             <div class="row align-items-end">
                 <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-success w-150 justify-content-end" @onclick="OpenAddExamModal">
+                    <button type="button" class="btn btn-success w-150 justify-content-end" disabled="@(this._currentTeacher.Position != 0 ? "disabled" : null)" @onclick="OpenAddExamModal">
                         + Thêm bài thi
                     </button>
                 </div>
@@ -50,8 +50,9 @@
                         <th class="col-mon">Môn học</th>
                         <th class="col-lop">Lớp</th>
                         <th class="col-sobai">Số bài</th>
-                        <th class="col-gvthi">GV coi thi</th>
-                        <th class="col-gvcn">GV chủ nhiệm</th>
+                        <th class="col-gvthi">GV coi thi 1(GV chủ nhiệm)</th>
+                        <th class="col-gvcn">GV coi thi 2</th>
+                        <th class="col-gvcn">GV gia đề</th>
                         <th class="col-batdau">Bắt đầu</th>
                         <th class="col-ketthuc">Kết thúc</th>
                         <th class="col-trangthai">Trạng thái</th>
@@ -59,7 +60,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var baiThi in filterInactive)
+                    @foreach (var baiThi in filterInactive.Where(o => o.Status != 3))
                     {
                         <tr>
                             <td class="text-center text-muted">@baiThi.Id</td>
@@ -68,8 +69,9 @@
                             <td><span class="badge bg-primary-subtle text-primary">@baiThi.SubjectName</span></td>
                             <td><span class="badge bg-success-subtle text-success">@baiThi.ClassName</span></td>
                             <td class="text-center">@baiThi.ClassNub</td>
-                            <td><span class="text-primary">@baiThi.TeacherExamRoom</span></td>
-                            <td><span class="text-success">@baiThi.TeacherClass</span></td>
+                            <td><span class="text-success">@baiThi.TeacherClassName</span></td>
+                            <td><span class="text-primary">@baiThi.TeacherExamRoomName</span></td>
+                            <td><span class="text-primary">@baiThi.TeacherGivesQuestionName</span></td>
                             <td>@ConvertLong.ConvertLongToDateTime(baiThi.StartTime)</td>
                             <td>@ConvertLong.ConvertLongToDateTime(baiThi.EndTime)</td>
                             <td>
@@ -93,12 +95,19 @@
                                     @onclick="() => GetLstQues(baiThi.Id, baiThi.PackageTypeId)">
                                         <i class="bi bi-list-ul"></i>
                                     </button>
+
                                     <button class="btn btn-sm btn-outline-primary" title="Thêm câu hỏi"
+                                    data-bs-toggle="tooltip" disabled="@((baiThi.Status == 1) || (this._currentTeacher.Id != baiThi.TeacherGivesQuestionId)? "disabled" : null)"
+                                    @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)">
+                                        <i class="bi bi-plus-circle"></i>
+                                    </button>
+
+                                    @* <button class="btn btn-sm btn-outline-primary" title="Thêm câu hỏi"
                                     data-bs-toggle="tooltip"
                                     disabled="@((baiThi.Status == 1) ? "disabled" : null)"
                                     @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)">
                                         <i class="bi bi-plus-circle"></i>
-                                    </button>
+                                    </button> *@
 
                                     <button class="btn btn-sm btn-outline-warning" title="Sửa"
                                     data-bs-toggle="tooltip"
@@ -193,8 +202,7 @@
 
                                 <div>
                                     <label for="class" class="block font-medium text-green-700 mb-1">Lớp</label>
-                                    <select id="class" name="class" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400"
-                                    @onchange="OnClassChanged">
+                                    <select id="class" name="class" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400">
                                         <option value="">-- Chọn gói lớp --</option>
                                         @foreach (var classes in classViewModels)
                                         {
@@ -237,15 +245,14 @@
                                 </div>
 
                                 <div>
-                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên coi thi 1(Chủ nhiệm)</label>
-                                    <input id="teachre" name="teachre" class="w-full border border-green-300 rounded-lg px-3 py-2 bg-gray-100 text-gray-700" value="@currteacher?.Teacher_Name" readonly />
-                                    @*                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Exam_Room_Teacher.Teacher_Id">
+                                    <label for="teacher1" class="block font-medium text-green-700 mb-1">Giáo viên coi thi 1</label>
+                                    <select id="teacher1" name="teacher1" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="TeacherId1">
                                         <option value="">-- Chọn giáo viên coi thi --</option>
-                                        @foreach (var tea in teacherViewModels)
+                                        @foreach (var tea in teacherViewModels.Where(o => o.Teacher_Id != TeacherId2))
                                         {
                                             <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
                                         }
-                                    </select> *@
+                                    </select>
                                 </div>
                             </div>
 
@@ -254,7 +261,7 @@
                                     <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên gia đề</label>
                                     <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Teacher_Id">
                                         <option value="">-- Chọn giáo viên coi thi --</option>
-                                        @foreach (var tea in teacherViewModels.Where(o => o.Subject_Id == SubjectId))
+                                        @foreach (var tea in teacherViewModels.Where(o => o.Subject_Id == SubjectId && o.Teacher_Id != Homeroom_Teacher))
                                         {
                                             <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
                                         }
@@ -262,10 +269,10 @@
                                 </div>
 
                                 <div>
-                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên coi thi 2</label>
-                                    <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="TeacherId">
+                                    <label for="teacher2" class="block font-medium text-green-700 mb-1">Giáo viên coi thi 2</label>
+                                    <select id="teacher2" name="teacher2" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="TeacherId2">
                                         <option value="">-- Chọn giáo viên coi thi --</option>
-                                        @foreach (var tea in teacherViewModels.Where(o => o.Teacher_Id != Homeroom_Teacher))
+                                        @foreach (var tea in teacherViewModels.Where(o => o.Teacher_Id != TeacherId1))
                                         {
                                             <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
                                         }
@@ -864,9 +871,35 @@
                             </div>
 
                             <div>
-                                <label for="teacher" class="block text-sm font-medium text-gray-700 mb-1">Giáo viên coi thi</label>
+                                <label for="teacher" class="block text-sm font-medium text-gray-700 mb-1">Giáo viên coi thi 1</label>
                                 <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
-                                @bind="updatePackageTestADO.Teacher_Id">
+                                        @bind="updatePackageTestADO.GV1_Id">
+                                    <option value="">-- Chọn giáo viên --</option>
+                                    @foreach (var tea in teacherViewModels)
+                                    {
+                                        <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div>
+                                <label for="exam" class="block text-sm font-medium text-gray-700 mb-1">Giảo viên gia đề</label>
+                                <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                        @bind="updatePackageTestADO.TeacherPackage_Id">
+                                    <option value="">-- Chọn giáo viên --</option>
+                                    @foreach (var tea in teacherViewModels)
+                                    {
+                                        <option value="@tea.Teacher_Id">@tea.Teacher_Name</option>
+                                    }
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="teacher" class="block text-sm font-medium text-gray-700 mb-1">Giáo viên coi thi 2</label>
+                                <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
+                                        @bind="updatePackageTestADO.GV2_Id">
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var tea in teacherViewModels)
                                     {
@@ -904,7 +937,8 @@
     public int ClassId { get; set; }
     public int SubjectId { get; set; }
     public int Homeroom_Teacher { get; set; }
-    public int TeacherId { get; set; }
+    public int TeacherId1 { get; set; } = 0;
+    public int TeacherId2 { get; set; } = 0;
     public int CheckType { get; set; }
     public int time { get; set; } = 0;
     public int IsCheck { get; set; } = 0;
@@ -949,6 +983,7 @@
     List<HistDTO> histDTOs = new List<HistDTO>();
     List<AnsAdo> lstAns = new List<AnsAdo>();
     AnsAdo ans = new AnsAdo();
+    Teacher _currentTeacher = new Teacher();
     public DateTime Create_Time = DateTime.Now;
     private string CreateTimeFormatted => Create_Time.ToString("dd/MM/yyyy HH:mm:ss");
     long timeLong;
@@ -980,6 +1015,7 @@
     private ListQuesAns lstQuesAns = new ListQuesAns();
     public List<int> selectedQuestionIds = new List<int>();
     private string validationMessage = "";
+    private int iduser;
 
     void CancelEdit()
     {
@@ -1001,6 +1037,7 @@
         await TeacherViewModel();
         //await QuestionTypeViewModels();
         await QuestionlevelViewModel();
+        _currentTeacher = await TeacherGivesQuestion();
     }
 
     public void OnExamChanged(ChangeEventArgs e)
@@ -1032,38 +1069,60 @@
         }
         catch (Exception ex)
         {
-            toastService.ShowError("Lỗi: " + ex);
+
         }
     }
 
-    public async Task OnClassChanged(ChangeEventArgs e)
+    public async Task<Teacher> TeacherGivesQuestion()
     {
         try
         {
-            var selectedValue = e.Value?.ToString();
-            if (!string.IsNullOrEmpty(selectedValue))
+            Teacher T = new Teacher();
+            var resuilt = await SessionStorage.GetAsync<string>("Id");
+            if (resuilt.Success && !string.IsNullOrEmpty(resuilt.Value))
             {
-                packageTestADO.Package.Class_Id = int.Parse(selectedValue);
+                iduser = int.Parse(resuilt.Value);
 
-                currteacher = await pm.GetTeacherOfClass(this.Homeroom_Teacher);
-
-                if (currteacher != null)
-                {
-                    packageTestADO.lstTeacherId.Add(currteacher.Teacher_Id);
-                }
-            }
-            else
-            {
-                this.Homeroom_Teacher = 0;
-                currteacher = null;
+                T = await pm.TeacherGives(iduser) ?? null;
             }
 
+            return T;
         }
         catch (Exception ex)
         {
             toastService.ShowError("Lỗi: " + ex);
+            return null;
         }
     }
+
+    // public async Task OnClassChanged(ChangeEventArgs e)
+    // {
+    //     try
+    //     {
+    //         var selectedValue = e.Value?.ToString();
+    //         if (!string.IsNullOrEmpty(selectedValue))
+    //         {
+    //             packageTestADO.Package.Class_Id = int.Parse(selectedValue);
+
+    //             currteacher = await pm.GetTeacherOfClass(this.Homeroom_Teacher);
+
+    //             if (currteacher != null)
+    //             {
+    //                 packageTestADO.lstTeacherId.Add(currteacher.Teacher_Id);
+    //             }
+    //         }
+    //         else
+    //         {
+    //             this.Homeroom_Teacher = 0;
+    //             currteacher = null;
+    //         }
+
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         toastService.ShowError("Lỗi: " + ex);
+    //     }
+    // }
 
     protected override void OnInitialized()
     {
@@ -1579,14 +1638,15 @@
                 return;
             }
 
-            if (TeacherId == null || TeacherId == 0)
+            if (TeacherId1 == null || TeacherId1 == 0 || TeacherId2 == null || TeacherId2 == 0)
             {
-                toastService.ShowError("Chưa chọn giám thị 2");
+                toastService.ShowError("Chưa chọn giám thị");
                 return;
             }
             else
             {
-                packageTestADO.lstTeacherId.Add(TeacherId);
+                packageTestADO.lstTeacherId.Add(TeacherId1);
+                packageTestADO.lstTeacherId.Add(TeacherId2);
             }
 
             if(Homeroom_Teacher == null || Homeroom_Teacher == 0)
@@ -1921,7 +1981,7 @@
             }
             else
             {
-                toastService.ShowError("Cập nhập thất bại ");
+                toastService.ShowError(PTERP.ErrorMes);
             }
         }
         catch (Exception ex)

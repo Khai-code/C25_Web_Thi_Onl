@@ -282,6 +282,7 @@ namespace Blazor_Server.Services
             public string Avatar { get; set; }
             public int Status { get; set; }
             public int Role_Id { get; set; }
+            public int Position { get; set; }
         }
     }
 }

@@ -18,9 +18,55 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public string ErrorMes { get; set; }
         public int secondsLeft { get; set; } = 0;
         public async Task<bool> CheckPackage(string Studentcode, int packagecode)
         {
+            #region Package
+            var filterPackage = new CommonFilterRequest
+            {
+                Filters = new Dictionary<string, string>
+                    {
+                        { "Package_Code", packagecode.ToString() }
+                    },
+            };
+
+            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterPackage);
+
+            if (!lstPackages.IsSuccessStatusCode)
+            {
+                ErrorMes = "Gọi API khiểm tra gói đề thất bại";
+                return false;
+            }
+                
+
+            var packages = (await lstPackages.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Package>>()).SingleOrDefault();
+            if (packages == null) 
+            {
+                ErrorMes = "Mã gói đề không hợp lệ";
+                return false;
+            }
+
+            if (packages.Status == 2)
+            {
+                ErrorMes = "Bài thi đã kết thúc";
+                return false;
+            }
+
+            if (packages.GV1_Confirm == 0)
+            {
+                ErrorMes = string.Format("Giám thị (0) chưa có xác nhận có mặt tại phòng thi", packages.GV1_Name);
+                return false;
+            }
+
+            if (packages.GV2_Confirm == 0)
+            {
+                ErrorMes = string.Format("Giám thị (0) chưa có xác nhận có mặt tại phòng thi", packages.GV2_Name);
+                return false;
+            }
+
+            #endregion
+
             #region Student
 
             var filterStudent = new CommonFilterRequest
@@ -34,7 +80,11 @@ namespace Blazor_Server.Services
             var studentResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", filterStudent);
 
             if (!studentResponse.IsSuccessStatusCode)
+            {
+                ErrorMes = "Gọi API khiểm tra thông tin học sinh thất bại";
                 return false;
+            }
+                
 
             var student = (await studentResponse.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student>>()).SingleOrDefault(); 
             #endregion
@@ -51,32 +101,12 @@ namespace Blazor_Server.Services
             var lstStudentClass = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student_Class/common/get", filterStudentClass);
 
             if (!lstStudentClass.IsSuccessStatusCode)
-                return false;
-
-            var studentClass_ClassId = (await lstStudentClass.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).SingleOrDefault().Class_Id;
-            #endregion
-
-            #region Package
-            var filterPackage = new CommonFilterRequest
             {
-                Filters = new Dictionary<string, string>
-                    {
-                        { "Class_Id", studentClass_ClassId.ToString() },
-                        { "Package_Code", packagecode.ToString() }
-                    },
-            };
-
-            var lstPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterPackage);
-
-            if (!lstPackages.IsSuccessStatusCode)
-                return false;
-
-            var packages = (await lstPackages.Content.ReadFromJsonAsync<List<Data_Base.V_Model.V_Package>>()).SingleOrDefault();
-            if (packages.Status == 2)
-            {
+                ErrorMes = "Gọi API khiểm tra thông tin học sinh thất bại";
                 return false;
             }
 
+            var studentClass_ClassId = (await lstStudentClass.Content.ReadFromJsonAsync<List<Data_Base.Models.S.Student_Class>>()).SingleOrDefault().Class_Id;
             #endregion
 
             #region Exam_Room_Package
@@ -91,7 +121,10 @@ namespace Blazor_Server.Services
             var ExamRoomPackages = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Package/common/get", filterERP);
 
             if (!ExamRoomPackages.IsSuccessStatusCode)
+            {
+                ErrorMes = "Gọi API khiểm tra gói đề thất bại";
                 return false;
+            }
 
             var ExamRoomPackage = (await ExamRoomPackages.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Package>>()).FirstOrDefault();
 
@@ -109,9 +142,18 @@ namespace Blazor_Server.Services
             var examrooms = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterExamRoom);
 
             if (!examrooms.IsSuccessStatusCode)
+            {
+                ErrorMes = "Gọi API khiểm tra phòng thi và thời gian thi thất bại";
                 return false;
+            }
 
             var examroom = (await examrooms.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room>>()).FirstOrDefault();
+
+            if (examroom == null)
+            {
+                ErrorMes = "Gọi API khiểm tra phòng thi và thời gian thi thất bại";
+                return false;
+            }
 
             #endregion
 
@@ -121,12 +163,35 @@ namespace Blazor_Server.Services
             TimeSpan duration = currentTime - ConvertLong.ConvertLongToDateTime(examroom.Start_Time);
             if (examroom.Start_Time > time)
             {
-                Console.WriteLine("Chưa đến thời gian làm bài thi.");
+                ErrorMes = "Chưa đến thời gian làm bài thi";
                 return false;
             }
             else if (examroom.End_Time < time)
             {
-                Console.WriteLine("Đã hết thời gian thi.");
+                ErrorMes = "Đã hết thời gian thi.";
+                if (packages.Status != 2)
+                {
+                    Data_Base.Models.P.Package packageNew = new Data_Base.Models.P.Package();
+                    packageNew.Id = packages.Id;
+                    packageNew.Package_Code = packages.Package_Code;
+                    packageNew.Package_Name = packages.Package_Name;
+                    packageNew.Create_Time = packages.Create_Time;
+                    packageNew.Number_Of_Questions = packages.Number_Of_Questions;
+                    packageNew.ExecutionTime = packages.ExecutionTime;
+                    packageNew.Status = 2;
+                    packageNew.Subject_Id = packages.Subject_Id;
+                    packageNew.Class_Id = packages.Class_Id;
+                    packageNew.Package_Type_Id = packages.Package_Type_Id;
+                    packageNew.Point_Type_Id = packages.Point_Type_Id;
+                    packageNew.Teacher_Id = packages.TeacherPackage_Id;
+
+                    var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageNew);
+                    if (!UpdatePackage.IsSuccessStatusCode)
+                    {
+                        ErrorMes += string.Format("Gọi API cậu nhập trạng thái gói đề thất bại ");
+                        return false;
+                    }
+                }
                 return false;
             }
             else if (examroom.Start_Time <= time 
@@ -134,7 +199,7 @@ namespace Blazor_Server.Services
                 && (packages.Point_Type_Id == 1 || packages.Point_Type_Id == 2)
                 && duration.TotalSeconds > 300)
             {
-                Console.WriteLine("Đã quá thời gian vào thi.");
+                ErrorMes = "Đã quá thời gian vào thi.";
                 return false;
             }
             else if (examroom.Start_Time <= time
@@ -142,7 +207,7 @@ namespace Blazor_Server.Services
                 && (packages.Point_Type_Id == 3 || packages.Point_Type_Id == 4 || packages.Point_Type_Id == 5)
                 && duration.TotalSeconds > 1500)
             {
-                Console.WriteLine("Đã quá thời gian vào thi.");
+                ErrorMes = "Đã quá thời gian vào thi.";
                 return false;
             }
             #endregion
@@ -161,9 +226,11 @@ namespace Blazor_Server.Services
 
             var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
             if (exs != null)
+            {
+                ErrorMes = string.Format("Học sinh có mã (0) đã vào thi, không thể đăng nhập lại", student.Student_Code);
                 return false;
-
-
+            }
+            
             Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
             test.Test_Code = string.Empty;
             test.Package_Id = packages.Id;
@@ -173,8 +240,11 @@ namespace Blazor_Server.Services
             var testReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/Post", test);
 
             if (!testReport.IsSuccessStatusCode)
+            {
+                ErrorMes = "Tạo bài thi thất bại";
                 return false;
-
+            }    
+                
             var filterTest = new CommonFilterRequest
             {
                 Filters = new Dictionary<string, string>
@@ -185,7 +255,11 @@ namespace Blazor_Server.Services
 
             var testRep = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/common/get", filterTest);
 
-            if (!testRep.IsSuccessStatusCode) return false;
+            if (!testRep.IsSuccessStatusCode) 
+            {
+                ErrorMes = "Gọi API kiểm tra bài thi thất bại";
+                return false;
+            } 
 
             var lstTest = (await testRep.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>()).ToList();
 
@@ -203,6 +277,7 @@ namespace Blazor_Server.Services
                 packageModel.Class_Id = packages.Class_Id;
                 packageModel.Package_Type_Id = packages.Package_Type_Id;
                 packageModel.Point_Type_Id = packages.Point_Type_Id;
+                packageModel.Teacher_Id = packages.TeacherPackage_Id;
 
                 var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
                 if (!UpdatePackage.IsSuccessStatusCode)
@@ -223,6 +298,7 @@ namespace Blazor_Server.Services
                 packageModel.Class_Id = packages.Class_Id;
                 packageModel.Package_Type_Id = packages.Package_Type_Id;
                 packageModel.Point_Type_Id = packages.Point_Type_Id;
+                packageModel.Teacher_Id = packages.TeacherPackage_Id;
 
                 var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
                 if (!UpdatePackage.IsSuccessStatusCode)
@@ -244,17 +320,28 @@ namespace Blazor_Server.Services
             if (!Exam_Room_Student_Post.IsSuccessStatusCode)
             {
                 await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{testId}");
+                ErrorMes = "Gọi API xác thực học sinh vào thi thất bại";
                 return false;
             }    
                 
-
             var Exam_Room_Student = (await Exam_Room_Student_Post.Content.ReadFromJsonAsync<Data_Base.Models.E.Exam_Room_Student>());
 
+            if (Exam_Room_Student == null)
+            {
+                ErrorMes = "Gọi API xác thực học sinh vào thi thất bại";
+                _httpClient.DeleteAsync($"https://localhost:7187/api/Exam_Room_Student/Delete/{Exam_Room_Student.Id}");
+                _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{testId}");
+                return false;
+            }
             #endregion
 
             #region Đếm thời gian
 
-            CountingTime(Exam_Room_Student, examroom);
+            //CountingTime(Exam_Room_Student, examroom);
+
+            int timeout = (int)(ConvertLong.ConvertLongToDateTime(examroom.End_Time) - ConvertLong.ConvertLongToDateTime(Exam_Room_Student.Check_Time)).TotalSeconds;
+
+            secondsLeft = timeout > 0 ? timeout : 0;
 
             if ((packages.Point_Type_Id == 1 || packages.Point_Type_Id == 2) && secondsLeft > 900) secondsLeft = 900;
             else if (packages.Point_Type_Id == 3 && secondsLeft > 2700) secondsLeft = 2700;
@@ -270,8 +357,7 @@ namespace Blazor_Server.Services
                 if (exam_Room_Student == null || exam_Room == null)
                 {
                     int testId = exam_Room_Student.Test_Id;
-                    _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{exam_Room_Student.Id}");
-                    _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{testId}");
+                   
                     return 0;
                 }    
                     

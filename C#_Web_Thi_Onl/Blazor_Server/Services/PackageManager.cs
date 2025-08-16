@@ -66,12 +66,13 @@ namespace Blazor_Server.Services
                     // Lấy giáo viên phụ trách lớp
                     var teacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id;
                     var teacherClass = teacherDict.TryGetValue(teacherClassId ?? 0, out var tClass) ? tClass : null;
-                    var teacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A";
+                    var teacherPackage = teacherDict.TryGetValue(p.Teacher_Id, out var tPack) ? tPack : null;
+                    //var teacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A";
 
                     // Lấy giáo viên phụ trách phòng thi
                     var examRoomTeacherId = lstExamRoomTeacher.FirstOrDefault(et => et.Exam_Room_Id == examRoom?.Id)?.Teacher_Id;
                     var teacherExam = teacherDict.TryGetValue(examRoomTeacherId ?? 0, out var tExam) ? tExam : null;
-                    var teacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A";
+                    //var teacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A";
 
                     return new PackageInactive
                     {
@@ -88,8 +89,12 @@ namespace Blazor_Server.Services
                         ClassNub = classDict.TryGetValue(p.Class_Id, out var cln) ? cln.Number : 0,
                         StartTime = examRoom?.Start_Time ?? 0,
                         EndTime = examRoom?.End_Time ?? 0,
-                        TeacherClass = teacherClassName,
-                        TeacherExamRoom = teacherExamRoomName
+                        TeacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id ?? 0,
+                        TeacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A",
+                        TeacherExamRoomId = lstExamRoomTeacher.FirstOrDefault(et => et.Exam_Room_Id == examRoom?.Id)?.Teacher_Id ?? 0,
+                        TeacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A",
+                        TeacherGivesQuestionId = p.Teacher_Id,
+                        TeacherGivesQuestionName = teacherPackage != null && userDict.TryGetValue(teacherPackage.User_Id, out var userPack) ? userPack.Full_Name : "N/A"
                     };
                 })
                 .ToList();
@@ -120,7 +125,6 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
-
         public async Task<TeacherViewModel> GetTeacherOfClass(int teacherId)
         {
             var lstTea = await _httpClient.GetFromJsonAsync<Teacher>($"https://localhost:7187/api/Class/GetBy/{teacherId}");
@@ -157,7 +161,6 @@ namespace Blazor_Server.Services
 
             return teacher;
         }
-
         public async Task<List<HistDTO>> GetQuesTL(int subjectId, int packageTypeId, int classId)
         {
             try
@@ -736,6 +739,31 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+        public async Task<Data_Base.Models.T.Teacher> TeacherGives(int userId)
+        {
+            try
+            {
+                var filter = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                         { "User_Id", string.Join(",", userId) },
+                    },
+                };
+
+                var lstTeacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Teacher/common/get", filter);
+
+                if (!lstTeacher.IsSuccessStatusCode) { return null  ; }
+
+                var teacher = (await lstTeacher.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Teacher>>()).Single();
+
+                return teacher;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
 
         public class AnsAdo
         {
@@ -791,7 +819,7 @@ namespace Blazor_Server.Services
         {
             public int Teacher_Id { get; set; }
             public string Teacher_Name { get; set; }
-            public int Subject_Id { get; set; }
+            public int? Subject_Id { get; set; }
         }
         public class PackageInactive
         {
@@ -804,8 +832,12 @@ namespace Blazor_Server.Services
             public string SubjectName { get; set; }
             public int ClassId { get; set; }
             public string ClassName { get; set; }
-            public string TeacherClass { get; set; }
-            public string TeacherExamRoom { get; set; }
+            public int TeacherClassId { get; set; }
+            public string TeacherClassName { get; set; }
+            public int TeacherExamRoomId { get; set; }
+            public string TeacherExamRoomName { get; set; }
+            public int TeacherGivesQuestionId { get; set; }
+            public string TeacherGivesQuestionName { get; set; }
             public int ClassNub { get; set; }
             public long StartTime { get; set; }
             public long EndTime { get; set; }
