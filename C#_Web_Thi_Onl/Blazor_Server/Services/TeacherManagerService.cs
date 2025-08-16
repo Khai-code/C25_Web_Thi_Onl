@@ -217,8 +217,8 @@ namespace Blazor_Server.Services
                     User_Id=teacher.User_Id,
                     Position = user.Position,
                     Teacher_Code=teacher.Teacher_Code,
-                    Subject_Id = user.idsubject
-                    
+                    Subject_Id = user.idsubject > 0 ? user.idsubject : null
+
                 };
                 var teacherResponse = await _httpClient.PutAsJsonAsync($"api/Teacher/Pus/{teacher.Id}", teacherToUpdate);
                 if (!teacherResponse.IsSuccessStatusCode)
