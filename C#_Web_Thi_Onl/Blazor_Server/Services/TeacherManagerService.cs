@@ -22,32 +22,50 @@ namespace Blazor_Server.Services
         }
         public async Task<List<listteacher>> GetAllTeacher()
         {
-            var ListUser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
-            var ListTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get") ?? new List<Teacher>();
-            // Chỉ lấy user có Status = 1, 2 hoặc 3
-            var query = from user in ListUser
-                        join teacher in ListTeacher on user.Id equals teacher.User_Id
-                        where user.Status == 1 || user.Status == 2 || user.Status == 3
-                        select new { user, teacher };
-
-            var result = query.Select(t =>
+            try
             {
-                return new listteacher
-                {
-                    Id = t.user.Id,
-                    Full_Name = t.user.Full_Name,
-                    User_name = t.user.User_Name,
-                    PassWord = t.user.User_Pass,
-                    Phone_Number = t.user.Phone_Number,
-                    date_of_bith = ConvertLong.ConvertLongToDateTime(t.user.Data_Of_Birth),
-                    Email = t.user.Email,
-                    Address = t.user.Address,
-                    Avatar = t.user.Avatar,
-                    Status = t.user.Status,
-                };
-            }).ToList();
+                var ListUser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get");
+                var ListTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get");
+                var ListSubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
 
-            return result;
+                var teacherUsers = ListUser.Where(u => u.Role_Id == 2).ToList();
+                List<listteacher> result = new List<listteacher>();
+
+                foreach (var t in ListTeacher)
+                {
+                    var user = teacherUsers.FirstOrDefault(u => u.Id == t.User_Id);
+                    if (user != null)
+                    {
+                        var subject = ListSubject.FirstOrDefault(s => s.Id == t.Subject_Id);
+
+                        result.Add(new listteacher
+                        {
+                            Id = user.Id,
+                            Full_Name = user.Full_Name,
+                            User_name = user.User_Name,
+                            PassWord = user.User_Pass,
+                            Phone_Number = user.Phone_Number,
+                            date_of_bith = user.Data_Of_Birth != null
+                                ? ConvertLong.ConvertLongToDateTime(user.Data_Of_Birth)
+                                : DateTime.MinValue,
+                            Email = user.Email,
+                            Address = user.Address,
+                            Avatar = user.Avatar,
+                            idsubject = subject?.Id ?? 0,
+                            subject_name = subject != null ? subject.Subject_Name : "N/A",
+                            Status = user.Status,
+                            Position=t.Position
+                        });
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[EXCEPTION] GetAllTeacher: {ex}");
+                return new List<listteacher>();
+            }
         }
 
         public async Task<int?> CreateTeacherAsync(listteacher user, IBrowserFile? imageFile)
@@ -107,7 +125,9 @@ namespace Blazor_Server.Services
                     var teacher = new Teacher
                     {
                         User_Id = createdUser.Id,
-                        Teacher_Code = string.Empty
+                        Teacher_Code = string.Empty,
+                        Position= user.Position,
+                        Subject_Id= user.idsubject
                     };
                     var teacherResponse = await _httpClient.PostAsJsonAsync("/api/Teacher/Post", teacher);
 
@@ -191,6 +211,22 @@ namespace Blazor_Server.Services
                     Console.WriteLine("[ERROR] Không tìm thấy giáo viên.");
                     return false;
                 }
+                var teacherToUpdate = new Teacher
+                {
+                    Id=teacher.Id,
+                    User_Id=teacher.User_Id,
+                    Position = user.Position,
+                    Teacher_Code=teacher.Teacher_Code,
+                    Subject_Id = user.idsubject
+                    
+                };
+                var teacherResponse = await _httpClient.PutAsJsonAsync($"api/Teacher/Pus/{teacher.Id}", teacherToUpdate);
+                if (!teacherResponse.IsSuccessStatusCode)
+                {
+                    var errorContent = await teacherResponse.Content.ReadAsStringAsync();
+                    Console.WriteLine($"[ERROR] Cập nhật giáo viên thất bại: {teacherResponse.StatusCode}, {errorContent}");
+                    return false;
+                }
                 Console.WriteLine("[SUCCESS] Cập nhật giáo viên thành công.");
                 return true;
             }
@@ -233,7 +269,7 @@ namespace Blazor_Server.Services
 
                 if (teacher != null)
                 {
-                    var deleteTeacherResponse = await _httpClient.DeleteAsync($"api/Teacher/Delete/{teacher}");
+                    var deleteTeacherResponse = await _httpClient.DeleteAsync($"api/Teacher/Delete/{teacher.Id}");
                 }
                 var deleteUserResponse = await _httpClient.DeleteAsync($"api/User/Delete/{userId}");
                 if (!deleteUserResponse.IsSuccessStatusCode)
@@ -283,6 +319,8 @@ namespace Blazor_Server.Services
             public int Status { get; set; }
             public int Role_Id { get; set; }
             public int Position { get; set; }
+            public int? idsubject { get; set; } // Mã môn dạy
+            public string subject_name { get; set; } // Tên môn dạy
         }
     }
 }

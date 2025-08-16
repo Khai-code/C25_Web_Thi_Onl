@@ -40,6 +40,7 @@
                         <th scope="col">Số điện thoại</th>
                         <th scope="col">Ngày sinh</th>
                         <th scope="col">Địa chỉ</th>
+                        <th scope="col">Bộ môn</th>
                         <th scope="col">Chức vụ</th>
                         <th scope="col">Hành động</th>
                     </tr>
@@ -60,6 +61,7 @@
                             <td>@item.teacher.Phone_Number</td>
                             <td>@item.teacher.date_of_bith.ToString("dd/MM/yyyy")</td>
                             <td class="text-truncate" style="max-width: 180px;">@item.teacher.Address</td>
+                            <td class="text-truncate" style="max-width: 180px;">@item.teacher.subject_name</td>
                             <td>
                                 <span class="badge rounded-pill
                             @(item.teacher.Position switch
@@ -224,16 +226,45 @@
                            oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
                            oninput="this.setCustomValidity('')" />
             </div>
+
             <div class="mb-3">
                 <label for="Status" class="form-label">Chức vụ</label>
-                <InputSelect class="form-select" id="Status" @bind-Value="currentTeacher.Status" disabled="@isReadOnly" required
+                <InputSelect class="form-select" id="Status" @bind-Value="currentTeacher.Position" disabled="@isReadOnly" required
                              oninvalid="this.setCustomValidity('Vui lòng chọn chức vụ giáo viên')"
                              oninput="this.setCustomValidity('')">
                     <option value="">-- Chọn chức vụ --</option>
-                    <option value="1">Quản lý</option>
-                    <option value="2">Giáo viên bộ môn</option>
+                    <option value="0">Quản lý</option>
+                    <option value="1">Giáo viên bộ môn</option>
                 </InputSelect>
             </div>
+            @if (currentTeacher.Position == 1)
+            {
+                <div class="mb-3">
+                    <label for="idsubject" class="form-label">Bộ môn</label>
+                    <InputSelect class="form-select" id="idsubject" @bind-Value="currentTeacher.idsubject" disabled="@isReadOnly" required
+                                 oninvalid="this.setCustomValidity('Vui lòng chọn bộ môn')"
+                                 oninput="this.setCustomValidity('')">
+                        <option value="">-- Chọn bộ môn --</option>
+                        @foreach (var subject in allSubject)
+                        {
+                            <option value="@subject.Id">@subject.Subject_Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
+            else
+            {
+                <div class="mb-3">
+                    <label for="idsubject" class="form-label">Bộ môn</label>
+                    <InputSelect class="form-select" id="idsubject" @bind-Value="currentTeacher.idsubject" disabled="@isReadOnly">
+                        <option value="">-- Chọn bộ môn --</option>
+                        @foreach (var subject in allSubject)
+                        {
+                            <option value="@subject.Id">@subject.Subject_Name</option>
+                        }
+                    </InputSelect>
+                </div>
+            }
             @if (!isReadOnly)
             {
                 <div class="d-flex justify-content-end">
