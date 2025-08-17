@@ -741,23 +741,27 @@ namespace Blazor_Server.Services
         }
         public async Task<Data_Base.Models.T.Teacher> TeacherGives(int userId)
         {
+            Teacher T = new Teacher();
             try
             {
                 var filter = new CommonFilterRequest
                 {
                     Filters = new Dictionary<string, string>
                     {
-                         { "User_Id", string.Join(",", userId) },
+                         { "User_Id", userId.ToString() },
                     },
                 };
 
                 var lstTeacher = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Teacher/common/get", filter);
 
-                if (!lstTeacher.IsSuccessStatusCode) { return null  ; }
+                if (!lstTeacher.IsSuccessStatusCode) { return null; }
 
-                var teacher = (await lstTeacher.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Teacher>>()).Single();
-
-                return teacher;
+                var teacher = await lstTeacher.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Teacher>>();
+                if (teacher != null && teacher.Count > 0)
+                {
+                    T = teacher.First();
+                }
+                return T;
             }
             catch (Exception ex)
             {

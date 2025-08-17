@@ -69,6 +69,8 @@ namespace ASP.NET.Controllers.G
                     return await HandleExamHisToryFilter(request.Filters);
                 case "Exam_Room_Teacher":
                     return await HandleExamRoomTeacher(request.Filters);
+                case "Teacher":
+                    return await HandleTeacher(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -498,11 +500,13 @@ namespace ASP.NET.Controllers.G
         private async Task<IActionResult> HandleVPackageFilter(Dictionary<string, string> filters)
         {
             int? packageCode = filters.ContainsKey("Package_Code") ? int.Parse(filters["Package_Code"]) : null;
+            int? packageId = filters.ContainsKey("Id") ? int.Parse(filters["Id"]) : null;
             int? classId = filters.ContainsKey("Class_Id") ? int.Parse(filters["Class_Id"]) : null;
 
             var result = await _repository.GetWithFilterAsync<V_Package>(a => 
                 (!packageCode.HasValue || a.Package_Code == packageCode) &&
-                (!classId.HasValue || a.Class_Id == classId)
+                (!classId.HasValue || a.Class_Id == classId) &&
+                (!packageId.HasValue || a.Id == packageId)
             );
 
             return Ok(result);
@@ -592,6 +596,16 @@ namespace ASP.NET.Controllers.G
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Teacher>(a =>
                 (!examRoomId.HasValue || a.Exam_Room_Id == examRoomId)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleTeacher(Dictionary<string, string> filters)
+        {
+            int? userId = filters.ContainsKey("User_Id") ? int.Parse(filters["User_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.T.Teacher>(a =>
+                (!userId.HasValue || a.User_Id == userId)
             );
 
             return Ok(result);
