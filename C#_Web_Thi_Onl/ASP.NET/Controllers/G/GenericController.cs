@@ -421,8 +421,8 @@ namespace ASP.NET.Controllers.G
             var result = await _repository.GetWithFilterAsync<Package>(p =>
                 (!packageTypeId.HasValue || p.Package_Type_Id == packageTypeId) &&
                 (!subjectId.HasValue || p.Subject_Id == subjectId) &&
-                (!classId.HasValue || p.Class_Id == classId) && 
-                (!packageCode.HasValue || p.Package_Code == packageCode) && 
+                (!classId.HasValue || p.Class_Id == classId) &&
+                (!packageCode.HasValue || p.Package_Code == packageCode) &&
                 (string.IsNullOrEmpty(keyword) || p.Package_Name.Contains(keyword))
             );
 
@@ -430,7 +430,7 @@ namespace ASP.NET.Controllers.G
         }
         private async Task<IActionResult> HandleAnswersFilter(Dictionary<string, string> filters)
         {
-            List<int>? lstquestionId = filters.ContainsKey("Question_Id") && !string.IsNullOrEmpty(filters["Question_Id"]) 
+            List<int>? lstquestionId = filters.ContainsKey("Question_Id") && !string.IsNullOrEmpty(filters["Question_Id"])
                 ? filters["Question_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
             //int? questionId = filters.ContainsKey("Question_Id") ? int.Parse(filters["Question_Id"]) : null;
             string? keyword = filters.ContainsKey("Keyword") ? filters["Keyword"] : null;
@@ -503,7 +503,7 @@ namespace ASP.NET.Controllers.G
             int? packageId = filters.ContainsKey("Id") ? int.Parse(filters["Id"]) : null;
             int? classId = filters.ContainsKey("Class_Id") ? int.Parse(filters["Class_Id"]) : null;
 
-            var result = await _repository.GetWithFilterAsync<V_Package>(a => 
+            var result = await _repository.GetWithFilterAsync<V_Package>(a =>
                 (!packageCode.HasValue || a.Package_Code == packageCode) &&
                 (!classId.HasValue || a.Class_Id == classId) &&
                 (!packageId.HasValue || a.Id == packageId)
@@ -561,7 +561,7 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
-        
+
         private async Task<IActionResult> HandleScoreFilter(Dictionary<string, string> filters)
         {
             int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
@@ -593,9 +593,11 @@ namespace ASP.NET.Controllers.G
         private async Task<IActionResult> HandleExamRoomTeacher(Dictionary<string, string> filters)
         {
             int? examRoomId = filters.ContainsKey("Exam_Room_Id") ? int.Parse(filters["Exam_Room_Id"]) : null;
+            int? TeacherId = filters.ContainsKey("Teacher_Id") ? int.Parse(filters["Teacher_Id"]) : null;
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Teacher>(a =>
-                (!examRoomId.HasValue || a.Exam_Room_Id == examRoomId)
+                (!examRoomId.HasValue || a.Exam_Room_Id == examRoomId) &&
+                (!TeacherId.HasValue || a.Teacher_Id == TeacherId)
             );
 
             return Ok(result);

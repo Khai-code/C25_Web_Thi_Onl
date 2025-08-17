@@ -8,6 +8,7 @@ using Data_Base.Models.R;
 using Data_Base.Models.S;
 using Data_Base.V_Model;
 using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.IdentityModel.Tokens;
 using static Blazor_Server.Services.ExamService;
 
 namespace Blazor_Server.Services
@@ -162,7 +163,7 @@ namespace Blazor_Server.Services
                 {
                     Filters = new Dictionary<string, string>
                     {
-                        { "Package_Id", packageId.ToString() }
+                        { "Id", packageId.ToString() }
                     },
                 };
 
@@ -171,6 +172,7 @@ namespace Blazor_Server.Services
                     return null;
 
                 var package = (await packageGetResponse.Content.ReadFromJsonAsync<List<V_Package>>()).SingleOrDefault();
+
 
                 return package;
             }
@@ -201,6 +203,8 @@ namespace Blazor_Server.Services
                 packageModel.Class_Id = packageTestADO.Class_Id;
                 packageModel.Package_Type_Id = packageTestADO.Package_Type_Id;
                 packageModel.Teacher_Id = packageTestADO.TeacherPackage_Id;
+                packageModel.Um_Lock = 0;
+                packageModel.Point_Type_Id = packageTestADO.Point_Type_Id;
 
                 var package = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageTestADO.Id}", packageModel);
 

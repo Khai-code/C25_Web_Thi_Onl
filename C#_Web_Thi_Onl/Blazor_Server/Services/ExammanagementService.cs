@@ -146,6 +146,15 @@ namespace Blazor_Server.Services
                                     ?? new List<Exam_Room>();
                 var examRoom = listExamRoom.FirstOrDefault(x => x.Id == exrPackage.Exam_Room_Id && x.Exam_Id == id);
                 if (examRoom == null) return null;
+
+                var listExamRoomTeachers = await _httpClient.GetFromJsonAsync<List<Exam_Room_Teacher>>("/api/Exam_Room_Teacher/Get")
+                           ?? new List<Exam_Room_Teacher>();
+
+                var proctorIds = listExamRoomTeachers
+                    .Where(x => x.Exam_Room_Id == examRoom.Id)
+                    .Select(x => x.Teacher_Id)
+                    .ToList();
+
                 var startTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time);
                 if (from != null && startTime < from) return null;
                 if (to != null && startTime > to) return null;
@@ -162,7 +171,10 @@ namespace Blazor_Server.Services
                     StartTime = startTime,
                     EndTime = ConvertLong.ConvertLongToDateTime(examRoom.End_Time),
                     RoomName = room.Room_Name,
-                    PackageTypeID = package.Package_Type_Id
+                    PackageTypeID = package.Package_Type_Id,
+                    TeacherId = package.Teacher_Id,
+                    ConfirmTheTest = 0,
+                    ProctorTeacherIds = proctorIds,
                 };
             });
 
@@ -596,11 +608,39 @@ namespace Blazor_Server.Services
             return currentSummary?.Id ?? 0;
         }
 
-        public class QuestionWithAnswers
+        public async Task<bool> ConfirmExamRoom(int examRoomId, int teacherId)
         {
-            public Question Question { get; set; }
-            public List<Answers> Answers { get; set; }
+            try
+            {
+                var filter = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+            {
+                { "Exam_Room_Id", examRoomId.ToString() },
+                { "Teacher_Id", teacherId.ToString() }
+            }
+                };
+
+                // Lấy bản ghi Exam_Room_Teacher hiện tại
+                var response = await _httpClient.PostAsJsonAsync("/api/Exam_Room_Teacher/common/get", filter);
+                if (!response.IsSuccessStatusCode) return false;
+
+                var list = await response.Content.ReadFromJsonAsync<List<Exam_Room_Teacher>>();
+                var examRoomTeacher = list?.FirstOrDefault();
+                if (examRoomTeacher == null) return false;
+
+                examRoomTeacher.Confirm_The_Test = 1;
+
+                var updateResp = await _httpClient.PutAsJsonAsync($"/api/Exam_Room_Teacher/Pus/{examRoomTeacher.Id}", examRoomTeacher);
+                return updateResp.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi xác nhận bài thi: {ex.Message}");
+                return false;
+            }
         }
+
 
         public class listexam
         {
@@ -624,6 +664,10 @@ namespace Blazor_Server.Services
             public DateTime EndTime { get; set; }
             public string RoomName {  get; set; }
             public int PackageTypeID { get; set; }
+            public int TeacherId { get; set; } // giáo viên ra đề
+            public int ConfirmTheTest { get; set; }
+
+            public List<int> ProctorTeacherIds { get; set; } = new();
 
         }
         public class listStudent

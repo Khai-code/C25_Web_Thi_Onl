@@ -140,7 +140,8 @@ namespace Blazor_Server.Services
                         score = examHistory?.Score ?? 0,
                         Point = scoreRecord?.Point ?? 0,
                         Check_Time = ConvertLong.ConvertLongToDateTime(examRoomStudent.Check_Time),
-                        End_Time = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time)
+                        End_Time = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time),
+                        Teacher_Id = reviewTest?.Teacher_Id ?? 0
                     });
                 }
             }
@@ -157,6 +158,7 @@ namespace Blazor_Server.Services
                 .ToList();
             var Review_Test = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
             var reviewTest = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Status;
+            var reviewTestTeacherID = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Teacher_Id;
             // Lấy danh sách Question liên quan đến Test
             var questions = await _httpClient.GetFromJsonAsync<List<Question>>("/api/Question/Get");
             var questionsFiltered = questions?
@@ -234,7 +236,8 @@ namespace Blazor_Server.Services
                     question_lever = level?.Question_Level_Name ?? "",
                     Questions = question,
                     Answers = relatedAnswers,
-                    Exam_Room_Student_Answer_HisTories = relatedHistories
+                    Exam_Room_Student_Answer_HisTories = relatedHistories,
+                    Teacher_Id = reviewTestTeacherID
                 });
             }
 
@@ -940,7 +943,73 @@ namespace Blazor_Server.Services
             }
         }
 
+        public async Task<Data_Base.Models.P.Package?> GetPackageAsync(int packageId)
+        {
+            return await _httpClient.GetFromJsonAsync<Data_Base.Models.P.Package>($"/api/Package/GetBy/{packageId}");
+        }
 
+        public async Task<Class?> GetClassByIdAsync(int classId)
+        {
+            return await _httpClient.GetFromJsonAsync<Class>($"/api/Class/GetBy/{classId}");
+        }
+
+        public async Task<List<TeacherWithName>> GetListTeacherSubJect(int packageId)
+        {
+            var pkg = await GetPackageAsync(packageId);
+            if (pkg == null) return new List<TeacherWithName>();
+
+            int subjectId = pkg.Subject_Id;
+            int classId = pkg.Class_Id;
+            int GVRaDe = pkg.Teacher_Id;
+
+            var clas = await _httpClient.GetFromJsonAsync<Class>($"/api/Class/GetBy/{classId}");
+            int GVCNId = clas?.Teacher_Id ?? 0;
+
+            var allTeachers = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get") ?? new List<Teacher>();
+
+            var filtered = allTeachers
+                .Where(t => t.Subject_Id == subjectId)       // đúng môn của package
+                .Where(t => t.Id != GVCNId)              // không phải GVCN của lớp
+                .Where(t=>t.Id != GVRaDe)              // không phải giáo viên ra đề
+                .ToList();
+
+            // Map tên 1 lượt để tránh gọi API theo từng teacher
+            var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
+            return filtered.Select(t => new TeacherWithName
+            {
+                Id = t.Id,
+                FullName = users.FirstOrDefault(u => u.Id == t.User_Id)?.Full_Name ?? $"Teacher #{t.Id}"
+            }).ToList();
+        }
+
+
+        public async Task<bool> AssignReviewToTeacherAsync(int reviewId, int teacherId, string? note = null)
+        {
+            // Lấy record review hiện tại
+            var review = await _httpClient.GetFromJsonAsync<Review_Test>($"/api/Review_Tests/GetBy/{reviewId}");
+            if (review == null) return false;
+
+            if (review.Teacher_Id != null && review.Teacher_Id > 0)
+                return false;
+
+            review.Teacher_Id = teacherId;
+
+            var resp = await _httpClient.PutAsJsonAsync($"/api/Review_Tests/Pus/{reviewId}", review);
+            return resp.IsSuccessStatusCode;
+        }
+
+        public async Task<Teacher?> GetTeacherByUserIdAsync(int userId)
+        {
+            var allTeachers = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get")
+                             ?? new List<Teacher>();
+            return allTeachers.FirstOrDefault(t => t.User_Id == userId);
+        }
+
+        public class TeacherWithName
+        {
+            public int Id { get; set; }
+            public string FullName { get; set; }
+        }
 
         public class Test_Review
         {
@@ -983,6 +1052,8 @@ namespace Blazor_Server.Services
             public double Point { get; set; }
             public DateTime Check_Time { get; set; }
             public DateTime End_Time { get; set; }
+
+            public int? Teacher_Id { get; set; }
         }
         public class listquestion
         {
@@ -993,6 +1064,8 @@ namespace Blazor_Server.Services
             public Question Questions { get; set; }
             public List<Answers> Answers { get; set; }
             public List<Exam_Room_Student_Answer_HisTory> Exam_Room_Student_Answer_HisTories { get; set; }
+
+            public int? Teacher_Id { get; set; } 
         }
 
         public class ListQuesAnsReview

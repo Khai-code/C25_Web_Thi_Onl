@@ -1,16 +1,17 @@
-﻿@page "/exam-history"
-@using System.Globalization
-@using Blazor_Server.Services
-@using Data_Base.GenericRepositories
-@using Data_Base.Models.C
-@using Data_Base.Models.P
-@using Data_Base.Models.S
-@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
-@using static Blazor_Server.Services.HistoriesExam
-@layout TeacherLayout
-@inject IJSRuntime jSRuntime
-@inject HistoriesExam HistoriesExam
-@inject Blazored.Toast.Services.IToastService toastService
+﻿    @page "/exam-history"
+    @using System.Globalization
+    @using Blazor_Server.Services
+    @using Data_Base.GenericRepositories
+    @using Data_Base.Models.C
+    @using Data_Base.Models.P
+    @using Data_Base.Models.S
+@using Data_Base.Models.T
+    @inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
+    @using static Blazor_Server.Services.HistoriesExam
+    @layout TeacherLayout
+    @inject IJSRuntime jSRuntime
+    @inject HistoriesExam HistoriesExam
+    @inject Blazored.Toast.Services.IToastService toastService
 <div>
     <div class="bg-body-secondary p-3 rounded shadow-sm mb-4">
         <div class="row g-2 align-items-end">
@@ -201,7 +202,8 @@
                                                                 </div>
                                                             </div>
 
-                                                            @if (hasReview)
+                                                            @if (IsAdmin || // admin luôn thấy
+                                                           (CurrentTeacherId.HasValue && r.Teacher_Id == CurrentTeacherId.Value)) // giáo viên đúng bài)
                                                             {
                                                                 <!-- Cột phải: Phúc khảo -->
                                                                 <div class="col-md-6 mb-3">
@@ -225,11 +227,25 @@
 
                                                                             <div class="d-flex gap-2">
                                                                                 <button class="btn btn-success" @onclick="()=>updateReview(r.IdReview, 2)">
-                                                                                    <i class="bi bi-check-circle"></i> Xác nhận
+                                                                                     Xác nhận
                                                                                 </button>
                                                                                 <button class="btn btn-danger" @onclick="()=>updateReview(r.IdReview, 3)">
-                                                                                    <i class="bi bi-x-circle"></i> Từ chối
+                                                                                    Từ chối
                                                                                 </button>
+
+                                                                                @if (IsAdmin && (r.Teacher_Id == null || r.Teacher_Id == 0))
+                                                                                {
+                                                                                    <button class="btn btn-outline-primary" @onclick="() => OpenAssignModal(r.IdReview, r.Idpackage)">
+                                                                                        <i class="bi bi-person-check"></i> Phân quyền giáo viên chấm lại
+                                                                                    </button>
+                                                                                }
+                                                                                else if (IsAdmin && r.Teacher_Id > 0)
+                                                                                {
+                                                                                    <span class="text-success">
+                                                                                        <i class="bi bi-check-circle"></i> Đã phân cho giáo viên: <b>@GetTeacherName(r.Teacher_Id)</b>
+                                                                                    </span>
+                                                                                }
+
                                                                             </div>
                                                                         }
                                                                         else
@@ -280,10 +296,10 @@
 
                             @if (item.question_type == 2)
                             {
-                                @if (item.statuss == 1)
+                                @if (item.statuss == 1 && (IsAdmin || (CurrentTeacherId.HasValue && item.Teacher_Id == CurrentTeacherId.Value)))
                                 {
                                     <button class="btn btn-warning btn-sm"
-                                    @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
+                                            @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
                                         Sửa
                                     </button>
                                 }
@@ -328,7 +344,7 @@
                                                     <p class="mb-1"><strong>Đáp án:</strong> @ans.Answers_Name</p>
                                                 </div>
                                                 <div class="col-md-6">
-                                                    @if (item.statuss == 1)
+                                                    @if (item.statuss == 1 && (IsAdmin || (CurrentTeacherId.HasValue && item.Teacher_Id == CurrentTeacherId.Value)))
                                                     {
                                                         <div class="row">
                                                             <div class="col-md-6 mb-2">
@@ -354,7 +370,7 @@
                                                     {
                                                         <div class="row">
                                                             <div class="col-md-6 mb-2">
-                                                                <label class="form-label">Kết quả</label>
+                                                                <label class="form-label">Kết quả</label>   
                                                                 <span>@ans.Points_Earned</span>
                                                             </div>
                                                             <div class="col-md-6 mb-2">
@@ -411,11 +427,11 @@
                     {
                         if (isEssayQuestion)
                         {
-                             <button type="submit" class="btn btn-primary" @onclick="() => updateexamhis(idtest, totalScore)">
+                            <button type="submit" class="btn btn-primary" @onclick="() => updateexamhis(idtest, totalScore)">
                                 Lưu chấm điểm
                             </button>
                         }
-                       
+
                     }
                     <button class="btn btn-secondary" @onclick="CloseModal">Đóng</button>
                 </div>
@@ -502,6 +518,40 @@
     </div>
 }
 
+@if (showAssignModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content shadow-lg rounded-4 border-0">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Phân quyền giáo viên chấm lại</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAssignModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Chọn giáo viên</label>
+                        <select class="form-select"
+                        @bind="selectedTeacherIdForAssign">
+                            <option value="0">-- Chọn giáo viên --</option>
+                            @foreach (var t in teachers)
+                            {
+                                <option value="@t.Id">@t.FullName</option>
+                            }
+                        </select>
+                    </div>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseAssignModal">Đóng</button>
+                    <button class="btn btn-primary" @onclick="ConfirmAssignAsync">
+                        <i class="bi bi-check2-circle"></i> Xác nhận gán
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code
 {
@@ -529,42 +579,42 @@
     private ListQuesAnsReview MapToListQuesAnsReview(listquestion item)
     {
         return new ListQuesAnsReview
-            {
-                QuestionId = item.Questions.Id,
-                QuestionName = item.Questions.Question_Name,
-                QuestionTypeId = item.question_type,
-                PackageId = item.Questions.Package_Id,
-                MaximumScore = item.Questions.Maximum_Score,
-                // Leva = item.question_lever,
-                Answers = item.Answers?.Select(a => new AnswerReview
                 {
-                    AnswerId = a.Id,
-                    AnswersName = a.Answers_Name,
-                    Right_Answer = a.Right_Answer,
-                    QuestionId = a.Question_Id
-                }).ToList() ?? new List<AnswerReview>()
-            };
+                    QuestionId = item.Questions.Id,
+                    QuestionName = item.Questions.Question_Name,
+                    QuestionTypeId = item.question_type,
+                    PackageId = item.Questions.Package_Id,
+                    MaximumScore = item.Questions.Maximum_Score,
+            // Leva = item.question_lever,
+                    Answers = item.Answers?.Select(a => new AnswerReview
+                    {
+                        AnswerId = a.Id,
+                        AnswersName = a.Answers_Name,
+                        Right_Answer = a.Right_Answer,
+                        QuestionId = a.Question_Id
+                    }).ToList() ?? new List<AnswerReview>()
+                };
     }
 
 
     private void StartEditQuestion(ListQuesAnsReview question)
     {
         lstQuesAns = new ListQuesAnsReview
-            {
-                QuestionId = question.QuestionId,
-                QuestionName = question.QuestionName,
-                QuestionTypeId = question.QuestionTypeId,
-                PackageId = question.PackageId,
-                MaximumScore = question.MaximumScore,
-                Leva = question.Leva,
-                Answers = question.Answers.Select(a => new AnswerReview
                 {
-                    AnswerId = a.AnswerId,
-                    AnswersName = a.AnswersName,
-                    Right_Answer = a.Right_Answer,
-                    QuestionId = a.QuestionId
-                }).ToList()
-            };
+                    QuestionId = question.QuestionId,
+                    QuestionName = question.QuestionName,
+                    QuestionTypeId = question.QuestionTypeId,
+                    PackageId = question.PackageId,
+                    MaximumScore = question.MaximumScore,
+                    Leva = question.Leva,
+                    Answers = question.Answers.Select(a => new AnswerReview
+                    {
+                        AnswerId = a.AnswerId,
+                        AnswersName = a.AnswersName,
+                        Right_Answer = a.Right_Answer,
+                        QuestionId = a.QuestionId
+                    }).ToList()
+                };
         validationMessage = "";
         isEditing = true;
     }
@@ -698,7 +748,7 @@
         {
             totalScore += GetQuestionTotalScore(question);
         }
-      StateHasChanged(); // Cập nhật UI
+        StateHasChanged(); // Cập nhật UI
     }
     private async Task UpdateAnswerScore(int answerId, string score)
     {
@@ -712,13 +762,16 @@
         {
             answerScores.Add(answerId, score);
         }
-       await CalculateTotalScore();
+        await CalculateTotalScore();
     }
     private string iduser;
     protected override async Task OnInitializedAsync()
     {
         try
         {
+
+            await LoadCurrentTeacherAsync();
+
             var resuilt = await SessionStorage.GetAsync<string>("Id");
             if (resuilt.Success && !string.IsNullOrEmpty(resuilt.Value))
             {
@@ -730,181 +783,272 @@
         catch { }
 
     }
-    private void ToggleFilter(string type)
+
+    private int UserId;
+    private int? CurrentTeacherId;
+    private int? CurrentTeacherPosition;  // 0 = admin, 1 = teacher
+    private bool IsAdmin => CurrentTeacherPosition == 0;
+    private string? errorMessage;
+    // Load token để lấy status
+
+    public async Task LoadCurrentTeacherAsync()
     {
-        if (selectedTypes.Contains(type))
+        var result = await SessionStorage.GetAsync<string>("authToken");
+        if (result.Success && !string.IsNullOrEmpty(result.Value))
         {
-            selectedTypes.Remove(type);
-            listTests = new List<listTest>();
-            selectedExamId = 0;
-        }
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(result.Value) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+            var userIdClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Id");
 
-        else
-            selectedTypes.Add(type);
-    }
-
-    private void ToggleSelectAll()
-    {
-        if (selectedTypes.Count < packageTypes.Count)
-        {
-            selectedTypes = packageTypes.ToHashSet(); // chọn hết
-            listTests = new List<listTest>();
-            selectedExamId = 0;
-        }
-
-        else
-        {
-            selectedTypes.Clear();
-            listTests = new List<listTest>();
-            selectedExamId = 0;// bỏ chọn hết
-        }
-
-    }
-
-    private IEnumerable<lispackage> FilteredPackages =>
-        selectedTypes.Count == 0
-            ? Enumerable.Empty<lispackage>()
-            : packagess.Where(p => selectedTypes.Contains(p.Name_Package_Type));
-    private async Task OnSearch()
-    {
-        if (selectedClassId <= 0)
-        {
-            toastService.ShowWarning("vui lòng chọn lớp!");
-            return;
-        }
-
-        if (selectedSubjectId <= 0)
-        {
-            toastService.ShowWarning("vui lòng chọn môn học!");
-            return;
-        }
-
-        if (startDate == default || endDate == default)
-        {
-            toastService.ShowWarning("vui lòng chọn khoảng thời gian hợp lệ!");
-            return;
-        }
-
-        if (startDate > endDate)
-        {
-            toastService.ShowWarning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
-            return;
-        }
-
-        packagess = await HistoriesExam.GetAllHistories(selectedClassId, selectedSubjectId, startDate, endDate);
-        selectedExamId = null;
-        packageTypes = packagess.Select(p => p.Name_Package_Type).Distinct().OrderBy(x => x).ToList();
-        selectedTypes = packageTypes.ToHashSet();
-        if (packagess.Count == 0)
-        {
-            toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
-        }
-    }
-
-    private async Task<bool> UpdateScoreByTestId(int testId, double totalScore)
-    {
-        // Gọi đúng API update Score với TestId truyền vào
-        var result = await HistoriesExam.SaveAllScoresByTestId(testId, totalScore);
-        return result;
-    }
-
-    private async Task updateexamhis(int id, double score)
-    {
-        if (score > 10)
-        {
-            toastService.ShowWarning("⚠️ Điểm bạn nhập vượt quá thang điểm 10!");
-            return;
-        }
-
-        var respon = await UpdateScoreByTestId(id, score); // Chỉ gọi update Score
-        var resspon = await SubmitComments();
-
-        if (respon && resspon)
-        {
-            toastService.ShowSuccess("✅ Cập nhật điểm thành công!");
-        }
-        else
-        {
-            toastService.ShowError("❌ Cập nhật điểm thất bại! Vui lòng thử lại.");
-        }
-    }
-
-
-    private async Task<bool> SubmitComments()
-    {
-        foreach (var entry in answerComments)
-        {
-            int answerId = entry.Key;
-            string? comment = entry.Value;
-
-            bool success = await HistoriesExam.updatecomemt(answerId, comment);
-
-            if (!success)
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int parsedId))
             {
-                Console.WriteLine($"Không thể cập nhật comment cho AnswerId {answerId}");
-                return false;
+                UserId = parsedId;
+
+                var teacher = await HistoriesExam.GetTeacherByUserIdAsync(UserId);
+                CurrentTeacherId = teacher?.Id;
+                CurrentTeacherPosition = teacher?.Position; // 0 = admin, 1 = teacher
+            }
+        }
+        else
+        {
+            errorMessage = "Không tìm thấy token trong session storage.";
+        }
+    }
+
+        private void ToggleFilter(string type)
+        {
+            if (selectedTypes.Contains(type))
+            {
+                selectedTypes.Remove(type);
+                listTests = new List<listTest>();
+                selectedExamId = 0;
+            }
+
+            else
+                selectedTypes.Add(type);
+        }
+
+        private void ToggleSelectAll()
+        {
+            if (selectedTypes.Count < packageTypes.Count)
+            {
+                selectedTypes = packageTypes.ToHashSet(); // chọn hết
+                listTests = new List<listTest>();
+                selectedExamId = 0;
+            }
+
+            else
+            {
+                selectedTypes.Clear();
+                listTests = new List<listTest>();
+                selectedExamId = 0;// bỏ chọn hết
+            }
+
+        }
+
+        private IEnumerable<lispackage> FilteredPackages =>
+            selectedTypes.Count == 0
+                ? Enumerable.Empty<lispackage>()
+                : packagess.Where(p => selectedTypes.Contains(p.Name_Package_Type));
+        private async Task OnSearch()
+        {
+            if (selectedClassId <= 0)
+            {
+                toastService.ShowWarning("vui lòng chọn lớp!");
+                return;
+            }
+
+            if (selectedSubjectId <= 0)
+            {
+                toastService.ShowWarning("vui lòng chọn môn học!");
+                return;
+            }
+
+            if (startDate == default || endDate == default)
+            {
+                toastService.ShowWarning("vui lòng chọn khoảng thời gian hợp lệ!");
+                return;
+            }
+
+            if (startDate > endDate)
+            {
+                toastService.ShowWarning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+                return;
+            }
+
+            packagess = await HistoriesExam.GetAllHistories(selectedClassId, selectedSubjectId, startDate, endDate);
+            selectedExamId = null;
+            packageTypes = packagess.Select(p => p.Name_Package_Type).Distinct().OrderBy(x => x).ToList();
+            selectedTypes = packageTypes.ToHashSet();
+            if (packagess.Count == 0)
+            {
+                toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
             }
         }
 
-        return true;
-    }
-
-    private async Task gettest(int id)
-    {
-        try
+        private async Task<bool> UpdateScoreByTestId(int testId, double totalScore)
         {
-
-
-            listTests = await HistoriesExam.GetTests(id);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Lỗi khi lấy bài thi: {ex.Message}");
+            // Gọi đúng API update Score với TestId truyền vào
+            var result = await HistoriesExam.SaveAllScoresByTestId(testId, totalScore);
+            return result;
         }
 
-    }
-    bool showQuestionModal = false;
-    List<listquestion> selectedQuestions;
+        private async Task updateexamhis(int id, double score)
+        {
+            if (score > 10)
+            {
+                toastService.ShowWarning("⚠️ Điểm bạn nhập vượt quá thang điểm 10!");
+                return;
+            }
 
-    async Task ShowQuestions(int testId)
+            var respon = await UpdateScoreByTestId(id, score); // Chỉ gọi update Score
+            var resspon = await SubmitComments();
+
+            if (respon && resspon)
+            {
+                toastService.ShowSuccess("✅ Cập nhật điểm thành công!");
+            }
+            else
+            {
+                toastService.ShowError("❌ Cập nhật điểm thất bại! Vui lòng thử lại.");
+            }
+        }
+
+
+        private async Task<bool> SubmitComments()
+        {
+            foreach (var entry in answerComments)
+            {
+                int answerId = entry.Key;
+                string? comment = entry.Value;
+
+                bool success = await HistoriesExam.updatecomemt(answerId, comment);
+
+                if (!success)
+                {
+                    Console.WriteLine($"Không thể cập nhật comment cho AnswerId {answerId}");
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private async Task gettest(int id)
+        {
+            try
+            {
+
+
+                listTests = await HistoriesExam.GetTests(id);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi khi lấy bài thi: {ex.Message}");
+            }
+
+        }
+        bool showQuestionModal = false;
+        List<listquestion> selectedQuestions;
+
+        async Task ShowQuestions(int testId)
+        {
+            selectedQuestions = await HistoriesExam.GetQuestions(testId);
+            answerComments = selectedQuestions
+          .Where(x => x.Questions != null)
+          .ToDictionary(
+              x => x.Questions.Id,
+              x => x.Questions.Note ?? ""
+          );
+            idtest = testId;
+            totalScore = listTests.FirstOrDefault()?.score ?? 0;
+            answerScores = new Dictionary<int, string>();
+            showQuestionModal = true;
+        }
+
+        void CloseModal()
+        {
+            showQuestionModal = false;
+            selectedQuestions = null;
+        }
+
+        int? selectedExamId = null;
+        int? selectedStudent = null;
+        string studentSearch = "";
+
+        private async Task SelectExam(int id)
+        {
+            await gettest(id);
+            selectedExamId = selectedExamId == id ? null : id;
+            selectedStudent = null;
+            studentSearch = "";
+
+        }
+
+        void SelectStudent(int name)
+        {
+            selectedStudent = selectedStudent == name ? null : name;
+        }
+
+        bool MatchesSearch(string name) =>
+            string.IsNullOrWhiteSpace(studentSearch) || name.Contains(studentSearch, StringComparison.OrdinalIgnoreCase);
+
+
+    // === Phân quyền (modal) ===
+    private bool showAssignModal = false;
+    private int assignReviewId = 0;               // review đang gán
+    private int selectedTeacherIdForAssign = 0;   // giáo viên đang chọn trong modal
+    private string assignNote = "";               // ghi chú (nếu cần)
+    private List<TeacherWithName> teachers = new();
+
+
+    // Mở/đóng modal
+    private async Task OpenAssignModal(int reviewId, int packageId)
     {
-        selectedQuestions = await HistoriesExam.GetQuestions(testId);
-        answerComments = selectedQuestions
-      .Where(x => x.Questions != null)
-      .ToDictionary(
-          x => x.Questions.Id,
-          x => x.Questions.Note ?? ""
-      );
-        idtest = testId;
-        totalScore = listTests.FirstOrDefault()?.score ?? 0;
-        answerScores = new Dictionary<int, string>();
-        showQuestionModal = true;
-    }
+        assignReviewId = reviewId;
+        selectedTeacherIdForAssign = 0;
 
-    void CloseModal()
+        if (IsAdmin)
+            teachers = await HistoriesExam.GetListTeacherSubJect(packageId);
+        else
+            teachers = new();
+
+        showAssignModal = true;
+    }
+    private void CloseAssignModal()
     {
-        showQuestionModal = false;
-        selectedQuestions = null;
+        showAssignModal = false;
     }
 
-    int? selectedExamId = null;
-    int? selectedStudent = null;
-    string studentSearch = "";
-
-    private async Task SelectExam(int id)
+    // Xác nhận gán
+    private async Task ConfirmAssignAsync()
     {
-        await gettest(id);
-        selectedExamId = selectedExamId == id ? null : id;
-        selectedStudent = null;
-        studentSearch = "";
+        if (selectedTeacherIdForAssign <= 0)
+        {
+            toastService.ShowWarning("Vui lòng chọn giáo viên!");
+            return;
+        }
 
+        var ok = await HistoriesExam.AssignReviewToTeacherAsync(assignReviewId, selectedTeacherIdForAssign, assignNote);
+        if (ok)
+        {
+            toastService.ShowSuccess("Đã gán giáo viên chấm phúc khảo!");
+            showAssignModal = false;
+
+            // reload danh sách bài test của gói đang mở (nếu có)
+            if (selectedExamId.HasValue)
+                await LoadListTests(selectedExamId.Value);
+        }
+        else
+        {
+            toastService.ShowError("Gán giáo viên thất bại!");
+        }
     }
 
-    void SelectStudent(int name)
+    private string GetTeacherName(int? teacherId)
     {
-        selectedStudent = selectedStudent == name ? null : name;
+        var t = teachers.FirstOrDefault(x => x.Id == teacherId);
+        return t?.FullName ?? "Chưa rõ";
     }
 
-    bool MatchesSearch(string name) =>
-        string.IsNullOrWhiteSpace(studentSearch) || name.Contains(studentSearch, StringComparison.OrdinalIgnoreCase);
 }

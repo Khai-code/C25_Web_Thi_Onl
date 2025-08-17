@@ -7,8 +7,10 @@
 @layout TeacherLayout
 @inject Notification notification
 @inject ExammanagementService exammanagement
+@inject HistoriesExam historiesExam
 @inject Package_Test_ERP Pack
 @inject Blazored.Toast.Services.IToastService toastService
+@inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
 @using Data_Base.Models.E
 @using static Blazor_Server.Services.HistoriesExam
 <div class="split-container">
@@ -21,7 +23,7 @@
                 </button>
                 <div class="dropdown">
                     <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center gap-1"
-                    type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                            type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
                         <i class="bi bi-funnel-fill"></i> Lọc
                     </button>
 
@@ -30,12 +32,12 @@
                         {
                             <li class="form-check mb-2">
                                 <input class="form-check-input"
-                                type="radio"
-                                id="@option.Id"
-                                name="timeFilter"
-                                value="@option.Id"
-                                checked="@(_selectedTimeFilter == option.Id)"
-                                @onchange="@(() => OnTimeOptionChanged(option.Id))" />
+                                       type="radio"
+                                       id="@option.Id"
+                                       name="timeFilter"
+                                       value="@option.Id"
+                                       checked="@(_selectedTimeFilter == option.Id)"
+                                       @onchange="@(() => OnTimeOptionChanged(option.Id))" />
                                 <label class="form-check-label ms-1" for="@option.Id" style="cursor: pointer;">@option.Label</label>
                             </li>
                         }
@@ -70,7 +72,7 @@
                 {
                     <a class="list-group-item d-flex justify-content-between align-items-center
                    @(SelectedExam == exam.Id ? "active text-white bg-primary" : "")"
-                    @onclick="() => SelectExam(exam.Id)">
+                       @onclick="() => SelectExam(exam.Id)">
                         <div>
                             <span class="fw-bold">📚 @exam.NameExam</span>
                         </div>
@@ -125,7 +127,16 @@
                                 @if (package.PackageTypeID == 1)
                                 {
 
-                                    <button class="btn btn-success btn-sm me-2" @onclick="() => ShowGradingModal(package.Id, package.NamePackage)">Chấm điểm</button>
+                                    <button class="btn btn-warning btn-sm me-2"
+                                            disabled="@(!CurrentTeacherId.HasValue || CurrentTeacherId.Value != package.TeacherId)"
+                                            title="@(
+                                                !CurrentTeacherId.HasValue ? "Đang tải thông tin giáo viên..." :
+                                                (CurrentTeacherId.Value != package.TeacherId ? "Chỉ giáo viên ra đề mới được chấm" : "Chấm điểm")
+                                            )"
+                                            @onclick:stopPropagation="true"
+                                            @onclick="() => TryOpenGrading(package)">
+                                        Chấm điểm
+                                    </button>
                                 }
 
                                 @if (EditingPackageId == package.Idexam)
@@ -139,19 +150,25 @@
                                 }
                                 else
                                 {
-                                    if (package.StartTime > status)
+                                    @if (package.ConfirmTheTest == 1)
                                     {
-                                        <button class="btn btn-warning btn-sm" @onclick="() => EditPackage(package.Idexam)">
-                                            <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            ✅ Đã xác nhận mở bài thi
                                         </button>
                                     }
-                                    else{
-                                        <button class="btn btn-warning btn-sm" disabled>
-                                            <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                                    else if (CurrentTeacherId.HasValue && package.ProctorTeacherIds.Contains(CurrentTeacherId.Value))
+                                    {
+                                        <button class="btn btn-success btn-sm"
+                                                @onclick="() => ConfirmExam(package.Idexam)">
+                                            ✅ Xác nhận mở bài thi
                                         </button>
                                     }
-
+                                    else
+                                    {
+                                        <!-- Giáo viên không coi thi thì không thấy nút -->
+                                    }
                                 }
+
                             </div>
 
                         </div>
@@ -180,9 +197,9 @@
                             </div>
                             <button class="btn btn-sm d-flex align-items-center
                                          @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
-                            @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
-                            disabled="@(student.status.StartsWith("Đã hoàn thành"))"
-                            title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
+                                    @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
+                                    disabled="@(student.status.StartsWith("Đã hoàn thành"))"
+                                    title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
                                 <i class="fas fa-times me-1"></i> Hủy thi
                             </button>
                         </li>
@@ -209,16 +226,16 @@
                             <div class="mb-3">
                                 <label for="examName" class="form-label">Tên bài thi</label>
                                 <InputText id="examName" class="form-control" @bind-Value="model.ExamName"
-                                required
-                                oninvalid="this.setCustomValidity('Vui lòng nhập tên bài thi')"
-                                oninput="this.setCustomValidity('')" />
+                                           required
+                                           oninvalid="this.setCustomValidity('Vui lòng nhập tên bài thi')"
+                                           oninput="this.setCustomValidity('')" />
                             </div>
                             <div class="mb-3">
                                 <label for="subjectId" class="form-label">Môn học</label>
                                 <InputSelect id="subjectId" class="form-control" @bind-Value="model.SubjectId"
-                                required
-                                oninvalid="this.setCustomValidity('Vui lòng chọn môn học')"
-                                oninput="this.setCustomValidity('')">
+                                             required
+                                             oninvalid="this.setCustomValidity('Vui lòng chọn môn học')"
+                                             oninput="this.setCustomValidity('')">
                                     <option value=" ">-- Chọn gói môn --</option>
                                     @foreach (var subj in subjectViewModel)
                                     {
@@ -293,9 +310,9 @@
                                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                                     <span>@ans.Answers_Name</span>
                                                     <input type="number" min="0" max="@q.Questions.Maximum_Score" step="0.01"
-                                                    class="form-control form-control-sm border-2 border-primary "
-                                                    style="width: 100px;"
-                                                    @bind="ans.Points_Earned" />
+                                                           class="form-control form-control-sm border-2 border-primary "
+                                                           style="width: 100px;"
+                                                           @bind="ans.Points_Earned" />
                                                 </li>
                                             }
                                         </ul>
@@ -325,7 +342,7 @@
     List<SubjectViewModel> subjectViewModel = new List<SubjectViewModel>();
     private List<Exam_Room_Student> listExamRoomStudents = new();
     private int _selectedTimeFilter = 0;
-    private DateTime status=DateTime.Now;
+    private DateTime status = DateTime.Now;
     private DateTime startDate = DateTime.Today;
     private DateTime endDate = DateTime.Today;
     private bool IsGradingModalOpen = false;
@@ -426,16 +443,19 @@
         }
 
         else
-            exams = await exammanagement.GetallExam(); 
+            exams = await exammanagement.GetallExam();
         Listpackages = new List<listpackage>();
         listStudents = new List<listStudent>();
     }
     protected override async Task OnInitializedAsync()
     {
-        try{
+        try
+        {
+            await LoadCurrentTeacherAsync();
             exams = await exammanagement.GetallExam();
             await Subject();
-        }catch{}
+        }
+        catch { }
 
     }
 
@@ -489,7 +509,7 @@
             {
                 toastService.ShowWarning("Bạn chưa chọn môn học!");
                 return;
-            } 
+            }
 
             await exammanagement.AddExam(exam);
             toastService.ShowSuccess("Tạo bài thi thành công");
@@ -522,7 +542,7 @@
     private async Task SelectExam(int id)
     {
         SelectedExam = id;
-        Listpackages = await exammanagement.GetallPackage(id,from,to);
+        Listpackages = await exammanagement.GetallPackage(id, from, to);
         listStudents = new List<listStudent>();
     }
 
@@ -599,15 +619,26 @@
         StateHasChanged();
     }
 
+    private async Task TryOpenGrading(listpackage package)
+    {
+        // Phòng hờ trường hợp gọi trực tiếp handler
+        if (!CurrentTeacherId.HasValue)
+        {
+            toastService.ShowWarning("Không xác định được giáo viên!");
+            return;
+        }
+        if (CurrentTeacherId.Value != package.TeacherId)
+        {
+            toastService.ShowWarning("Chỉ giáo viên ra đề mới có quyền chấm bài này.");
+            return;
+        }
+
+        await ShowGradingModal(package.Id, package.NamePackage);
+    }
+
+
     private async Task SaveAllScores()
     {
-        // if (listExamRoomStudents == null || !listExamRoomStudents.Any())
-        // {
-        //     toastService.ShowError("Không tìm thấy Exam_Room_Student tương ứng để lưu điểm!");
-        //     return;
-        // }
-        // var examRoomStudentId = listExamRoomStudents.First().Id;
-        // Gom hết các answer từ QuestionsWithAnswers
         var allAnswers = QuestionsWithAnswers.SelectMany(q => q.Answers).ToList();
 
         var result = await exammanagement.SaveAllScores(CurrentGradingTestId, allAnswers);
@@ -617,10 +648,61 @@
             toastService.ShowSuccess("Lưu toàn bộ điểm thành công!");
             TestsOfPackage = await exammanagement.GetTestsByPackage(CurrentGradingPackageId);
             StateHasChanged();
-            
+
         }
         else
             toastService.ShowError("Lưu điểm thất bại!");
     }
+
+    private int? CurrentTeacherId = null;
+    private int UserId;
+    private string errorMessage;
+
+    public async Task LoadCurrentTeacherAsync()
+    {
+        var result = await SessionStorage.GetAsync<string>("authToken");
+        if (result.Success && !string.IsNullOrEmpty(result.Value))
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(result.Value) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+            var userIdClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Id");
+
+            if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int parsedId))
+            {
+                UserId = parsedId;
+
+                var teacher = await historiesExam.GetTeacherByUserIdAsync(UserId);
+                CurrentTeacherId = teacher?.Id;
+            }
+        }
+        else
+        {
+            errorMessage = "Không tìm thấy token trong session storage.";
+        }
+    }
+
+    private async Task ConfirmExam(int examRoomId)
+    {
+        if (CurrentTeacherId == null)
+        {
+            toastService.ShowWarning("Không xác định được giáo viên!");
+            return;
+        }
+
+        bool success = await exammanagement.ConfirmExamRoom(examRoomId, CurrentTeacherId.Value);
+
+        if (success)
+        {
+            toastService.ShowSuccess("✅ Đã xác nhận mở bài thi!");
+            var pkg = Listpackages.FirstOrDefault(x => x.Idexam == examRoomId);
+            if (pkg != null)
+            {
+                pkg.ConfirmTheTest = 1; // cập nhật trạng thái
+            }
+        }
+        else
+            toastService.ShowError("❌ Xác nhận thất bại!");
+    }
+
 
 }
