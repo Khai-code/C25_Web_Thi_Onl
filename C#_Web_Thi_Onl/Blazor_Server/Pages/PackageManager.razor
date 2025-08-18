@@ -60,9 +60,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (v_Packages != null && v_Packages.Count > 0)
+                    @if (filterInactive != null && filterInactive.Count > 0)
                     {
-                        @foreach (var baiThi in v_Packages.Where(o => o.Status != 2))
+                        @foreach (var baiThi in filterInactive.Where(o => o.Status != 2))
                         {
                             <tr>
                                 <td class="text-center text-muted">@baiThi.Id</td>
@@ -951,12 +951,7 @@
     private string Search;
 
     List<PackageInactive> packageInactive =new List<PackageInactive>();
-    List<PackageInactive> filterInactive => string.IsNullOrWhiteSpace(Search) ? 
-    packageInactive : packageInactive.Where(o => o.ClassName.Contains(Search, StringComparison.OrdinalIgnoreCase) || 
-                                                 o.SubjectName.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
-                                                 o.Name.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
-                                                 o.PackageTypeName.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
-                                                 o.Code.ToString().Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
+    
     PackageTestADO packageTestADO = new PackageTestADO
         {
             Exam_Room = new Exam_Room(),
@@ -968,6 +963,15 @@
 
     V_Package updatePackageTestADO = new V_Package();
     List<V_Package> v_Packages = new List<V_Package>();
+    List<V_Package> filterInactive => string.IsNullOrWhiteSpace(Search) ?
+    v_Packages : v_Packages.Where(o => o.Class_Name.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                                                 o.Subject_Name.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                                                 o.Package_Name.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                                                 o.Package_Type_Name.Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                                                 o.Package_Code.ToString().Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                                                 o.GV1_Name.ToString().Contains(Search, StringComparison.OrdinalIgnoreCase) ||
+                                                 o.GV2_Name.ToString().Contains(Search, StringComparison.OrdinalIgnoreCase) || 
+                                                 o.TeacherPackage_Name.ToString().Contains(Search, StringComparison.OrdinalIgnoreCase)).ToList();
 
     QuestionAdo questionAnswers = new QuestionAdo
         {
@@ -1097,47 +1101,6 @@
         }
     }
 
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     try
-    //     {
-            
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         toastService.ShowError("Lỗi: " + ex);
-    //     }
-    // }
-
-    // public async Task OnClassChanged(ChangeEventArgs e)
-    // {
-    //     try
-    //     {
-    //         var selectedValue = e.Value?.ToString();
-    //         if (!string.IsNullOrEmpty(selectedValue))
-    //         {
-    //             packageTestADO.Package.Class_Id = int.Parse(selectedValue);
-
-    //             currteacher = await pm.GetTeacherOfClass(this.Homeroom_Teacher);
-
-    //             if (currteacher != null)
-    //             {
-    //                 packageTestADO.lstTeacherId.Add(currteacher.Teacher_Id);
-    //             }
-    //         }
-    //         else
-    //         {
-    //             this.Homeroom_Teacher = 0;
-    //             currteacher = null;
-    //         }
-
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         toastService.ShowError("Lỗi: " + ex);
-    //     }
-    // }
-
     protected override void OnInitialized()
     {
         try
@@ -1178,7 +1141,6 @@
                 lstAns.Add(new AnsAdo());
             }
 
-            // selectedAnswer = lstAns.FirstOrDefault();
         }
         catch (Exception ex)
         {
@@ -1679,7 +1641,7 @@
             {
                 toastService.ShowError(PTERP.ErrorMes);
             }
-            await PackageInactive();
+            await this.VPackage();
         }
         catch (Exception ex)
         {
@@ -1991,7 +1953,7 @@
             if (check)
             {
                 IsUpdateExamModalOpen = false;
-                await PackageInactive();
+                await this.VPackage();
             }
             else
             {
