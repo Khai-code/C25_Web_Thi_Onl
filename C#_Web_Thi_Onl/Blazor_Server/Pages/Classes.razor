@@ -68,9 +68,9 @@
                 <!-- Tìm kiếm -->
                 <div class="d-flex align-items-center gap-2 ms-auto" style="min-width: 350px;">
                     <input type="text" class="form-control form-control-sm" placeholder="Tìm tên lớp hoặc giáo viên"
-                           @bind="searchTerm" @bind:event="oninput" />
+                    @bind="searchTerm" @bind:event="oninput" />
                     <button class="btn btn-primary btn-sm d-flex align-items-center gap-1"
-                            @onclick="SearchClass" style="min-width: 100px;">
+                    @onclick="SearchClass" style="min-width: 100px;">
                         <i class="bi bi-search"></i> <span>Tìm kiếm</span>
                     </button>
                 </div>
@@ -320,30 +320,30 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Tài khoản <span class="text-danger">*</span></label>
                                             <InputText @bind-Value="currentStudent.User_Name" class="form-control" required
-                                                       oninvalid="this.setCustomValidity('Vui lòng nhập tài khoản')"
-                                                       oninput="this.setCustomValidity('')" />
+                                            oninvalid="this.setCustomValidity('Vui lòng nhập tài khoản')"
+                                            oninput="this.setCustomValidity('')" />
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Mật khẩu <span class="text-danger">*</span></label>
                                             <InputText @bind-Value="currentStudent.User_Pass" type="password" class="form-control" required
-                                                       oninvalid="this.setCustomValidity('Vui lòng nhập mật khẩu')"
-                                                       oninput="this.setCustomValidity('')" />
+                                            oninvalid="this.setCustomValidity('Vui lòng nhập mật khẩu')"
+                                            oninput="this.setCustomValidity('')" />
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="email" class="form-label">Email</label>
                                             <InputText type="email" @bind-Value="currentStudent.Email" id="email" class="form-control" required
-                                                       oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
-                                                       oninput="this.setCustomValidity('')"  />
+                                            oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
+                                            oninput="this.setCustomValidity('')"  />
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Số điện thoại</label>
                                             <InputText class="form-control" id="Phone"
-                                                       @bind-Value="currentStudent.Phone_Number"
-                                                       inputmode="numeric"
-                                                       pattern="0[0-9]{9}"
-                                                       required
-                                                       oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ, bắt đầu bằng 0 và đủ 10 chữ số')"
-                                                       oninput="this.setCustomValidity(''); this.value=this.value.replace(/[^0-9]/g,'');" />
+                                            @bind-Value="currentStudent.Phone_Number"
+                                            inputmode="numeric"
+                                            pattern="0[0-9]{9}"
+                                            required
+                                            oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ, bắt đầu bằng 0 và đủ 10 chữ số')"
+                                            oninput="this.setCustomValidity(''); this.value=this.value.replace(/[^0-9]/g,'');" />
 
                                         </div>
                                         <div class="col-md-6 mb-3">
@@ -353,8 +353,8 @@
                                             format="yyyy-MM-dd"
                                             max="@MaxBirthDate.ToString("yyyy-MM-dd")"
                                             min="@MinBirthDate.ToString("yyyy-MM-dd")"
-                                                       oninvalid="this.setCustomValidity('Vui lòng chọn ngày sinh')"
-                                                       oninput="this.setCustomValidity('')" />
+                                            oninvalid="this.setCustomValidity('Vui lòng chọn ngày sinh')"
+                                            oninput="this.setCustomValidity('')" />
                                             <ValidationMessage For="@(() => birthDate)" required />
                                             @if (birthDate > MaxBirthDate)
                                             {
@@ -369,8 +369,8 @@
                                         <div class="col-md-12 mb-3">
                                             <label class="form-label">Địa chỉ</label>
                                             <InputText @bind-Value="currentStudent.Address" class="form-control"
-                                                       oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
-                                                       oninput="this.setCustomValidity('')" required />
+                                            oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
+                                            oninput="this.setCustomValidity('')" required />
                                         </div>
                                     </div>
                                 </div>
@@ -428,17 +428,17 @@
                             <div class="mb-3">
                                 <label class="form-label">Tên lớp</label>
                                 <InputText @bind-Value="model.ClassName"
-                                           class="form-control"
-                                           required
-                                           pattern="[1-9][A-Za-z]"
-                                           oninvalid="this.setCustomValidity('Vui lòng nhập tên lớp hợp lệ, ví dụ: 6A')"
-                                           oninput="this.setCustomValidity('')" />
+                                class="form-control"
+                                required
+                                pattern="[1-9][A-Za-z]"
+                                oninvalid="this.setCustomValidity('Vui lòng nhập tên lớp hợp lệ, ví dụ: 6A')"
+                                oninput="this.setCustomValidity('')" />
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Giáo viên chủ nhiệm</label>
                                 <select class="form-control" @bind="model.TeacherId" required
-                                        oninvalid="this.setCustomValidity('Vui lòng chọn giáo viên chủ nhiệm')"
-                                        oninput="this.setCustomValidity('')">
+                                oninvalid="this.setCustomValidity('Vui lòng chọn giáo viên chủ nhiệm')"
+                                oninput="this.setCustomValidity('')">
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var teacher in teacherDisplayList)
                                     {
@@ -517,9 +517,9 @@
                                     {
                                         <td class="text-center">
                                             @(studentSummary.SubjectScores != null &&
-                                                    studentSummary.SubjectScores.TryGetValue(subject, out var score)
-                                                    ? score.ToString("0.00")
-                                                    : "-")
+                                                        studentSummary.SubjectScores.TryGetValue(subject, out var score)
+                                                        ? score.ToString("0.00")
+                                                        : "-")
                                         </td>
                                     }
                                     <td class="text-center">@studentSummary.Term_Summary.ToString("0.00")</td>
@@ -675,7 +675,7 @@
     private int currentPage = 1; // Trang hiện tại
     private int pageSize = 10;  // Số học sinh mỗi trang
     private int totalPages;     // Tổng số trang
-    private List<Learning_SummaryView> pagedLearningSummaryList; // Danh sách học sinh đã phân trang
+    private List<Learning_SummaryView> pagedLearningSummaryList = new();
 
     private void UpdatePagedList()
     {
@@ -998,7 +998,7 @@
             var success = await ClassService.CreateClassWithTeacherAsync(model);
             if (success)
             {
-               toastService.ShowSuccess($"Đã tạo lớp {model.ClassName} thành công.");
+                toastService.ShowSuccess($"Đã tạo lớp {model.ClassName} thành công.");
                 await LoadClasses();
                 FilterClasses();
             }
@@ -1465,7 +1465,7 @@
         {
             selectedStudent = student;
 
-            var allStudents = await _client.GetFromJsonAsync<List<Student>>("api/Student/Get");
+            var allStudents = await ClassService.GetAllStudent();
             var studentEntity = allStudents?.FirstOrDefault(s => s.User_Id == student.Id);
 
             if (studentEntity == null)
@@ -1513,6 +1513,8 @@
                     summarySubjects.Clear();
                     showStudentScoreMessageBox = true;
                 }
+
+                UpdatePagedList();
             }
             else
             {
@@ -1548,6 +1550,8 @@
                     summarySubjects.Clear();
                     showStudentScoreMessageBox = true;
                 }
+                UpdatePagedList();
+
             }
         }
         catch (Exception ex)

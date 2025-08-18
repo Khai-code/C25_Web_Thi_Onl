@@ -35,6 +35,20 @@ namespace Blazor_Server.Services
             }
         }
 
+        public async Task<List<Student>> GetAllStudent()
+        {
+            try
+            {
+                var response = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get");
+                return response ?? new List<Student>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetAllStudent: {ex.Message}");
+                return new List<Student>();
+            }
+        }
+
         public async Task<bool> CreateClassWithTeacherAsync(ClassWithTeacherModel model)
         {
             try
