@@ -60,22 +60,22 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (packageInactive != null && packageInactive.Count > 0)
+                    @if (v_Packages != null && v_Packages.Count > 0)
                     {
-                        @foreach (var baiThi in packageInactive.Where(o => o.Status != 3))
+                        @foreach (var baiThi in v_Packages.Where(o => o.Status != 2))
                         {
                             <tr>
                                 <td class="text-center text-muted">@baiThi.Id</td>
-                                <td>@baiThi.Code</td>
-                                <td class="fw-semibold">@baiThi.Name</td>
-                                <td><span class="badge bg-primary-subtle text-primary">@baiThi.SubjectName</span></td>
-                                <td><span class="badge bg-success-subtle text-success">@baiThi.ClassName</span></td>
-                                <td class="text-center">@baiThi.ClassNub</td>
-                                <td><span class="text-success">@baiThi.TeacherClassName</span></td>
-                                <td><span class="text-primary">@baiThi.TeacherExamRoomName</span></td>
-                                <td><span class="text-primary">@baiThi.TeacherGivesQuestionName</span></td>
-                                <td>@ConvertLong.ConvertLongToDateTime(baiThi.StartTime)</td>
-                                <td>@ConvertLong.ConvertLongToDateTime(baiThi.EndTime)</td>
+                                <td>@baiThi.Package_Code</td>
+                                <td class="fw-semibold">@baiThi.Package_Name</td>
+                                <td><span class="badge bg-primary-subtle text-primary">@baiThi.Subject_Name</span></td>
+                                <td><span class="badge bg-success-subtle text-success">@baiThi.Class_Name</span></td>
+                                <td class="text-center">@baiThi.Number</td>
+                                <td><span class="text-success">@baiThi.GV1_Name</span></td>
+                                <td><span class="text-primary">@baiThi.GV2_Name</span></td>
+                                <td><span class="text-primary">@baiThi.TeacherPackage_Name</span></td>
+                                <td>@ConvertLong.ConvertLongToDateTime(baiThi.Start_Time)</td>
+                                <td>@ConvertLong.ConvertLongToDateTime(baiThi.End_Time)</td>
                                 <td>
                                     @if (baiThi.Status == 0)
                                     {
@@ -94,13 +94,13 @@
                                     <div class="d-flex gap-2 justify-content-center">
                                         <button class="btn btn-sm btn-outline-danger" title="DS câu hỏi"
                                         data-bs-toggle="tooltip"
-                                        @onclick="() => GetLstQues(baiThi.Id, baiThi.PackageTypeId)">
+                                        @onclick="() => GetLstQues(baiThi.Id, baiThi.Package_Type_Id)">
                                             <i class="bi bi-list-ul"></i>
                                         </button>
 
                                         <button class="btn btn-sm btn-outline-primary" title="Thêm câu hỏi"
-                                        data-bs-toggle="tooltip" disabled="@((baiThi.Status == 1) || (this._currentTeacher.Id != baiThi.TeacherGivesQuestionId)? "disabled" : null)"
-                                        @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.PackageTypeId, baiThi.ClassId, baiThi.SubjectId)">
+                                        data-bs-toggle="tooltip" disabled="@((baiThi.Status == 1) || (this._currentTeacher.Id != baiThi.TeacherPackage_Id)? "disabled" : null)"
+                                                @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.Package_Type_Id, baiThi.Class_Id, baiThi.Subject_Id)">
                                             <i class="bi bi-plus-circle"></i>
                                         </button>
 
@@ -876,7 +876,7 @@
                             <div>
                                 <label for="teacher" class="block text-sm font-medium text-gray-700 mb-1">Giáo viên coi thi 1</label>
                                 <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
-                                        @bind="updatePackageTestADO.GV1_Id">
+                                @bind="updatePackageTestADO.GV1_Id">
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var tea in teacherViewModels)
                                     {
@@ -890,7 +890,7 @@
                             <div>
                                 <label for="exam" class="block text-sm font-medium text-gray-700 mb-1">Giảo viên gia đề</label>
                                 <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
-                                        @bind="updatePackageTestADO.TeacherPackage_Id">
+                                @bind="updatePackageTestADO.TeacherPackage_Id">
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var tea in teacherViewModels)
                                     {
@@ -902,7 +902,7 @@
                             <div>
                                 <label for="teacher" class="block text-sm font-medium text-gray-700 mb-1">Giáo viên coi thi 2</label>
                                 <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
-                                        @bind="updatePackageTestADO.GV2_Id">
+                                @bind="updatePackageTestADO.GV2_Id">
                                     <option value="">-- Chọn giáo viên --</option>
                                     @foreach (var tea in teacherViewModels)
                                     {
@@ -967,6 +967,7 @@
         };
 
     V_Package updatePackageTestADO = new V_Package();
+    List<V_Package> v_Packages = new List<V_Package>();
 
     QuestionAdo questionAnswers = new QuestionAdo
         {
@@ -1030,6 +1031,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await this.VPackage();
         await PackageType();
         //await Subject();
         await Classes();
@@ -1047,6 +1049,18 @@
             iduser = int.Parse(resuilt.Value);
 
             _currentTeacher = await pm.TeacherGives(iduser) ?? null;
+        }
+    }
+
+    private async Task VPackage()
+    {
+        try
+        {
+            v_Packages = await pm.GetVPackageInactive();
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex);
         }
     }
 

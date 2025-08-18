@@ -9,6 +9,7 @@ using Data_Base.Models.Q;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using Data_Base.V_Model;
 using System.ComponentModel;
 using System.Net.Http.Json;
 using System.Net.WebSockets;
@@ -33,12 +34,33 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+
+        public async Task<List<V_Package>> GetVPackageInactive()
+        {
+            List<V_Package> lstVPackageInactive = new List<V_Package>();
+            try
+            {
+                var lstVPackage = await _httpClient.GetFromJsonAsync<List<V_Package>>("https://localhost:7187/api/V_Package/Get");
+
+                if (lstVPackage == null && lstVPackage.Count <= 0)
+                {
+                    return lstVPackageInactive;
+                }
+
+                lstVPackageInactive.AddRange(lstVPackage.Where(o => o.Status != 2).ToList());
+                return lstVPackageInactive;
+            }
+            catch (Exception ex)
+            {
+                return lstVPackageInactive;
+            }
+        }
         public async Task<List<PackageInactive>> GetPackageInactive()
         {
             var lstPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
             if (lstPackage == null || lstPackage.Count == 0)
                 return new List<PackageInactive>();
-
+           
             var lstPackageType = await _httpClient.GetFromJsonAsync<List<Package_Type>>("https://localhost:7187/api/Package_Type/Get");
             var lstClass = await _httpClient.GetFromJsonAsync<List<Class>>("https://localhost:7187/api/Class/Get");
             var lstSubject = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
