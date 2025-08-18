@@ -365,6 +365,27 @@ namespace Blazor_Server.Services
                     return false;
                 }
 
+                Data_Base.Models.T.Test TestBy = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{testId}");
+                
+                if (TestBy == null)
+                {
+                    return false;
+                }
+
+                Data_Base.Models.T.Test testModel = new Data_Base.Models.T.Test();
+                testModel.Id = TestBy.Id;
+                testModel.Student_Id = TestBy.Student_Id;
+                testModel.Test_Code = TestBy.Test_Code;
+                testModel.Package_Id = TestBy.Package_Id;
+                testModel.Status = 1;
+
+                var updateTest = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{TestBy.Id}", testModel);
+
+                if (updateTest == null)
+                {
+                    return false;
+                }
+
                 var filterStudent = new CommonFilterRequest
                 {
                     Filters = new Dictionary<string, string>
@@ -423,9 +444,9 @@ namespace Blazor_Server.Services
                             var filterTQ = new CommonFilterRequest
                             {
                                 Filters = new Dictionary<string, string>
-                            {
-                                 { "Test_Id", testId.ToString()}
-                            }
+                                {
+                                     { "Test_Id", testId.ToString()}
+                                }
                             };
 
                             var TQ = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/common/get", filter);
