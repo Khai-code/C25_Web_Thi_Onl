@@ -29,7 +29,7 @@ namespace Data_Base.Models.R
         public Teacher? Teachers  { get; set; }
         public int? Teacher_Id { get; set; }
         public string Reason_For_Sending {  get; set; }
-        public string Reason_For_Refusal { get; set; }
+        public string? Reason_For_Refusal { get; set; }
         public int Status { get; set; }
     }
 }

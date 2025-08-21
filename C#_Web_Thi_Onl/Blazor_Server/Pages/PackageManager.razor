@@ -197,7 +197,6 @@
                                         <option value="">-- Chọn gói Exam --</option>
                                         @foreach (var exam in examsViewModels)
                                         {
-                                            SubjectId = exam.Subject_Id;
                                             <option value="@exam.Exams_Id">@exam.Exams_Name</option>
                                         }
                                     </select>
@@ -1068,38 +1067,48 @@
         }
     }
 
-    public void OnExamChanged(ChangeEventArgs e)
+    public async Task OnExamChanged(ChangeEventArgs e)
     {
         try
         {
-            var selectedValue = e.Value?.ToString();
-            if (!string.IsNullOrEmpty(selectedValue))
+            var selectedValue = e?.Value?.ToString();
+            if (int.TryParse(selectedValue, out var examId))
             {
-                packageTestADO.Exam_Room.Exam_Id = int.Parse(selectedValue);
+                packageTestADO.Exam_Room.Exam_Id = examId;
 
-
-                subjectViewModel = PTERP.GetSubjectOfExam(this.SubjectId);
-
-                if (subjectViewModel != null)
+                // Tìm exam tương ứng trong danh sách đã load
+                var exam = examsViewModels.FirstOrDefault(x => x.Exams_Id == examId);
+                if (exam is not null)
                 {
-                    packageTestADO.Package.Subject_Id = subjectViewModel.Subject_Id;
+                    SubjectId = exam.Subject_Id;                       // set đúng subject theo exam
+                    subjectViewModel = PTERP.GetSubjectOfExam(SubjectId); // hoặc await nếu method async
+                    packageTestADO.Package.Subject_Id = SubjectId;     // lưu vào model
+                }
+                else
+                {
+                    // fallback an toàn
+                    SubjectId = 0;
+                    subjectViewModel = null;
+                    packageTestADO.Package.Subject_Id = 0;
                 }
             }
             else
             {
-                // Nếu chọn lại option mặc định "-- Chọn gói Exam --"
-                this.SubjectId = 0;
+                // Reset khi chọn option mặc định
                 packageTestADO.Exam_Room.Exam_Id = 0;
-                packageTestADO.Package.Subject_Id = 0;
+                SubjectId = 0;
                 subjectViewModel = null;
+                packageTestADO.Package.Subject_Id = 0;
             }
 
+            await InvokeAsync(StateHasChanged); // đảm bảo UI cập nhật
         }
         catch (Exception ex)
         {
-            toastService.ShowError("Lỗi: " + ex);
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
+
 
     protected override void OnInitialized()
     {

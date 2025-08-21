@@ -752,9 +752,9 @@
     {
         try
         {
+            await LoadClasses();
             await LoadTeachers();
             await LoadGrades();
-            await LoadClasses();
             teachers = await ClassService.GetAllTeachersAsync();
             summaries = await ClassService.GetAllSummaries();
             if (summaries.Any())
@@ -803,20 +803,15 @@
     {
         try
         {
-            teachers = await _client.GetFromJsonAsync<List<Teacher>>("api/Teacher/Get");
-            users = await _client.GetFromJsonAsync<List<User>>("api/User/Get");
-
-            // Ghép User vào Teacher
-            teacherDisplayList = (from t in teachers
-                                  join u in users on t.User_Id equals u.Id
-                                  select (t.Id, $"{u.Full_Name} ({u.User_Name})"))
-                                  .ToList();
+            teacherDisplayList = await ClassService.GetAvailableTeachersAsync();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[ERROR] LoadTeachers: {ex.Message}");
+            Console.WriteLine($"[ERROR] LoadTeachers (Blazor): {ex.Message}");
+            teacherDisplayList = new();
         }
     }
+
 
 
     private void OnGradeChange(ChangeEventArgs e)
@@ -902,6 +897,12 @@
 
         try
         {
+            if (teachers == null || teachers.Count == 0)
+                teachers = await ClassService.GetAllTeachersAsync();
+
+            if (users == null || users.Count == 0)
+                users = await ClassService.GetAllUser();
+
             // Lấy thông tin giáo viên từ Teacher_Id
             var teacher = teachers?.FirstOrDefault(t => t.Id == selectedClass.Teacher_Id);
 

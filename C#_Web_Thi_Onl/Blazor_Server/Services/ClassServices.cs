@@ -35,6 +35,21 @@ namespace Blazor_Server.Services
             }
         }
 
+        public async Task<List<User>> GetAllUser()
+        {
+            try
+            {
+                var response = await _client.GetFromJsonAsync<List<User>>("api/User/Get");
+                Console.WriteLine($"GetAllUserresponse: {response?.Count ?? 0} classes");
+                return response ?? new List<User>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetAllClass: {ex.Message}");
+                return new List<User>();
+            }
+        }
+
         public async Task<List<Student>> GetAllStudent()
         {
             try
@@ -49,10 +64,45 @@ namespace Blazor_Server.Services
             }
         }
 
+        public async Task<List<(int TeacherId, string DisplayName)>> GetAvailableTeachersAsync()
+        {
+            try
+            {
+                var teachers = await _client.GetFromJsonAsync<List<Teacher>>("api/Teacher/Get");
+                var users = await _client.GetFromJsonAsync<List<User>>("api/User/Get");
+                var classes = await GetAllClass(); // lấy danh sách lớp hiện có
+
+                var usedTeacherIds = classes.Select(c => c.Teacher_Id).Distinct().ToList();
+
+                var availableTeachers = (from t in teachers
+                                         join u in users on t.User_Id equals u.Id
+                                         where !usedTeacherIds.Contains(t.Id)
+                                         select (t.Id, $"{u.Full_Name} ({u.User_Name})"))
+                                        .ToList();
+
+                return availableTeachers;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] GetAvailableTeachersAsync: {ex.Message}");
+                return new List<(int, string)>();
+            }
+        }   
+
+
         public async Task<bool> CreateClassWithTeacherAsync(ClassWithTeacherModel model)
         {
             try
             {
+
+                // Kiểm tra giáo viên đã có lớp chưa
+                var allClasses = await GetAllClass();
+                if (allClasses.Any(c => c.Teacher_Id == model.TeacherId))
+                {
+                    Console.WriteLine("[ERROR] Giáo viên đã có lớp, không thể tạo lớp mới.");
+                    return false;
+                }
+
                 var newClass = new Class
                 {
                     Class_Name = model.ClassName,

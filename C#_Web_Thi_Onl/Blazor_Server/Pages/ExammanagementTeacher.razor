@@ -1,6 +1,7 @@
 ﻿@page "/exammanagement"
 @using Blazor_Server.Services
 @using Data_Base.GenericRepositories
+@using Data_Base.Models.A
 @using Data_Base.Models.E
 @using static Blazor_Server.Services.Package_Test_ERP
 @using static Blazor_Server.Services.ExammanagementService
@@ -13,6 +14,8 @@
 @inject Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage.ProtectedSessionStorage SessionStorage
 @using Data_Base.Models.E
 @using static Blazor_Server.Services.HistoriesExam
+@using System.Globalization;
+
 <div class="split-container">
     <div class="left-panel px-2">
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
@@ -307,14 +310,27 @@
                                         <ul class="list-group">
                                             @foreach (var ans in q.Answers)
                                             {
-                                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span>@ans.Answers_Name</span>
-                                                    <input type="number" min="0" max="@q.Questions.Maximum_Score" step="0.01"
-                                                           class="form-control form-control-sm border-2 border-primary "
-                                                           style="width: 100px;"
-                                                           @bind="ans.Points_Earned" />
+                                                <li class="list-group-item d-flex flex-column">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <span>@ans.Answers_Name</span>
+
+                                                        <input type="number"
+                                                               min="0"
+                                                               max="@q.Questions.Maximum_Score"
+                                                               step="0.01"
+                                                               class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")"
+                                                               style="width: 100px;"
+                                                               value="@FormatScore(ans.Points_Earned)"
+                                                               @oninput="(e) => OnScoreChanged(e, ans, q.Questions.Maximum_Score)" />
+                                                    </div>
+
+                                                    @if (errorMessages.ContainsKey(ans.Id))
+                                                    {
+                                                        <small class="text-danger">@errorMessages[ans.Id]</small>
+                                                    }
                                                 </li>
                                             }
+
                                         </ul>
                                     </li>
                                     questionIndex++;
@@ -702,6 +718,34 @@
         }
         else
             toastService.ShowError("❌ Xác nhận thất bại!");
+    }
+
+    private Dictionary<int, string> errorMessages = new();
+
+    private string FormatScore(double? v)
+        => v?.ToString("0.##", CultureInfo.InvariantCulture) ?? string.Empty;
+
+    private void OnScoreChanged(ChangeEventArgs e, Answers ans, double? maxScore)
+    {
+        errorMessages.Remove(ans.Id);
+
+        var str = e.Value?.ToString() ?? string.Empty;
+        if (double.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+        {
+            if (maxScore.HasValue)
+            {
+                if (value < 0)
+                    errorMessages[ans.Id] = "⚠️ Điểm không được âm";
+                else if (value > maxScore.Value)
+                    errorMessages[ans.Id] = $"⚠️ Điểm không được vượt quá {maxScore.Value}";
+            }
+
+            ans.Points_Earned = value;
+        }
+        else
+        {
+            ans.Points_Earned = null;
+        }
     }
 
 

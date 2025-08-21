@@ -12,6 +12,8 @@
     @inject IJSRuntime jSRuntime
     @inject HistoriesExam HistoriesExam
     @inject Blazored.Toast.Services.IToastService toastService
+    @using System.Globalization;
+
 <div>
     <div class="bg-body-secondary p-3 rounded shadow-sm mb-4">
         <div class="row g-2 align-items-end">
@@ -350,12 +352,18 @@
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhập điểm</label>
                                                                 <input type="number"
-                                                                min="0"
-                                                                max="@item.Questions.Maximum_Score"
-                                                                step="0.1"
-                                                                value="@ans.Points_Earned"
-                                                                oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value.ToString()))"
-                                                                class="form-control form-control-sm" />
+                                                                       min="0"
+                                                                       max="@item.Questions.Maximum_Score"
+                                                                       step="0.1"
+                                                                       value="@(answerScores.TryGetValue(ans.Id, out var s) ? s : (ans.Points_Earned?.ToString(CultureInfo.InvariantCulture) ?? ""))"
+                                                                       oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString(), item.Questions.Maximum_Score))"
+                                                                       class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")" />
+
+                                                                @if (errorMessages.TryGetValue(ans.Id, out var msg))
+                                                                {
+                                                                    <div class="invalid-feedback d-block">@msg</div>
+                                                                }
+
                                                             </div>
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhận xét</label>
@@ -576,6 +584,12 @@
     public List<int> selectedQuestionIds = new List<int>();
     private string validationMessage = "";
 
+// Cảnh báo theo AnswerId
+private Dictionary<int, string> errorMessages = new();
+    // Set các AnswerId đang invalid
+    private HashSet<int> invalidAnswerIds = new();
+
+
     private ListQuesAnsReview MapToListQuesAnsReview(listquestion item)
     {
         return new ListQuesAnsReview
@@ -750,20 +764,49 @@
         }
         StateHasChanged(); // Cập nhật UI
     }
-    private async Task UpdateAnswerScore(int answerId, string score)
+    private async Task UpdateAnswerScore(int answerId, string? score, double? maxScore)
     {
+        // Clear lỗi cũ
+        errorMessages.Remove(answerId);
+        invalidAnswerIds.Remove(answerId);
 
+        // Lưu raw input (để giữ nguyên cái user gõ)
         if (answerScores.ContainsKey(answerId))
-        {
-            answerScores[answerId] = score;
-
-        }
+            answerScores[answerId] = score ?? "";
         else
+            answerScores.Add(answerId, score ?? "");
+
+        // Validate
+        if (string.IsNullOrWhiteSpace(score))
         {
-            answerScores.Add(answerId, score);
+            invalidAnswerIds.Add(answerId);
+            errorMessages[answerId] = "⚠️ Vui lòng nhập điểm.";
+            await CalculateTotalScore();
+            return;
         }
+
+        if (!double.TryParse(score, NumberStyles.Float, CultureInfo.InvariantCulture, out var value))
+        {
+            invalidAnswerIds.Add(answerId);
+            errorMessages[answerId] = "⚠️ Điểm không hợp lệ.";
+            await CalculateTotalScore();
+            return;
+        }
+
+        if (value < 0)
+        {
+            invalidAnswerIds.Add(answerId);
+            errorMessages[answerId] = "⚠️ Điểm không được âm.";
+        }
+        else if (maxScore.HasValue && value > maxScore.Value)
+        {
+            invalidAnswerIds.Add(answerId);
+            errorMessages[answerId] = $"⚠️ Không vượt quá {maxScore.Value}.";
+        }
+
         await CalculateTotalScore();
     }
+
     private string iduser;
     protected override async Task OnInitializedAsync()
     {
@@ -895,6 +938,13 @@
 
         private async Task updateexamhis(int id, double score)
         {
+
+        if (invalidAnswerIds.Count > 0)
+        {
+            toastService.ShowWarning("⚠️ Vẫn còn điểm không hợp lệ. Vui lòng kiểm tra lại.");
+            return;
+        }
+
             if (score > 10)
             {
                 toastService.ShowWarning("⚠️ Điểm bạn nhập vượt quá thang điểm 10!");
