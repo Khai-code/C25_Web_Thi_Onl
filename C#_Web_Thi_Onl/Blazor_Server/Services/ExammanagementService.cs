@@ -641,6 +641,45 @@ namespace Blazor_Server.Services
             }
         }
 
+        public async Task<List<Room>> GetAllRooms()
+        {
+            var rooms = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get");
+            return rooms ?? new List<Room>();
+        }
+
+        public async Task<bool> AddRoom(Room room)
+        {
+            try
+            {
+                // Tối thiểu cần Room_Name
+                if (room == null || string.IsNullOrWhiteSpace(room.Room_Name))
+                    return false;
+
+                // (Optional) Kiểm tra trùng tên phòng trước khi tạo
+                var exists = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get") ?? new List<Room>();
+                if (exists.Any(r => string.Equals(r.Room_Name?.Trim(), room.Room_Name.Trim(), StringComparison.OrdinalIgnoreCase)))
+                {
+                    // Nếu muốn coi trùng tên là lỗi, return false; hoặc thêm hậu tố tự động
+                    return false;
+                }
+
+                // Gọi API tạo mới
+                var resp = await _httpClient.PostAsJsonAsync("/api/Room/Post", room);
+                if (!resp.IsSuccessStatusCode) return false;
+
+                // Nếu API trả về object Room mới, bạn có thể đọc về (không bắt buộc)
+                // var created = await resp.Content.ReadFromJsonAsync<Room>();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[AddRoom] Lỗi: {ex.Message}");
+                return false;
+            }
+        }
+
+
 
         public class listexam
         {

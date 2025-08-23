@@ -15,81 +15,130 @@
 @using Data_Base.Models.E
 @using static Blazor_Server.Services.HistoriesExam
 @using System.Globalization;
+@using Data_Base.Models.R
 
 <div class="split-container">
+    <!-- LEFT PANEL -->
     <div class="left-panel px-2">
-        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 gap-2">
-            <h6 class="text-primary fw-bold mb-0">📋 Danh sách bài thi</h6>
-            <div class="d-flex align-items-center gap-2 ms-auto">
-                <button class="btn btn-sm btn-success" @onclick="OpenAddExamModal">
-                    ➕ Tạo mới
-                </button>
-                <div class="dropdown">
-                    <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center gap-1"
-                            type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-                        <i class="bi bi-funnel-fill"></i> Lọc
-                    </button>
-
-                    <ul class="dropdown-menu shadow p-3" aria-labelledby="filterDropdown" style="min-width: 250px;">
-                        @foreach (var option in timeOptions)
-                        {
-                            <li class="form-check mb-2">
-                                <input class="form-check-input"
-                                       type="radio"
-                                       id="@option.Id"
-                                       name="timeFilter"
-                                       value="@option.Id"
-                                       checked="@(_selectedTimeFilter == option.Id)"
-                                       @onchange="@(() => OnTimeOptionChanged(option.Id))" />
-                                <label class="form-check-label ms-1" for="@option.Id" style="cursor: pointer;">@option.Label</label>
-                            </li>
-                        }
-
-                        @if (_selectedTimeFilter == 7)
-                        {
-                            <div class="border-top pt-3 mt-2">
-                                <label class="form-label fw-semibold">Từ ngày:</label>
-                                <input type="date" class="form-control form-control-sm mb-2" @bind="startDate" />
-                                <label class="form-label fw-semibold">Đến ngày:</label>
-                                <input type="date" class="form-control form-control-sm mb-3" @bind="endDate" />
-                            </div>
-                        }
-
-                        <li>
-                            <button class="btn btn-sm btn-primary w-100" @onclick="ApplyDateFilter">
-                                <i class="bi bi-filter"></i> Áp dụng lọc
+        <div class="left-panel-inner">
+            <!-- Danh sách bài thi (50%) -->
+            <div class="panel-box">
+                <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+                    <h6 class="text-primary fw-bold mb-0">📋 Danh sách bài thi</h6>
+                    <div class="d-flex align-items-center gap-2 ms-auto">
+                        <button class="btn btn-sm btn-success" @onclick="OpenAddExamModal">
+                            ➕ Tạo mới
+                        </button>
+                        <div class="dropdown">
+                            <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center gap-1"
+                                    type="button" id="filterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                <i class="bi bi-funnel-fill"></i> Lọc
                             </button>
-                        </li>
-                    </ul>
+
+                            <ul class="dropdown-menu shadow p-3" aria-labelledby="filterDropdown" style="min-width: 250px;">
+                                @foreach (var option in timeOptions)
+                                {
+                                    <li class="form-check mb-2">
+                                        <input class="form-check-input"
+                                               type="radio"
+                                               id="@option.Id"
+                                               name="timeFilter"
+                                               value="@option.Id"
+                                               checked="@(_selectedTimeFilter == option.Id)"
+                                               @onchange="@(() => OnTimeOptionChanged(option.Id))" />
+                                        <label class="form-check-label ms-1" for="@option.Id" style="cursor: pointer;">@option.Label</label>
+                                    </li>
+                                }
+
+                                @if (_selectedTimeFilter == 7)
+                                {
+                                    <div class="border-top pt-3 mt-2">
+                                        <label class="form-label fw-semibold">Từ ngày:</label>
+                                        <input type="date" class="form-control form-control-sm mb-2" @bind="startDate" />
+                                        <label class="form-label fw-semibold">Đến ngày:</label>
+                                        <input type="date" class="form-control form-control-sm mb-3" @bind="endDate" />
+                                    </div>
+                                }
+
+                                <li>
+                                    <button class="btn btn-sm btn-primary w-100" @onclick="ApplyDateFilter">
+                                        <i class="bi bi-filter"></i> Áp dụng lọc
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CHỈ HIỂN THỊ TỐI ĐA 5 ITEM, DƯ CUỘN -->
+                <div class="list-group exam-scroll">
+                    @if (exams == null || !exams.Any())
+                    {
+                        <div class="text-center text-muted mt-2">Không có bài thi</div>
+                    }
+                    else
+                    {
+                        @foreach (var exam in exams)
+                        {
+                            <a class="list-group-item d-flex justify-content-between align-items-center exam-row
+                           @(SelectedExam == exam.Id ? "active text-white bg-primary" : "")"
+                               @onclick="() => SelectExam(exam.Id)">
+                                <div>
+                                    <span class="fw-bold">📚 @exam.NameExam</span>
+                                </div>
+                                <span class="badge bg-info text-dark p-2 rounded-pill">
+                                    @exam.Totalpackage gói đề
+                                </span>
+                            </a>
+                        }
+                    }
                 </div>
             </div>
-        </div>
-        <div class="list-group">
-            @if (exams == null || !exams.Any())
-            {
-                <div class="text-center text-muted mt-2">Không có bài thi</div>
-            }
-            else
-            {
-                @foreach (var exam in exams)
+
+            <!-- Danh sách phòng (50%) -->
+            <div class="panel-box">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <h6 class="fw-bold text-secondary mb-0">🏫 Danh sách phòng</h6>
+
+                    <button class="btn btn-sm btn-success" @onclick="OpenAddRoomModal">
+                        ➕ Thêm phòng
+                    </button>
+                </div>
+
+                @if (AllRooms == null || AllRooms.Count == 0)
                 {
-                    <a class="list-group-item d-flex justify-content-between align-items-center
-                   @(SelectedExam == exam.Id ? "active text-white bg-primary" : "")"
-                       @onclick="() => SelectExam(exam.Id)">
-                        <div>
-                            <span class="fw-bold">📚 @exam.NameExam</span>
-                        </div>
-                        <span class="badge bg-info text-dark p-2 rounded-pill">
-                            @exam.Totalpackage gói đề
-                        </span>
-                    </a>
+                    <div class="text-muted small">Chưa có phòng nào.</div>
                 }
-            }
+                else
+                {
+                    <!-- CHỈ HIỂN THỊ 5 DÒNG TBODY, DƯ CUỘN -->
+                    <div class="room-scroll">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="table-light position-sticky top-0" style="z-index:1;">
+                                <tr>
+                                    <th style="width:80px;">STT</th>
+                                    <th>Tên phòng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var r in AllRooms)
+                                {
+                                    <tr class="room-row">
+                                        <td class="text-muted">@r.ID</td>
+                                        <td class="fw-semibold">
+                                            <i class="bi bi-geo-alt-fill me-1"></i>@r.Room_Name
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
     </div>
 
-
-
+    <!-- RIGHT PANEL -->
     <div class="right-panel">
 
         <div class="top-panel">
@@ -100,15 +149,14 @@
                     @foreach (var package in Listpackages)
                     {
                         <div class="list-group-item d-flex justify-content-between align-items-center
-                         @(SelectedPackage == package.Id ? "active bg-primary text-white" : "")" @onclick="() => SelectPackage(package.Id)">
+                             @(SelectedPackage == package.Id ? "active bg-primary text-white" : "")" @onclick="() => SelectPackage(package.Id)">
 
                             <div>
                                 <span class="fw-bold">📘 @package.NamePackage</span>
 
-                                <!-- Kiểm tra nếu đang chỉnh sửa -->
                                 @if (EditingPackageId == package.Idexam)
                                 {
-                                    <div class="d-flex align-items-center gap-3">
+                                    <div class="d-flex align-items-center gap-3 mt-2">
                                         <label class="fw-bold mb-0">🕒 Bắt đầu:</label>
                                         <input type="datetime-local" class="form-control form-control-sm w-auto" @bind="package.StartTime" />
 
@@ -116,7 +164,6 @@
                                         <input type="datetime-local" class="form-control form-control-sm w-auto" @bind="package.EndTime" />
                                     </div>
                                 }
-
                                 else
                                 {
                                     <div class="small @(SelectedPackage == package.Id ? "text-light" : "text-muted")">
@@ -126,10 +173,9 @@
                                 }
                             </div>
 
-                            <div>
+                            <div class="d-flex align-items-center gap-2">
                                 @if (package.PackageTypeID == 1)
                                 {
-
                                     <button class="btn btn-warning btn-sm me-2"
                                             disabled="@(!CurrentTeacherId.HasValue || CurrentTeacherId.Value != package.TeacherId)"
                                             title="@(
@@ -166,12 +212,7 @@
                                             ✅ Xác nhận mở bài thi
                                         </button>
                                     }
-                                    else
-                                    {
-                                        <!-- Giáo viên không coi thi thì không thấy nút -->
-                                    }
                                 }
-
                             </div>
 
                         </div>
@@ -189,13 +230,12 @@
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center p-3 rounded shadow-sm">
                             <div class="d-flex align-items-center">
-                                <div class="avatar bg-primary  rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
+                                <div class="avatar bg-primary rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
                                     <i class="bi bi-person-circle"></i>
                                 </div>
                                 <div>
                                     <h6 class="mb-1 fw-bold">@student.NameStudent</h6>
                                     <small class="@GetStatusClass(student.status)">@student.status</small>
-
                                 </div>
                             </div>
                             <button class="btn btn-sm d-flex align-items-center
@@ -206,14 +246,13 @@
                                 <i class="fas fa-times me-1"></i> Hủy thi
                             </button>
                         </li>
-
-
                     }
                 </ul>
             }
         </div>
     </div>
 
+    <!-- MODAL: Thêm bài thi -->
     @if (IsAddExamModalOpen)
     {
         <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
@@ -255,7 +294,101 @@
             </div>
         </div>
     }
+
+    <!-- MODAL: Chấm điểm -->
+    @if (IsGradingModalOpen)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.6);">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content shadow-lg border-0 rounded-3">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            📊 Trình chấm điểm chi tiết – @CurrentGradingPackageName
+                        </h5>
+                        <button class="btn-close btn-close-white" @onclick="CloseGradingModal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-4">
+                            <h6 class="text-primary fw-bold mb-3">📄 Danh sách bài Thi</h6>
+                            <ul class="list-group">
+                                @foreach (var test in TestsOfPackage)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span class="fw-medium">@test.Test_Code</span>
+                                        @if (test.Status != 1)
+                                        {
+                                            <button class="btn btn-outline-info btn-sm" @onclick="() => LoadQuestionsForTest(test.Id)">
+                                                Bắt đầu chấm điểm
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-success fw-bold">Đã chấm điểm</span>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+
+                        @if (QuestionsWithAnswers.Any())
+                        {
+                            <div class="border-top pt-3">
+                                <h6 class="text-success fw-bold mb-3">🧠 Chi tiết bài làm </h6>
+                                @{
+                                    int questionIndex = 1;
+                                }
+                                <ol class="ps-3">
+                                    @foreach (var q in QuestionsWithAnswers)
+                                    {
+                                        <li class="mb-3">
+                                            <div class="fw-semibold mb-1">
+                                                <span class="text-primary">Câu @questionIndex:</span> @q.Questions.Question_Name
+                                                <span class="text-muted">(Tối đa: @q.Questions.Maximum_Score điểm)</span>
+                                            </div>
+                                            <ul class="list-group">
+                                                @foreach (var ans in q.Answers)
+                                                {
+                                                    <li class="list-group-item d-flex flex-column">
+                                                        <div class="d-flex justify-content-between align-items-center">
+                                                            <span>@ans.Answers_Name</span>
+
+                                                            <input type="number"
+                                                                   min="0"
+                                                                   max="@q.Questions.Maximum_Score"
+                                                                   step="0.01"
+                                                                   class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")"
+                                                                   style="width: 100px;"
+                                                                   value="@FormatScore(ans.Points_Earned)"
+                                                                   @oninput="(e) => OnScoreChanged(e, ans, q.Questions.Maximum_Score)" />
+                                                        </div>
+
+                                                        @if (errorMessages.ContainsKey(ans.Id))
+                                                        {
+                                                            <small class="text-danger">@errorMessages[ans.Id]</small>
+                                                        }
+                                                    </li>
+                                                }
+                                            </ul>
+                                        </li>
+                                        questionIndex++;
+                                    }
+                                </ol>
+
+                                <div class="mt-4 text-end">
+                                    <button class="btn btn-success px-4" @onclick="SaveAllScores">
+                                        💾 Lưu điểm
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 </div>
+
 
 @if (IsGradingModalOpen)
 {
@@ -315,13 +448,13 @@
                                                         <span>@ans.Answers_Name</span>
 
                                                         <input type="number"
-                                                               min="0"
-                                                               max="@q.Questions.Maximum_Score"
-                                                               step="0.01"
-                                                               class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")"
-                                                               style="width: 100px;"
-                                                               value="@FormatScore(ans.Points_Earned)"
-                                                               @oninput="(e) => OnScoreChanged(e, ans, q.Questions.Maximum_Score)" />
+                                                        min="0"
+                                                        max="@q.Questions.Maximum_Score"
+                                                        step="0.01"
+                                                        class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")"
+                                                        style="width: 100px;"
+                                                        value="@FormatScore(ans.Points_Earned)"
+                                                        @oninput="(e) => OnScoreChanged(e, ans, q.Questions.Maximum_Score)" />
                                                     </div>
 
                                                     @if (errorMessages.ContainsKey(ans.Id))
@@ -349,6 +482,43 @@
         </div>
     </div>
 }
+
+@if (IsAddRoomModalOpen)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">➕ Thêm phòng</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAddRoomModal"></button>
+                </div>
+                <div class="modal-body">
+                    <EditForm Model="newRoom" OnValidSubmit="CreateRoom">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                 <div class="mb-3">
+    <label class="form-label fw-semibold">Tên phòng</label>
+    <InputText class="form-control" @bind-Value="newRoomName"
+               required
+               oninvalid="this.setCustomValidity('Vui lòng nhập tên phòng')"
+               oninput="this.setCustomValidity('')" />
+</div>
+
+
+                        @* Nếu sau này có mã phòng / sức chứa thì thêm ở đây *@
+
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="button" class="btn btn-secondary" @onclick="CloseAddRoomModal">Hủy</button>
+                            <button type="submit" class="btn btn-primary">Lưu</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 @code {
     [Parameter] public EventCallback OnStopTest { get; set; }
@@ -463,6 +633,9 @@
         Listpackages = new List<listpackage>();
         listStudents = new List<listStudent>();
     }
+
+    private List<Room> AllRooms = new List<Room>();
+
     protected override async Task OnInitializedAsync()
     {
         try
@@ -470,6 +643,8 @@
             await LoadCurrentTeacherAsync();
             exams = await exammanagement.GetallExam();
             await Subject();
+
+            AllRooms = await exammanagement.GetAllRooms();
         }
         catch { }
 
@@ -747,6 +922,53 @@
             ans.Points_Earned = null;
         }
     }
+
+    // ====== ADD ROOM MODAL STATE ======
+    private bool IsAddRoomModalOpen = false;
+    private string newRoomName = string.Empty;
+    private Room newRoom = new Room();
+
+    private void OpenAddRoomModal()
+    {
+        newRoomName = "Phòng";
+        newRoom = new Room();
+        IsAddRoomModalOpen = true;
+    }
+
+    private void CloseAddRoomModal()
+    {
+        IsAddRoomModalOpen = false;
+    }
+
+    // Submit tạo phòng
+    private async Task CreateRoom()
+    {
+        if (string.IsNullOrWhiteSpace(newRoomName))
+        {
+            toastService.ShowWarning("Vui lòng nhập tên phòng!");
+            return;
+        }
+
+        // Chuẩn hóa dữ liệu
+        newRoom.Room_Name = newRoomName.Trim();
+
+        // Gọi service để tạo phòng
+        var ok = await exammanagement.AddRoom(newRoom);
+        if (ok)
+        {
+            toastService.ShowSuccess("Thêm phòng thành công!");
+            IsAddRoomModalOpen = false;
+
+            // Refresh lại list phòng
+            AllRooms = await exammanagement.GetAllRooms();
+            StateHasChanged();
+        }
+        else
+        {
+            toastService.ShowError("Thêm phòng thất bại!");
+        }
+    }
+
 
 
 }

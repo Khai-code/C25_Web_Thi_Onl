@@ -10,15 +10,42 @@
     gap: 20px;
 }
 
+/* LEFT */
 .left-panel {
     width: 30%;
     background: #ffffff;
-    padding: 20px;
+    padding: 15px;
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
+    display: flex;
 }
 
+.left-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* khoảng cách giữa 2 phần */
+    height: 100%;
+    width: 100%;
+}
+
+.panel-box {
+    flex: 1; /* mỗi phần 50% chiều cao */
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; /* quan trọng để overflow hoạt động trong flex child */
+}
+
+.panel-scroll {
+    overflow: auto;
+    min-height: 0;
+    flex: 1;
+}
+
+/* RIGHT */
 .right-panel {
     width: 70%;
     display: flex;
@@ -33,3 +60,206 @@
     border-radius: 10px;
     overflow-y: auto;
 }
+
+/* Optional: mịn hơn khi cuộn */
+.left-panel .panel-scroll::-webkit-scrollbar,
+.right-panel::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.left-panel .panel-scroll::-webkit-scrollbar-thumb,
+.right-panel::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: #d1d5db;
+}
+
+/* Tham số chiều cao dòng để tính 5 item */
+:root {
+    --exam-row-h: 48px; /* chiều cao 1 item list-group bài thi */
+    --room-row-h: 44px; /* chiều cao 1 dòng <tr> phòng */
+    --table-head-h: 42px; /* chiều cao thead (ước lượng) */
+}
+
+.left-panel {
+    width: 30%;
+    background: #ffffff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+}
+
+.left-panel-inner {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    height: 100%;
+    width: 100%;
+}
+
+.panel-box {
+    flex: 1; /* 50% chiều cao mỗi box */
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+/* ====== Bài thi: tối đa 5 item ====== */
+.exam-scroll {
+    overflow-y: auto;
+    max-height: calc(var(--exam-row-h) * 5);
+    border-radius: 8px;
+}
+
+.exam-row {
+    min-height: var(--exam-row-h);
+    display: flex;
+    align-items: center;
+    /* tránh item quá sát nhau */
+}
+
+/* ====== Phòng: tối đa 5 dòng body (thead giữ nguyên) ====== */
+.room-scroll {
+    overflow-y: auto;
+    /* 5 dòng tbody + chiều cao thead để không cắt tiêu đề cột */
+    max-height: calc(var(--room-row-h) * 5 + var(--table-head-h));
+    border-radius: 8px;
+}
+
+.room-row > td {
+    height: var(--room-row-h);
+    vertical-align: middle;
+}
+
+/* Scrollbar mịn */
+.exam-scroll::-webkit-scrollbar,
+.room-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.exam-scroll::-webkit-scrollbar-thumb,
+.room-scroll::-webkit-scrollbar-thumb {
+    border-radius: 8px;
+    background: #d1d5db;
+}
+
+/* ====== DANH SÁCH PHÒNG - LOOK & FEEL ====== */
+:root {
+    /* Giữ các biến sẵn có để tính 5 dòng + header */
+    --room-row-h: 44px; /* chiều cao 1 dòng <tr> */
+    --table-head-h: 42px; /* chiều cao thead */
+}
+
+/* Khung cuộn của danh sách phòng */
+.room-scroll {
+    overflow-y: auto;
+    max-height: calc(var(--room-row-h) * 5 + var(--table-head-h)); /* 5 dòng + header */
+    border: 1px solid #e5e7eb; /* viền ngoài nhạt */
+    border-radius: 12px;
+    background: #fafafa; /* nền sáng dịu */
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+    /* Bảng phòng */
+    .room-scroll table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0; /* bo góc header mượt */
+        font-size: 14px;
+    }
+
+    /* Header cố định */
+    .room-scroll thead {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+        color: #374151;
+    }
+
+        .room-scroll thead th {
+            padding: 10px 12px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+    /* Ô dữ liệu */
+    .room-scroll tbody td {
+        height: var(--room-row-h);
+        padding: 9px 12px;
+        border-bottom: 1px solid #eef2f7;
+        color: #111827;
+        vertical-align: middle;
+    }
+
+    /* Zebra rows */
+    .room-scroll tbody tr:nth-child(odd) td {
+        background: #ffffff;
+    }
+
+    .room-scroll tbody tr:nth-child(even) td {
+        background: #fdfdfd;
+    }
+
+    /* Hover row */
+    .room-scroll tbody tr:hover td {
+        background: #f1f5f9;
+        transition: background 120ms ease-in;
+    }
+
+    /* Cột mã phòng – nổi bật nhẹ */
+    .room-scroll tbody td:first-child {
+        font-weight: 600;
+        color: #4b5563;
+    }
+
+    /* Cột tên phòng – icon & chữ căn dòng */
+    .room-scroll tbody td:nth-child(2) {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+        .room-scroll tbody td:nth-child(2) i {
+            opacity: 0.8;
+        }
+
+    /* Bo góc cho hàng đầu/cuối (khi không cuộn) */
+    .room-scroll thead tr:first-child th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .room-scroll thead tr:first-child th:last-child {
+        border-top-right-radius: 12px;
+    }
+
+    .room-scroll tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 12px;
+    }
+
+    .room-scroll tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 12px;
+    }
+
+    /* Scrollbar mịn */
+    .room-scroll::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    .room-scroll::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 8px;
+    }
+
+        .room-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
