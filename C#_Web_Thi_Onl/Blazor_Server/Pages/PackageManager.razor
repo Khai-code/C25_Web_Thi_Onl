@@ -22,16 +22,16 @@
 
 <div class="container-fluid mt-3">
     <div class=" mb-3">
-        <form class="w-100" style="max-width: 1200px;">
-            <!-- Hàng 2: Bộ lọc bên trái, nút thêm bài thi bên phải -->
-            <div class="row align-items-end">
-                <div class="d-flex justify-content-end">
-                    <button type="button" class="btn btn-success w-150 justify-content-end" disabled="@(this._currentTeacher.Position != 0 ? "disabled" : null)" @onclick="OpenAddExamModal">
-                        + Thêm bài thi
-                    </button>
-                </div>
+        <div class="row">
+            <div class="col-12 d-flex">
+                <button type="button"
+                        class="btn btn-success ms-auto"
+                        disabled="@(_currentTeacher.Position != 0)"
+                        @onclick="OpenAddExamModal">
+                    + Thêm bài thi
+                </button>
             </div>
-        </form>
+        </div>
     </div>
 
     <!-- Danh sách bài thi -->
