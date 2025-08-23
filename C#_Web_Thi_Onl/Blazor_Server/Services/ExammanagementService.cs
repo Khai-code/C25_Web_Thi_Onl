@@ -155,6 +155,11 @@ namespace Blazor_Server.Services
                     .Select(x => x.Teacher_Id)
                     .ToList();
 
+                var confirmedProctorIds = listExamRoomTeachers
+                    .Where(x => x.Exam_Room_Id == examRoom.Id && x.Confirm_The_Test == 1)
+                    .Select(x => x.Teacher_Id)
+                    .ToList();
+
                 var startTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time);
                 if (from != null && startTime < from) return null;
                 if (to != null && startTime > to) return null;
@@ -175,6 +180,7 @@ namespace Blazor_Server.Services
                     TeacherId = package.Teacher_Id,
                     ConfirmTheTest = 0,
                     ProctorTeacherIds = proctorIds,
+                    ConfirmedProctorTeacherIds = confirmedProctorIds,
                 };
             });
 
@@ -706,7 +712,9 @@ namespace Blazor_Server.Services
             public int TeacherId { get; set; } // giáo viên ra đề
             public int ConfirmTheTest { get; set; }
 
+            // Chỉ dùng để hiện thị lên trên view
             public List<int> ProctorTeacherIds { get; set; } = new();
+            public List<int> ConfirmedProctorTeacherIds { get; set; } = new();
 
         }
         public class listStudent

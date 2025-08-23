@@ -205,7 +205,7 @@
                                                             </div>
 
                                                             @if (IsAdmin || // admin luôn thấy
-                                                           (CurrentTeacherId.HasValue && r.Teacher_Id == CurrentTeacherId.Value)) // giáo viên đúng bài)
+                                                          (CurrentTeacherId.HasValue && r.Teacher_Id == CurrentTeacherId.Value)) // giáo viên đúng bài)
                                                             {
                                                                 <!-- Cột phải: Phúc khảo -->
                                                                 <div class="col-md-6 mb-3">
@@ -229,7 +229,7 @@
 
                                                                             <div class="d-flex gap-2">
                                                                                 <button class="btn btn-success" @onclick="()=>updateReview(r.IdReview, 2)">
-                                                                                     Xác nhận
+                                                                                    Xác nhận
                                                                                 </button>
                                                                                 <button class="btn btn-danger" @onclick="()=>updateReview(r.IdReview, 3)">
                                                                                     Từ chối
@@ -301,7 +301,7 @@
                                 @if (item.statuss == 1 && (IsAdmin || (CurrentTeacherId.HasValue && item.Teacher_Id == CurrentTeacherId.Value)))
                                 {
                                     <button class="btn btn-warning btn-sm"
-                                            @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
+                                    @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
                                         Sửa
                                     </button>
                                 }
@@ -352,12 +352,12 @@
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhập điểm</label>
                                                                 <input type="number"
-                                                                       min="0"
-                                                                       max="@item.Questions.Maximum_Score"
-                                                                       step="0.1"
-                                                                       value="@(answerScores.TryGetValue(ans.Id, out var s) ? s : (ans.Points_Earned?.ToString(CultureInfo.InvariantCulture) ?? ""))"
-                                                                       oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString(), item.Questions.Maximum_Score))"
-                                                                       class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")" />
+                                                                min="0"
+                                                                max="@item.Questions.Maximum_Score"
+                                                                step="0.1"
+                                                                value="@(answerScores.TryGetValue(ans.Id, out var s) ? s : (ans.Points_Earned?.ToString(CultureInfo.InvariantCulture) ?? ""))"
+                                                                oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString(), item.Questions.Maximum_Score))"
+                                                                class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")" />
 
                                                                 @if (errorMessages.TryGetValue(ans.Id, out var msg))
                                                                 {
@@ -584,8 +584,8 @@
     public List<int> selectedQuestionIds = new List<int>();
     private string validationMessage = "";
 
-// Cảnh báo theo AnswerId
-private Dictionary<int, string> errorMessages = new();
+    // Cảnh báo theo AnswerId
+    private Dictionary<int, string> errorMessages = new();
     // Set các AnswerId đang invalid
     private HashSet<int> invalidAnswerIds = new();
 
@@ -721,6 +721,7 @@ private Dictionary<int, string> errorMessages = new();
     private async Task LoadListTests(int examId)
     {
         listTests = await HistoriesExam.GetTests(examId);
+        teachers = await HistoriesExam.GetListTeacherSubJect(examId);
         StateHasChanged();
     }
 
@@ -988,9 +989,8 @@ private Dictionary<int, string> errorMessages = new();
         {
             try
             {
-
-
                 listTests = await HistoriesExam.GetTests(id);
+                teachers = await HistoriesExam.GetListTeacherSubJect(id); // 🔹 nạp danh sách GV của package
             }
             catch (Exception ex)
             {
@@ -1048,7 +1048,6 @@ private Dictionary<int, string> errorMessages = new();
     private bool showAssignModal = false;
     private int assignReviewId = 0;               // review đang gán
     private int selectedTeacherIdForAssign = 0;   // giáo viên đang chọn trong modal
-    private string assignNote = "";               // ghi chú (nếu cần)
     private List<TeacherWithName> teachers = new();
 
 
@@ -1079,7 +1078,7 @@ private Dictionary<int, string> errorMessages = new();
             return;
         }
 
-        var ok = await HistoriesExam.AssignReviewToTeacherAsync(assignReviewId, selectedTeacherIdForAssign, assignNote);
+        var ok = await HistoriesExam.AssignReviewToTeacherAsync(assignReviewId, selectedTeacherIdForAssign);
         if (ok)
         {
             toastService.ShowSuccess("Đã gán giáo viên chấm phúc khảo!");

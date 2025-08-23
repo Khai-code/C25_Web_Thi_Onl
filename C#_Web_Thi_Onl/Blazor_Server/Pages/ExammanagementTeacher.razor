@@ -188,30 +188,24 @@
                                     </button>
                                 }
 
-                                @if (EditingPackageId == package.Idexam)
+                                @* Nút xác nhận mở bài thi *@
+                                @{
+                                    var canProctor = CurrentTeacherId.HasValue && package.ProctorTeacherIds.Contains(CurrentTeacherId.Value);
+                                    var hasThisTeacherConfirmed = CurrentTeacherId.HasValue && package.ConfirmedProctorTeacherIds.Contains(CurrentTeacherId.Value);
+                                }
+
+                                @if (hasThisTeacherConfirmed)
                                 {
-                                    <button class="btn btn-success btn-sm" @onclick="() => SaveChanges(package)">
-                                        <i class="bi bi-save"></i> Lưu
-                                    </button>
-                                    <button class="btn btn-secondary btn-sm" @onclick="CancelEdit">
-                                        ❌ Hủy
+                                    <button class="btn btn-secondary btn-sm" disabled>
+                                        ✅ Bạn đã xác nhận mở bài thi
                                     </button>
                                 }
-                                else
+                                else if (canProctor)
                                 {
-                                    @if (package.ConfirmTheTest == 1)
-                                    {
-                                        <button class="btn btn-secondary btn-sm" disabled>
-                                            ✅ Đã xác nhận mở bài thi
-                                        </button>
-                                    }
-                                    else if (CurrentTeacherId.HasValue && package.ProctorTeacherIds.Contains(CurrentTeacherId.Value))
-                                    {
-                                        <button class="btn btn-success btn-sm"
-                                                @onclick="() => ConfirmExam(package.Idexam)">
-                                            ✅ Xác nhận mở bài thi
-                                        </button>
-                                    }
+                                    <button class="btn btn-success btn-sm"
+                                            @onclick="() => ConfirmExam(package.Idexam)">
+                                        ✅ Xác nhận mở bài thi
+                                    </button>
                                 }
                             </div>
 
@@ -885,11 +879,8 @@
         if (success)
         {
             toastService.ShowSuccess("✅ Đã xác nhận mở bài thi!");
-            var pkg = Listpackages.FirstOrDefault(x => x.Idexam == examRoomId);
-            if (pkg != null)
-            {
-                pkg.ConfirmTheTest = 1; // cập nhật trạng thái
-            }
+            Listpackages = await exammanagement.GetallPackage(SelectedExam, from, to);
+
         }
         else
             toastService.ShowError("❌ Xác nhận thất bại!");
