@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Data_Base.Migrations
 {
     [DbContext(typeof(Db_Context))]
-    [Migration("20250814175429_data")]
+    [Migration("20250823095758_data")]
     partial class data
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -757,7 +757,13 @@ namespace Data_Base.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
-                    b.Property<int>("Subject_Id")
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Subject_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("TeacherId")
                         .HasColumnType("int");
 
                     b.Property<string>("Teacher_Code")
@@ -770,6 +776,8 @@ namespace Data_Base.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Subject_Id");
+
+                    b.HasIndex("TeacherId");
 
                     b.HasIndex("User_Id");
 
@@ -893,10 +901,6 @@ namespace Data_Base.Migrations
 
             modelBuilder.Entity("Data_Base.V_Model.V_Package", b =>
                 {
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Class_Code")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -910,13 +914,6 @@ namespace Data_Base.Migrations
 
                     b.Property<long>("Create_Time")
                         .HasColumnType("bigint");
-
-                    b.Property<long>("Data_Of_Birth")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("End_Time")
                         .HasColumnType("bigint");
@@ -934,15 +931,78 @@ namespace Data_Base.Migrations
                     b.Property<int>("Exam_Room_Package_Id")
                         .HasColumnType("int");
 
-                    b.Property<int>("Exam_Room_Teacher_Id")
+                    b.Property<int>("Exam_Room_Teacher1_Id")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Exam_Room_Teacher2_Id")
                         .HasColumnType("int");
 
                     b.Property<int>("ExecutionTime")
                         .HasColumnType("int");
 
-                    b.Property<string>("Full_Name")
+                    b.Property<string>("GV1_Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GV1_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GV1_Confirm")
+                        .HasColumnType("int");
+
+                    b.Property<long>("GV1_DoB")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("GV1_Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GV1_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GV1_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GV1_Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GV1_User_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GV2_Address")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GV2_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GV2_Confirm")
+                        .HasColumnType("int");
+
+                    b.Property<long>("GV2_DoB")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("GV2_Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GV2_Id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("GV2_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("GV2_Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("GV2_User_Id")
+                        .HasColumnType("int");
 
                     b.Property<int>("Id")
                         .HasColumnType("int");
@@ -964,10 +1024,6 @@ namespace Data_Base.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Package_Type_Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phone_Number")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -998,14 +1054,33 @@ namespace Data_Base.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Teacher_Code")
+                    b.Property<string>("TeacherPackage_Address")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Teacher_Id")
+                    b.Property<string>("TeacherPackage_Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("TeacherPackage_DoB")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TeacherPackage_Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TeacherPackage_Id")
                         .HasColumnType("int");
 
-                    b.Property<int>("User_Id")
+                    b.Property<string>("TeacherPackage_Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TeacherPackage_Phone")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("TeacherPackage_User_Id")
                         .HasColumnType("int");
 
                     b.ToView("V_Package");
@@ -1532,10 +1607,12 @@ namespace Data_Base.Migrations
             modelBuilder.Entity("Data_Base.Models.T.Teacher", b =>
                 {
                     b.HasOne("Data_Base.Models.S.Subject", "Subjects")
-                        .WithMany()
-                        .HasForeignKey("Subject_Id")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .WithMany("Teachers")
+                        .HasForeignKey("Subject_Id");
+
+                    b.HasOne("Data_Base.Models.T.Teacher", null)
+                        .WithMany("Teachers")
+                        .HasForeignKey("TeacherId");
 
                     b.HasOne("Data_Base.Models.U.User", "User")
                         .WithMany()
@@ -1705,6 +1782,8 @@ namespace Data_Base.Migrations
                     b.Navigation("PointType_Subjects");
 
                     b.Navigation("Scores");
+
+                    b.Navigation("Teachers");
                 });
 
             modelBuilder.Entity("Data_Base.Models.S.Summary", b =>
@@ -1719,6 +1798,8 @@ namespace Data_Base.Migrations
                     b.Navigation("Exam_Room_Teachers");
 
                     b.Navigation("Review_Tests");
+
+                    b.Navigation("Teachers");
                 });
 
             modelBuilder.Entity("Data_Base.Models.T.Test", b =>
