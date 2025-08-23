@@ -477,10 +477,13 @@ namespace ASP.NET.Controllers.G
         {
             int? id = filters.ContainsKey("Id") ? int.Parse(filters["Id"]) : null;
             int? roomId = filters.ContainsKey("Room_Id") ? int.Parse(filters["Room_Id"]) : null;
+            List<int>? lstExamRoomid = filters.ContainsKey("Exam_Room_Id") && !string.IsNullOrEmpty(filters["Exam_Room_Id"])
+                ? filters["Exam_Room_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
 
             var result = await _repository.GetWithFilterAsync<Exam_Room>(a =>
                 (!id.HasValue || a.Id == id) &&
-                (!roomId.HasValue || a.Room_Id == roomId)
+                (!roomId.HasValue || a.Room_Id == roomId) &&
+                (!lstExamRoomid.Any() || lstExamRoomid.Contains(a.Id))
             );
 
             return Ok(result);

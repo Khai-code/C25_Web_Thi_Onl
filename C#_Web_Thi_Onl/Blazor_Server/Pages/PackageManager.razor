@@ -25,9 +25,9 @@
         <div class="row">
             <div class="col-12 d-flex">
                 <button type="button"
-                        class="btn btn-success ms-auto"
-                        disabled="@(_currentTeacher.Position != 0)"
-                        @onclick="OpenAddExamModal">
+                class="btn btn-success ms-auto"
+                disabled="@(_currentTeacher.Position != 0)"
+                @onclick="OpenAddExamModal">
                     + Thêm bài thi
                 </button>
             </div>
@@ -100,7 +100,7 @@
 
                                         <button class="btn btn-sm btn-outline-primary" title="Thêm câu hỏi"
                                         data-bs-toggle="tooltip" disabled="@((baiThi.Status == 1) || (this._currentTeacher.Id != baiThi.TeacherPackage_Id)? "disabled" : null)"
-                                                @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.Package_Type_Id, baiThi.Class_Id, baiThi.Subject_Id)">
+                                        @onclick="() => OpenAddExamModalQuesEssay(baiThi.Id, baiThi.Package_Type_Id, baiThi.Class_Id, baiThi.Subject_Id)">
                                             <i class="bi bi-plus-circle"></i>
                                         </button>
 
@@ -149,12 +149,12 @@
                         <form class="space-y-6">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="packageName" class="block font-medium text-green-700 mb-1">Tên Package</label>
+                                    <label for="packageName" class="block font-medium text-green-700 mb-1">Tên gói đề</label>
                                     <input type="text" id="packageName" name="packageName" class="w-full border border-green-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400 hover:border-green-500 transition" @bind="PackageName">
                                 </div>
 
                                 <div>
-                                    <label for="subject" class="block font-medium text-green-700 mb-1">Bài thi</label>
+                                    <label for="subject" class="block font-medium text-green-700 mb-1">Loại gói đề</label>
                                     <select id="subject" name="subject" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Package_Type_Id">
                                         <option value="">-- Chọn bài thi --</option>
                                         @foreach (var pt in packageTypeViewModels)
@@ -179,18 +179,18 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="startTime" class="block font-medium text-green-700 mb-1">Bắt đầu</label>
-                                    <input type="datetime-local" id="startTime" name="startTime" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="Start_Time" required />
+                                    <label for="startTime" class="block font-medium text-green-700 mb-1">Thời gian bắt đầu</label>
+                                    <input type="datetime-local" id="startTime" name="startTime" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="Start_Time" @onblur="OnStartTimeBlur" required />
                                 </div>
                                 <div>
-                                    <label for="endTime" class="block font-medium text-green-700 mb-1">Kết thúc</label>
-                                    <input type="datetime-local" id="endTime" name="endTime" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="End_Time" required>
+                                    <label for="endTime" class="block font-medium text-green-700 mb-1">Thời gian kết thúc</label>
+                                    <input type="datetime-local" id="endTime" name="endTime" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="End_Time" @onblur="OnEndTimeBlur" required>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="room" class="block font-medium text-green-700 mb-1">Bài thi</label>
+                                    <label for="room" class="block font-medium text-green-700 mb-1">Đề thi</label>
                                     <select id="exam" name="exam"
                                     class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400"
                                     @onchange="OnExamChanged">
@@ -223,7 +223,7 @@
                                         <option value="">-- Chọn gói loại --</option>
                                         @foreach (var point in pointTypeViewModels)
                                         {
-                                            <option value="@point.PointType_Id">@point.PointType_Name</option>
+                                            <option value="@point.PointType_Id">@Translate(point.PointType_Name)</option>
                                         }
                                     </select>
                                 </div>
@@ -284,7 +284,7 @@
 
                             <button class="w-full bg-gradient-to-r from-green-500 via-emerald-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white py-2 px-4 rounded-xl font-semibold shadow-md transition duration-200 flex items-center justify-center gap-2"
                             @onclick="Creta_P_ER_ERP" @onclick:preventDefault>
-                                ➕ Thêm Package
+                                ➕ Thêm gói đề
                             </button>
                         </form>
                     </div>
@@ -950,7 +950,7 @@
     private string Search;
 
     List<PackageInactive> packageInactive =new List<PackageInactive>();
-    
+
     PackageTestADO packageTestADO = new PackageTestADO
         {
             Exam_Room = new Exam_Room(),
@@ -1023,6 +1023,18 @@
     public List<int> selectedQuestionIds = new List<int>();
     private string validationMessage = "";
     private int iduser;
+
+    Dictionary<string, string> pointTypeTranslate = new()
+    {
+        { "Attendance", "Điểm kiểm tra thường xuyên" },
+        { "Point_15", "Điểm 15 phút" },
+        { "Point_45", "Điểm 45 phút" },
+        { "Point_Midterm", "Điểm giữa kỳ" },
+        { "Point_Final", "Điểm cuối kỳ" }
+    };
+
+    string Translate(string key)
+        => pointTypeTranslate.ContainsKey(key) ? pointTypeTranslate[key] : key;
 
     void CancelEdit()
     {
@@ -1221,6 +1233,175 @@
                 CheckquestionType(value);
                 AddAns();
             }
+        }
+    }
+
+    private void OnStartTimeBlur(FocusEventArgs e)
+    {
+        try
+        {
+            string ErrorMessage;
+            DateTime now = DateTime.Now;
+
+            // Giờ hành chính 08:00 - 17:00
+            TimeSpan startWorking = new(7, 0, 0);
+            TimeSpan endWorking = new(17, 3, 0);
+
+            if (Start_Time < now)
+            {
+                ErrorMessage = "⛔ Thời gian bắt đầu không được nhỏ hơn hiện tại.";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (Start_Time.DayOfWeek == DayOfWeek.Sunday || End_Time.DayOfWeek == DayOfWeek.Sunday)
+            {
+                ErrorMessage = "⛔ Ngày Chủ nhật không được chọn.";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (Start_Time.TimeOfDay < startWorking || Start_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (End_Time < Start_Time)
+            {
+                ErrorMessage = "⛔ Thời gian bắt đầu không được lớn hơn thời gian kết thúc.";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (End_Time.TimeOfDay < startWorking || End_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian kết thúc phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (packageTestADO.Package.Point_Type_Id != null)
+            {
+                if (packageTestADO.Package.Point_Type_Id == 1 || packageTestADO.Package.Point_Type_Id == 2)
+                {
+                    this.time = 900;
+
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 3)
+                {
+                    packageTestADO.Package.ExecutionTime = 2700;
+                    this.time = 2700;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 4 || packageTestADO.Package.Point_Type_Id == 5)
+                {
+                    packageTestADO.Package.ExecutionTime = 5400;
+                    this.time = 5400;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds != this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else
+                {
+                    this.time = 0;
+                }
+            }
+            else
+            {
+                ErrorMessage = string.Empty; // hợp lệ
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
+        }
+    }
+
+    private void OnEndTimeBlur(FocusEventArgs e)
+    {
+        try
+        {
+            string ErrorMessage;
+            DateTime now = DateTime.Now;
+
+            // Giờ hành chính 08:00 - 17:00
+            TimeSpan startWorking = new(7, 0, 0);
+            TimeSpan endWorking = new(17, 3, 0);
+
+            if (End_Time < Start_Time)
+            {
+                ErrorMessage = "⛔ Thời gian kết thúc không được nhỏ hơn thời gian bắt đầu.";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (End_Time.TimeOfDay < startWorking || End_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian kết thúc phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (Start_Time.DayOfWeek == DayOfWeek.Sunday || End_Time.DayOfWeek == DayOfWeek.Sunday)
+            {
+                ErrorMessage = "⛔ Ngày Chủ nhật không được chọn.";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (Start_Time.TimeOfDay < startWorking || Start_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian bắt đầu phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+            }
+            else if (packageTestADO.Package.Point_Type_Id != null )
+            {
+                if (packageTestADO.Package.Point_Type_Id == 1 || packageTestADO.Package.Point_Type_Id == 2)
+                {
+                    this.time = 900;
+
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 3)
+                {
+                    packageTestADO.Package.ExecutionTime = 2700;
+                    this.time = 2700;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 4 || packageTestADO.Package.Point_Type_Id == 5)
+                {
+                    packageTestADO.Package.ExecutionTime = 5400;
+                    this.time = 5400;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds != this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else
+                {
+                    this.time = 0;
+                }
+            }
+            else
+            {
+                ErrorMessage = string.Empty; // hợp lệ
+            }
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError("Lỗi: " + ex.Message);
         }
     }
 
@@ -1628,17 +1809,50 @@
                 toastService.ShowError("Chưa chọn giám thị");
                 return;
             }
-            else
+            else if (TeacherId1 == TeacherId2)
             {
-                packageTestADO.lstTeacherId.Add(TeacherId1);
-                packageTestADO.lstTeacherId.Add(TeacherId2);
+                toastService.ShowError("Cần chọn 2 giáo viên coi thi khác nhau");
+                return;
             }
 
+            if (TeacherId1 != null || TeacherId1 > 0)
+            {
+                bool check = await PTERP.CheckTeacher(TeacherId1, packageTestADO.Exam_Room.Start_Time, packageTestADO.Exam_Room.End_Time);
+                if (!check)
+                {
+                    var teacher = teacherViewModels.FirstOrDefault(o => o.Teacher_Id == TeacherId1)?.Teacher_Name;
+                    string err = string.Format("Giáo viên {0} " + PTERP.ErrorMes, teacher);
+                    toastService.ShowError(err);
+                    return;
+                }
+                else
+                {
+                    packageTestADO.lstTeacherId.Add(TeacherId1);
+                }
+            }
+
+            if (TeacherId2 != null || TeacherId2 > 0)
+            {
+                bool check = await PTERP.CheckTeacher(TeacherId2, packageTestADO.Exam_Room.Start_Time, packageTestADO.Exam_Room.End_Time);
+                if (!check)
+                {
+                    var teacher = teacherViewModels.FirstOrDefault(o => o.Teacher_Id == TeacherId2)?.Teacher_Name;
+                    string err = string.Format("Giáo viên {0} " + PTERP.ErrorMes, teacher);
+                    toastService.ShowError(err);
+                    return;
+                }
+                else
+                {
+                    packageTestADO.lstTeacherId.Add(TeacherId2);
+                }
+            }
+            
             if(Homeroom_Teacher == null || Homeroom_Teacher == 0)
             {
                 toastService.ShowError("Chưa chọn lớp tham ra thi");
                 return;
             }
+
 
             var packageTestViewModel = await PTERP.AddPackageTestERP(packageTestADO);
             if (packageTestViewModel != null)
