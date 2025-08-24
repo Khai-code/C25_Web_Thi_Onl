@@ -570,7 +570,7 @@
     private int selectedClassId;
     private int selectedSubjectId;
     private int idtest;
-    private DateTime startDate;
+    private DateTime startDate = DateTime.Today.AddDays(-4);
     private DateTime endDate = DateTime.Now;
     private List<string> packageTypes = new();
     private HashSet<string> selectedTypes = new();
