@@ -47,33 +47,36 @@ namespace Blazor_Server.Services
 
                 List<int> lstExamRoomId = (await ExamRoomTeacherResponse.Content.ReadFromJsonAsync<List<Exam_Room_Teacher>>()).Select(o => o.Exam_Room_Id).ToList();
 
-                var filterRequestER = new CommonFilterRequest
+                if (lstExamRoomId != null && lstExamRoomId.Count > 0)
                 {
-                    Filters = new Dictionary<string, string>
+                    var filterRequestER = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
                     {
                         { "Exam_Room_Id", string.Join(",", lstExamRoomId) }
                     },
-                };
+                    };
 
-                var ExamRoomResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterRequestER);
-                if (!ExamRoomResponse.IsSuccessStatusCode)
-                {
-                    ErrorMes = "Gọi API kiểm tra phòng thi thất bại";
-                    return false;
-                }
-
-                var lstExamRoom = await ExamRoomResponse.Content.ReadFromJsonAsync<List<Exam_Room>>();
-
-                foreach (var item in lstExamRoom)
-                {
-                    if ((item.Start_Time <= StartTime && item.End_Time >= StartTime) || (item.End_Time >= EndTime && item.Start_Time <= EndTime)
-                        || (StartTime.ToString().Substring(0, 8) == item.Start_Time.ToString().Substring(0, 8) && StartTime <= item.Start_Time && EndTime >= item.End_Time))
+                    var ExamRoomResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room/common/get", filterRequestER);
+                    if (!ExamRoomResponse.IsSuccessStatusCode)
                     {
-                        ErrorMes = string.Format("trong khoảng thời gian từ {0} đến {1} đã được phân công coi thi.", StartTime, EndTime);
+                        ErrorMes = "Gọi API kiểm tra phòng thi thất bại";
                         return false;
                     }
-                }
 
+                    var lstExamRoom = await ExamRoomResponse.Content.ReadFromJsonAsync<List<Exam_Room>>();
+
+                    foreach (var item in lstExamRoom)
+                    {
+                        if ((item.Start_Time <= StartTime && item.End_Time >= StartTime) || (item.End_Time >= EndTime && item.Start_Time <= EndTime)
+                            || (StartTime.ToString().Substring(0, 8) == item.Start_Time.ToString().Substring(0, 8) && StartTime <= item.Start_Time && EndTime >= item.End_Time))
+                        {
+                            ErrorMes = string.Format("trong khoảng thời gian từ {0} đến {1} đã được phân công coi thi.", StartTime, EndTime);
+                            return false;
+                        }
+                    }
+                }
+                
                 return success;
             }
             catch (Exception ex)
