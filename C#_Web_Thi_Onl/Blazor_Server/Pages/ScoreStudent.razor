@@ -60,7 +60,7 @@
 
                                 totalPoints += diemMieng;
 
-                                <td class="@(diemMieng < 5 ? "score-low" : "score-good")">@diemMieng</td>
+                                <td class="@(diemMieng < 5 ? "score-low" : "score-good")">@diemMieng.ToString("0.00")</td>
                             }
 
                             @* Điểm 15 phút (Point_15) *@
@@ -73,7 +73,7 @@
 
                                 totalPoints += diem15;
 
-                                <td class="@(diem15 < 5 ? "score-low" : "score-good")">@diem15</td>
+                                <td class="@(diem15 < 5 ? "score-low" : "score-good")">@diem15.ToString("0.00")</td>
                             }
 
                             @* Điểm 45 phút (Point_45) *@
@@ -86,7 +86,7 @@
 
                                 totalPoints += diem45;
 
-                                <td class="@(diem45 < 5 ? "score-low" : "score-good")">@diem45</td>
+                                <td class="@(diem45 < 5 ? "score-low" : "score-good")">@diem45.ToString("0.00")</td>
                             }
 
                             @* Điểm giữa kỳ (Midterm) *@
@@ -96,7 +96,7 @@
 
                                 totalPoints += diemGiuaKy;
 
-                                <td class="@(diemGiuaKy < 5 ? "score-low" : "score-good")">@diemGiuaKy</td>
+                                <td class="@(diemGiuaKy < 5 ? "score-low" : "score-good")">@diemGiuaKy.ToString("0.00")</td>
                             }
 
                             @* Điểm cuối kỳ (Final) *@
@@ -106,7 +106,7 @@
 
                                 totalPoints += diemCuoiKy;
 
-                                <td class="@(diemCuoiKy < 5 ? "score-low" : "score-good")">@diemCuoiKy</td>
+                                <td class="@(diemCuoiKy < 5 ? "score-low" : "score-good")">@diemCuoiKy.ToString("0.00")</td>
                             }
 
                             @* Tổng kết mới (chia cho 10) *@
@@ -179,7 +179,7 @@
                                     .OrderBy(x => x.Point)
                                     .ElementAtOrDefault(j)?.Point ?? 0;
                                     total += diem;
-                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem</td>
+                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem.ToString("0.00")</td>
                                 }
 
                                 @* Điểm 15 phút *@
@@ -190,7 +190,7 @@
                                     .OrderBy(x => x.Point)
                                     .ElementAtOrDefault(j)?.Point ?? 0;
                                     total += diem;
-                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem</td>
+                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem.ToString("0.00")</td>
                                 }
 
                                 @* Điểm 45 phút *@
@@ -201,7 +201,7 @@
                                     .OrderBy(x => x.Point)
                                     .ElementAtOrDefault(j)?.Point ?? 0;
                                     total += diem;
-                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem</td>
+                                    <td class="@(diem < 5 ? "score-low" : "score-good")">@diem.ToString("0.00")</td>
                                 }
 
                                 @* Giữa kỳ *@
@@ -209,14 +209,14 @@
                                     var diemGiuaKy = subjectScores.FirstOrDefault(x => x.PointType == "Point_Midterm")?.Point ?? 0;
                                     total += diemGiuaKy;
                                 }
-                                <td class="@(diemGiuaKy < 5 ? "score-low" : "score-good")">@diemGiuaKy</td>
+                                <td class="@(diemGiuaKy < 5 ? "score-low" : "score-good")">@diemGiuaKy.ToString("0.00")</td>
 
                                 @* Cuối kỳ *@
                                 @{
                                     var diemCuoiKy = subjectScores.FirstOrDefault(x => x.PointType == "Point_Final")?.Point ?? 0;
                                     total += diemCuoiKy;
                                 }
-                                <td class="@(diemCuoiKy < 5 ? "score-low" : "score-good")">@diemCuoiKy</td>
+                                <td class="@(diemCuoiKy < 5 ? "score-low" : "score-good")">@diemCuoiKy.ToString("0.00")</td>
 
                                 @{
                                     double tb = total / 10;
