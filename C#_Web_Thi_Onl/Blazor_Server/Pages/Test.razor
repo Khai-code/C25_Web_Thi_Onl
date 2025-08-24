@@ -57,10 +57,10 @@ else
                             Câu hỏi @Que.QuestionId: @Que.QuestionName (@Que.MaximumScore)
                         </div>
                         <textarea value="@answer.Name"
-                                  @oninput="(e) => AutoSaveAnswer(Que.QuestionId, ((ChangeEventArgs)e).Value?.ToString())"
-                                  class="form-control"
-                                  rows="5">
-                    </textarea>
+                        @oninput="(e) => AutoSaveAnswer(Que.QuestionId, ((ChangeEventArgs)e).Value?.ToString())"
+                        class="form-control"
+                        rows="5">
+                        </textarea>
                         @* <textarea @bind="answer.Name" class="form-control" rows="5"></textarea> *@
                     </div>
                 }
@@ -84,21 +84,21 @@ else
                             <div class="input-group mb-2">
                                 <span class="input-group-text">
                                     <input type="radio"
-                                           name="answer_@QueTN.QuestionId"
-                                           @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
+                                    name="answer_@QueTN.QuestionId"
+                                    @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
                                 </span>
                                 @if(a.AnswersName=="1"){
                                     <label class="form-control">Đúng</label>
                                 }
                                 else if (a.AnswersName == "0")
                                 {
-                                <label class="form-control">Sai</label>
+                                    <label class="form-control">Sai</label>
                                 }
                                 else
                                 {
                                     <label class="form-control">@a.AnswersName</label>
                                 }
-                                
+
                             </div>
                         }
                     }
@@ -109,7 +109,7 @@ else
                             <div class="input-group mb-2">
                                 <span class="input-group-text">
                                     <input type="checkbox"
-                                           @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
+                                    @onchange="@((ChangeEventArgs e) => OnAnswerChanged(e, QueTN.QuestionId, QueTN.Type, a.AnswerId))" />
                                 </span>
                                 <label class="form-control">@a.AnswersName</label>
                             </div>
@@ -163,7 +163,7 @@ else
             await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
         }
     }
-  
+
     [JSInvokable]
     public async Task<bool> load()
     {
@@ -173,10 +173,13 @@ else
         if (abc == true)
         {
             // Gian lận thật
-            if (histDTO.PackageTypeId == 1)
+            if (histDTO.PackageTypeId == 1){
                 await SaveAllAnswers();
-            else
+                await TestService.UpdateTestAsync(histDTO.TestId);
+            }
+        else
                 await CreateStudentAns(selectedAnsIds);
+            await TestService.UpdateTestAsync(histDTO.TestId);
 
             toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");
             Navigation.NavigateTo("/His");
@@ -194,7 +197,7 @@ else
         }
     }
 
-    
+
     [JSInvokable]
     public async Task ResetExamTime()
     {
@@ -210,10 +213,12 @@ else
             if (histDTO.PackageTypeId == 1)
             {
                 await SaveAllAnswers();
+                await TestService.UpdateTestAsync(histDTO.TestId);
             }
             else
             {
                 await CreateStudentAns(selectedAnsIds);
+                await TestService.UpdateTestAsync(histDTO.TestId);
             }
 
             toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");

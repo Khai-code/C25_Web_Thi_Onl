@@ -24,6 +24,19 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<bool> UpdateTestAsync(int id)
+        {
+            var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
+            if (existingTest == null)
+            {
+                return false; 
+            }
+            existingTest.Status = 2;
+            var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
+
+            return response.IsSuccessStatusCode;
+        }
+
         public async Task<bool> GetExamHis(int testID)
         {
             var getallTest = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
