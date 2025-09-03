@@ -32,7 +32,7 @@
                             @foreach (var grade in grades)
                             {
                                 <option value="@grade.ID" selected="@(selectedGrade?.ID == grade.ID)">
-                                    Khối: @grade.Grade_Name
+                                     @grade.Grade_Name
                                 </option>
                             }
                         }

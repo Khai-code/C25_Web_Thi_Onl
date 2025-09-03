@@ -520,7 +520,9 @@
             if (respom!=null){
                 toastService.ShowSuccess("Yêu cầu phúc khảo đã được gửi thành công!");
                 await TriggerClose();
-                comment = string.Empty; 
+                comment = string.Empty;
+                await GetTests(selectedExamId.Value);
+               
             }else{
                 toastService.ShowSuccess("Yêu cầu phúc khảo chưa được gửi thành công!");
             }

@@ -57,13 +57,13 @@ namespace Blazor_Server.Services
 
                 if (packages.GV1_Confirm == 0)
                 {
-                    ErrorMes = string.Format("Giám thị (0) chưa có xác nhận có mặt tại phòng thi", packages.GV1_Name);
+                    ErrorMes = string.Format("Giám thị {0} chưa có xác nhận có mặt tại phòng thi", packages.GV1_Name);
                     return false;
                 }
 
                 if (packages.GV2_Confirm == 0)
                 {
-                    ErrorMes = string.Format("Giám thị (0) chưa có xác nhận có mặt tại phòng thi", packages.GV2_Name);
+                    ErrorMes = string.Format("Giám thị {0} chưa có xác nhận có mặt tại phòng thi", packages.GV2_Name);
                     return false;
                 }
 

@@ -1258,26 +1258,41 @@
             {
                 ErrorMessage = "⛔ Thời gian bắt đầu không được nhỏ hơn hiện tại.";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (Start_Time.DayOfWeek == DayOfWeek.Sunday || End_Time.DayOfWeek == DayOfWeek.Sunday)
             {
                 ErrorMessage = "⛔ Ngày Chủ nhật không được chọn.";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (Start_Time.TimeOfDay < startWorking || Start_Time.TimeOfDay > endWorking)
             {
                 ErrorMessage = "⛔ Thời gian phải nằm trong thời gian lên lớp (07:00 - 17:30).";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (End_Time < Start_Time)
             {
                 ErrorMessage = "⛔ Thời gian bắt đầu không được lớn hơn thời gian kết thúc.";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (End_Time.TimeOfDay < startWorking || End_Time.TimeOfDay > endWorking)
             {
                 ErrorMessage = "⛔ Thời gian kết thúc phải nằm trong thời gian lên lớp (07:00 - 17:30).";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (packageTestADO.Package.Point_Type_Id != null)
             {
@@ -1345,21 +1360,33 @@
             {
                 ErrorMessage = "⛔ Thời gian kết thúc không được nhỏ hơn thời gian bắt đầu.";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (End_Time.TimeOfDay < startWorking || End_Time.TimeOfDay > endWorking)
             {
                 ErrorMessage = "⛔ Thời gian kết thúc phải nằm trong thời gian lên lớp (07:00 - 17:30).";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (Start_Time.DayOfWeek == DayOfWeek.Sunday || End_Time.DayOfWeek == DayOfWeek.Sunday)
             {
                 ErrorMessage = "⛔ Ngày Chủ nhật không được chọn.";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (Start_Time.TimeOfDay < startWorking || Start_Time.TimeOfDay > endWorking)
             {
                 ErrorMessage = "⛔ Thời gian bắt đầu phải nằm trong thời gian lên lớp (07:00 - 17:30).";
                 toastService.ShowWarning(ErrorMessage);
+
+                return;
+
             }
             else if (packageTestADO.Package.Point_Type_Id != null )
             {
@@ -1778,6 +1805,175 @@
     {
         try
         {
+            string ErrorMessage;
+            DateTime now = DateTime.Now;
+
+            // Giờ hành chính 08:00 - 17:00
+            TimeSpan startWorking = new(7, 0, 0);
+            TimeSpan endWorking = new(17, 3, 0);
+
+            if (Start_Time < now)
+            {
+                ErrorMessage = "⛔ Thời gian bắt đầu không được nhỏ hơn hiện tại.";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (Start_Time.DayOfWeek == DayOfWeek.Sunday || End_Time.DayOfWeek == DayOfWeek.Sunday)
+            {
+                ErrorMessage = "⛔ Ngày Chủ nhật không được chọn.";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (Start_Time.TimeOfDay < startWorking || Start_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (End_Time < Start_Time)
+            {
+                ErrorMessage = "⛔ Thời gian bắt đầu không được lớn hơn thời gian kết thúc.";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (End_Time.TimeOfDay < startWorking || End_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian kết thúc phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (packageTestADO.Package.Point_Type_Id != null)
+            {
+                if (packageTestADO.Package.Point_Type_Id == 1 || packageTestADO.Package.Point_Type_Id == 2)
+                {
+                    this.time = 900;
+
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 3)
+                {
+                    packageTestADO.Package.ExecutionTime = 2700;
+                    this.time = 2700;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 4 || packageTestADO.Package.Point_Type_Id == 5)
+                {
+                    packageTestADO.Package.ExecutionTime = 5400;
+                    this.time = 5400;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds != this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else
+                {
+                    this.time = 0;
+                }
+            }
+            else
+            {
+                ErrorMessage = string.Empty; // hợp lệ
+            }
+
+            if (End_Time < Start_Time)
+            {
+                ErrorMessage = "⛔ Thời gian kết thúc không được nhỏ hơn thời gian bắt đầu.";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (End_Time.TimeOfDay < startWorking || End_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian kết thúc phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (Start_Time.DayOfWeek == DayOfWeek.Sunday || End_Time.DayOfWeek == DayOfWeek.Sunday)
+            {
+                ErrorMessage = "⛔ Ngày Chủ nhật không được chọn.";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (Start_Time.TimeOfDay < startWorking || Start_Time.TimeOfDay > endWorking)
+            {
+                ErrorMessage = "⛔ Thời gian bắt đầu phải nằm trong thời gian lên lớp (07:00 - 17:30).";
+                toastService.ShowWarning(ErrorMessage);
+
+                return;
+
+            }
+            else if (packageTestADO.Package.Point_Type_Id != null)
+            {
+                if (packageTestADO.Package.Point_Type_Id == 1 || packageTestADO.Package.Point_Type_Id == 2)
+                {
+                    this.time = 900;
+
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 3)
+                {
+                    packageTestADO.Package.ExecutionTime = 2700;
+                    this.time = 2700;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds < this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else if (packageTestADO.Package.Point_Type_Id == 4 || packageTestADO.Package.Point_Type_Id == 5)
+                {
+                    packageTestADO.Package.ExecutionTime = 5400;
+                    this.time = 5400;
+                    TimeSpan duration = End_Time - Start_Time;
+                    if (duration.TotalSeconds != this.time)
+                    {
+                        toastService.ShowWarning($"Thời gian nhập không đúng! Thời gian phải tối thiểu {time / 60} phút ({time} giây)");
+                        return;
+                    }
+                }
+                else
+                {
+                    this.time = 0;
+                }
+            }
+            else
+            {
+                ErrorMessage = string.Empty; // hợp lệ
+            }
+
             if (Create_Time != null && Start_Time != null && End_Time != null 
                 && ConvertLong.ConvertDateTimeToLong(Create_Time) < ConvertLong.ConvertDateTimeToLong(Start_Time) 
                 && ConvertLong.ConvertDateTimeToLong(Start_Time) < ConvertLong.ConvertDateTimeToLong(End_Time))

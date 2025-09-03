@@ -398,7 +398,13 @@
                                         {
                                             if (item.statuss == 1)
                                             {
-                                                if (item.Questions.Question_Type_Id == 1 || item.Questions.Question_Type_Id == 2)
+                                                if (item.Questions.Question_Type_Id == 1)
+                                                {
+                                                    <div class="d-flex align-items-center">
+                                                        <span>@(ans.Right_Answer == 1 ? "Đúng" : "Sai")</span>
+                                                    </div>
+                                                }
+                                                else if (item.Questions.Question_Type_Id == 2)
                                                 {
                                                     <div class="d-flex align-items-center">
                                                         <span>@ans.Answers_Name</span>
@@ -406,6 +412,7 @@
                                                 }
                                                 else
                                                 {
+
                                                     <div class="d-flex align-items-center">
                                                         <span>@ans.Answers_Name</span>
                                                     </div>
@@ -683,12 +690,12 @@
                 isEditing = false;
                 lstQuesAns = null;
                 validationMessage = "";
-                toastService.ShowSuccess("Update thành công");
+                toastService.ShowSuccess("Sửa câu hỏi thành công");
                 // await GetLstQues(packageId, packageTypeId);
             }
             else
             {
-                toastService.ShowError("Update thất bại");
+                toastService.ShowError("Sửa câu hỏi thất bại");
                 return;
             }
         }
