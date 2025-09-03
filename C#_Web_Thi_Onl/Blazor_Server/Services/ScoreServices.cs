@@ -20,80 +20,34 @@ namespace Blazor_Server.Services
 
         public async Task<List<StudentScoreDetail>> GetStudentScoresAsync(string studentCode, int currentSummaryId)
         {
-            var scores = await _client.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new();
-            var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
-            var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new();
-            var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get") ?? new();
-
-            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
-            if (student == null) return new();
-
-            // Chỉ lấy các đầu điểm cố định, không cần check Summary_Id của PointType nữa
-            var validPointTypeIds = pointTypes.Select(pt => pt.Id).ToList();
-
-            // Lọc điểm theo kỳ
-            var studentScores = scores
-                .Where(s => s.Student_Id == student.Id && s.Summary_Id == currentSummaryId && validPointTypeIds.Contains(s.Point_Type_Id))
-                .ToList();
-
-            var studentScoreDetails = new List<StudentScoreDetail>();
-
-            foreach (var score in studentScores)
+            try
             {
-                var subject = subjects.FirstOrDefault(su => su.Id == score.Subject_Id);
-                var pointType = pointTypes.FirstOrDefault(pt => pt.Id == score.Point_Type_Id);
+                var scores = await _client.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new();
+                var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
+                var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new();
+                var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get") ?? new();
 
-                if (subject != null && pointType != null)
-                {
-                    studentScoreDetails.Add(new StudentScoreDetail
-                    {
-                        SubjectName = subject.Subject_Name,
-                        PointType = pointType.Point_Type_Name,
-                        Point = score.Point,
-                        SummaryId = score.Summary_Id,
-                        PointTypeId = score.Point_Type_Id
-                    });
-                }
-            }
+                var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+                if (student == null) return new();
 
-            return studentScoreDetails;
-        }
+                // Chỉ lấy các đầu điểm cố định, không cần check Summary_Id của PointType nữa
+                var validPointTypeIds = pointTypes.Select(pt => pt.Id).ToList();
 
-        public async Task<Dictionary<int, List<StudentScoreDetail>>> GetAnnualStudentScoresAsync(string studentCode)
-        {
-            var scores = await _client.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new();
-            var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
-            var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new();
-            var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get") ?? new();
+                // Lọc điểm theo kỳ
+                var studentScores = scores
+                    .Where(s => s.Student_Id == student.Id && s.Summary_Id == currentSummaryId && validPointTypeIds.Contains(s.Point_Type_Id))
+                    .ToList();
 
-            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
-            if (student == null) return new();
+                var studentScoreDetails = new List<StudentScoreDetail>();
 
-            // Các PointTypeId cố định
-            var validPointTypeIds = pointTypes.Select(pt => pt.Id).ToList();
-
-            // Nhóm điểm theo từng kỳ học (Summary_Id)
-            var groupedBySummary = scores
-                .Where(s => s.Student_Id == student.Id && validPointTypeIds.Contains(s.Point_Type_Id))
-                .GroupBy(s => s.Summary_Id)
-                .ToDictionary(g => g.Key, g => g.ToList());
-
-            var result = new Dictionary<int, List<StudentScoreDetail>>();
-
-            foreach (var kvp in groupedBySummary)
-            {
-                var summaryId = kvp.Key;
-                var scoreList = kvp.Value;
-                var details = new List<StudentScoreDetail>();
-
-                foreach (var score in scoreList)
+                foreach (var score in studentScores)
                 {
                     var subject = subjects.FirstOrDefault(su => su.Id == score.Subject_Id);
                     var pointType = pointTypes.FirstOrDefault(pt => pt.Id == score.Point_Type_Id);
 
                     if (subject != null && pointType != null)
                     {
-                        details.Add(new StudentScoreDetail
+                        studentScoreDetails.Add(new StudentScoreDetail
                         {
                             SubjectName = subject.Subject_Name,
                             PointType = pointType.Point_Type_Name,
@@ -104,14 +58,72 @@ namespace Blazor_Server.Services
                     }
                 }
 
-                if (details.Any())
-                    result[summaryId] = details;
+                return studentScoreDetails;
             }
-
-            return result;
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
+        public async Task<Dictionary<int, List<StudentScoreDetail>>> GetAnnualStudentScoresAsync(string studentCode)
+        {
+            try
+            {
+                var scores = await _client.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new();
+                var students = await _client.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
+                var pointTypes = await _client.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get") ?? new();
+                var subjects = await _client.GetFromJsonAsync<List<Subject>>("/api/Subject/Get") ?? new();
 
+                var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+                if (student == null) return new();
+
+                // Các PointTypeId cố định
+                var validPointTypeIds = pointTypes.Select(pt => pt.Id).ToList();
+
+                // Nhóm điểm theo từng kỳ học (Summary_Id)
+                var groupedBySummary = scores
+                    .Where(s => s.Student_Id == student.Id && validPointTypeIds.Contains(s.Point_Type_Id))
+                    .GroupBy(s => s.Summary_Id)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                var result = new Dictionary<int, List<StudentScoreDetail>>();
+
+                foreach (var kvp in groupedBySummary)
+                {
+                    var summaryId = kvp.Key;
+                    var scoreList = kvp.Value;
+                    var details = new List<StudentScoreDetail>();
+
+                    foreach (var score in scoreList)
+                    {
+                        var subject = subjects.FirstOrDefault(su => su.Id == score.Subject_Id);
+                        var pointType = pointTypes.FirstOrDefault(pt => pt.Id == score.Point_Type_Id);
+
+                        if (subject != null && pointType != null)
+                        {
+                            details.Add(new StudentScoreDetail
+                            {
+                                SubjectName = subject.Subject_Name,
+                                PointType = pointType.Point_Type_Name,
+                                Point = score.Point,
+                                SummaryId = score.Summary_Id,
+                                PointTypeId = score.Point_Type_Id
+                            });
+                        }
+                    }
+
+                    if (details.Any())
+                        result[summaryId] = details;
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
 
         // 🔥 Hàm lấy tất cả học sinh
         public async Task<List<Student>> GetAllStudentsAsync()

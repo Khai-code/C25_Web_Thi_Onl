@@ -513,7 +513,7 @@ namespace Blazor_Server.Services
                                 int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
 
                                 Exam_HisTory examHistory = new Exam_HisTory();
-                                examHistory.Score = pointPerQuestion; /// điểm
+                                examHistory.Score = Math.Round(pointPerQuestion, 2); /// điểm
                                 examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
                                 examHistory.Exam_Room_Student_Id = ers.Id;
                                 examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
@@ -535,7 +535,7 @@ namespace Blazor_Server.Services
                     int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
 
                     Exam_HisTory examHistory = new Exam_HisTory();
-                    examHistory.Score = pointPerQuestion; /// điểm
+                    examHistory.Score = Math.Round(pointPerQuestion, 2); /// điểm
                     examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
                     examHistory.Exam_Room_Student_Id = ers.Id;
                     examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            

@@ -57,131 +57,152 @@ namespace Blazor_Server.Services
         }
         public async Task<List<PackageInactive>> GetPackageInactive()
         {
-            var lstPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
-            if (lstPackage == null || lstPackage.Count == 0)
-                return new List<PackageInactive>();
-           
-            var lstPackageType = await _httpClient.GetFromJsonAsync<List<Package_Type>>("https://localhost:7187/api/Package_Type/Get");
-            var lstClass = await _httpClient.GetFromJsonAsync<List<Class>>("https://localhost:7187/api/Class/Get");
-            var lstSubject = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
-            var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
-            var lstExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("https://localhost:7187/api/Exam_Room/Get");
-            var lstExamRoomTeacher = await _httpClient.GetFromJsonAsync<List<Exam_Room_Teacher>>("https://localhost:7187/api/Exam_Room_Teacher/Get");
-            var lstTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("https://localhost:7187/api/Teacher/Get");
-            var lstUser = await _httpClient.GetFromJsonAsync<List<User>>("https://localhost:7187/api/User/Get");
+            try
+            {
+                var lstPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("https://localhost:7187/api/Package/Get");
+                if (lstPackage == null || lstPackage.Count == 0)
+                    return new List<PackageInactive>();
 
-            // Dictionary
-            var subjectDict = lstSubject.ToDictionary(s => s.Id);
-            var classDict = lstClass.ToDictionary(c => c.Id);
-            var PackageTypeDict = lstPackageType.ToDictionary(c => c.Id);
-            var examRoomDict = lstExamRoom.ToDictionary(e => e.Id);
-            var teacherDict = lstTeacher.ToDictionary(t => t.Id);   
-            var userDict = lstUser.ToDictionary(u => u.Id);
+                var lstPackageType = await _httpClient.GetFromJsonAsync<List<Package_Type>>("https://localhost:7187/api/Package_Type/Get");
+                var lstClass = await _httpClient.GetFromJsonAsync<List<Class>>("https://localhost:7187/api/Class/Get");
+                var lstSubject = await _httpClient.GetFromJsonAsync<List<Subject>>("https://localhost:7187/api/Subject/Get");
+                var lstExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("https://localhost:7187/api/Exam_Room_Package/Get");
+                var lstExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("https://localhost:7187/api/Exam_Room/Get");
+                var lstExamRoomTeacher = await _httpClient.GetFromJsonAsync<List<Exam_Room_Teacher>>("https://localhost:7187/api/Exam_Room_Teacher/Get");
+                var lstTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("https://localhost:7187/api/Teacher/Get");
+                var lstUser = await _httpClient.GetFromJsonAsync<List<User>>("https://localhost:7187/api/User/Get");
 
-            var result = lstPackage
-                .Where(p => p.Status == 0 || p.Status == 1)
-                .Select(p =>
-                {
-                    var examRoomPackage = lstExamRoomPackage.FirstOrDefault(x => x.Package_Id == p.Id);
-                    examRoomDict.TryGetValue(examRoomPackage?.Exam_Room_Id ?? 0, out var examRoom);
+                // Dictionary
+                var subjectDict = lstSubject.ToDictionary(s => s.Id);
+                var classDict = lstClass.ToDictionary(c => c.Id);
+                var PackageTypeDict = lstPackageType.ToDictionary(c => c.Id);
+                var examRoomDict = lstExamRoom.ToDictionary(e => e.Id);
+                var teacherDict = lstTeacher.ToDictionary(t => t.Id);
+                var userDict = lstUser.ToDictionary(u => u.Id);
 
-                    // Lấy giáo viên phụ trách lớp
-                    var teacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id;
-                    var teacherClass = teacherDict.TryGetValue(teacherClassId ?? 0, out var tClass) ? tClass : null;
-                    var teacherPackage = teacherDict.TryGetValue(p.Teacher_Id, out var tPack) ? tPack : null;
-                    //var teacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A";
-
-                    // Lấy giáo viên phụ trách phòng thi
-                    var examRoomTeacherId = lstExamRoomTeacher.FirstOrDefault(et => et.Exam_Room_Id == examRoom?.Id)?.Teacher_Id;
-                    var teacherExam = teacherDict.TryGetValue(examRoomTeacherId ?? 0, out var tExam) ? tExam : null;
-                    //var teacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A";
-
-                    return new PackageInactive
+                var result = lstPackage
+                    .Where(p => p.Status == 0 || p.Status == 1)
+                    .Select(p =>
                     {
-                        Id = p.Id,
-                        Name = p.Package_Name,
-                        Code = p.Package_Code,
-                        PackageTypeId = p.Package_Type_Id,
-                        SubjectId = p.Subject_Id,
-                        ClassId = p.Class_Id,
-                        Status = p.Status,
-                        PackageTypeName = PackageTypeDict.TryGetValue(p.Package_Type_Id, out var pt) ? pt.Package_Type_Name : "N/A",
-                        SubjectName = subjectDict.TryGetValue(p.Subject_Id, out var sub) ? sub.Subject_Name : "N/A",
-                        ClassName = classDict.TryGetValue(p.Class_Id, out var cl) ? cl.Class_Name : "N/A",
-                        ClassNub = classDict.TryGetValue(p.Class_Id, out var cln) ? cln.Number : 0,
-                        StartTime = examRoom?.Start_Time ?? 0,
-                        EndTime = examRoom?.End_Time ?? 0,
-                        TeacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id ?? 0,
-                        TeacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A",
-                        TeacherExamRoomId = lstExamRoomTeacher.FirstOrDefault(et => et.Exam_Room_Id == examRoom?.Id)?.Teacher_Id ?? 0,
-                        TeacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A",
-                        TeacherGivesQuestionId = p.Teacher_Id,
-                        TeacherGivesQuestionName = teacherPackage != null && userDict.TryGetValue(teacherPackage.User_Id, out var userPack) ? userPack.Full_Name : "N/A"
-                    };
-                })
-                .ToList();
+                        var examRoomPackage = lstExamRoomPackage.FirstOrDefault(x => x.Package_Id == p.Id);
+                        examRoomDict.TryGetValue(examRoomPackage?.Exam_Room_Id ?? 0, out var examRoom);
 
-            return result;
+                        // Lấy giáo viên phụ trách lớp
+                        var teacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id;
+                        var teacherClass = teacherDict.TryGetValue(teacherClassId ?? 0, out var tClass) ? tClass : null;
+                        var teacherPackage = teacherDict.TryGetValue(p.Teacher_Id, out var tPack) ? tPack : null;
+                        //var teacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A";
+
+                        // Lấy giáo viên phụ trách phòng thi
+                        var examRoomTeacherId = lstExamRoomTeacher.FirstOrDefault(et => et.Exam_Room_Id == examRoom?.Id)?.Teacher_Id;
+                        var teacherExam = teacherDict.TryGetValue(examRoomTeacherId ?? 0, out var tExam) ? tExam : null;
+                        //var teacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A";
+
+                        return new PackageInactive
+                        {
+                            Id = p.Id,
+                            Name = p.Package_Name,
+                            Code = p.Package_Code,
+                            PackageTypeId = p.Package_Type_Id,
+                            SubjectId = p.Subject_Id,
+                            ClassId = p.Class_Id,
+                            Status = p.Status,
+                            PackageTypeName = PackageTypeDict.TryGetValue(p.Package_Type_Id, out var pt) ? pt.Package_Type_Name : "N/A",
+                            SubjectName = subjectDict.TryGetValue(p.Subject_Id, out var sub) ? sub.Subject_Name : "N/A",
+                            ClassName = classDict.TryGetValue(p.Class_Id, out var cl) ? cl.Class_Name : "N/A",
+                            ClassNub = classDict.TryGetValue(p.Class_Id, out var cln) ? cln.Number : 0,
+                            StartTime = examRoom?.Start_Time ?? 0,
+                            EndTime = examRoom?.End_Time ?? 0,
+                            TeacherClassId = lstClass.FirstOrDefault(tc => tc.Id == p.Class_Id)?.Teacher_Id ?? 0,
+                            TeacherClassName = teacherClass != null && userDict.TryGetValue(teacherClass.User_Id, out var userClass) ? userClass.Full_Name : "N/A",
+                            TeacherExamRoomId = lstExamRoomTeacher.FirstOrDefault(et => et.Exam_Room_Id == examRoom?.Id)?.Teacher_Id ?? 0,
+                            TeacherExamRoomName = teacherExam != null && userDict.TryGetValue(teacherExam.User_Id, out var userExam) ? userExam.Full_Name : "N/A",
+                            TeacherGivesQuestionId = p.Teacher_Id,
+                            TeacherGivesQuestionName = teacherPackage != null && userDict.TryGetValue(teacherPackage.User_Id, out var userPack) ? userPack.Full_Name : "N/A"
+                        };
+                    })
+                    .ToList();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
         public async Task<List<TeacherViewModel>> GetTeacher()
         {
-            var lstTea = await _httpClient.GetFromJsonAsync<List<Teacher>>("https://localhost:7187/api/Teacher/Get");
-            if (lstTea == null || lstTea.Count == 0)
-                return new List<TeacherViewModel>();
-
-            var lstUser = await _httpClient.GetFromJsonAsync<List<User>>("https://localhost:7187/api/User/Get");
-            if (lstUser == null || lstUser.Count == 0)
-                return new List<TeacherViewModel>();
-
-            var UserDict = lstUser.Where(u => u.Status != 1).ToDictionary(s => s.Id);
-
-            var teacher = lstTea.Select(t =>
+            try
             {
-                return new TeacherViewModel
-                {
-                    Teacher_Id = t.Id,
-                    Teacher_Name = UserDict.TryGetValue(t.User_Id, out var use) ? use.Full_Name : "N/A",
-                    Subject_Id = t.Subject_Id
-                };
-            }).ToList();
+                var lstTea = await _httpClient.GetFromJsonAsync<List<Teacher>>("https://localhost:7187/api/Teacher/Get");
+                if (lstTea == null || lstTea.Count == 0)
+                    return new List<TeacherViewModel>();
 
-            return teacher;
+                var lstUser = await _httpClient.GetFromJsonAsync<List<User>>("https://localhost:7187/api/User/Get");
+                if (lstUser == null || lstUser.Count == 0)
+                    return new List<TeacherViewModel>();
+
+                var UserDict = lstUser.Where(u => u.Status != 1).ToDictionary(s => s.Id);
+
+                var teacher = lstTea.Select(t =>
+                {
+                    return new TeacherViewModel
+                    {
+                        Teacher_Id = t.Id,
+                        Teacher_Name = UserDict.TryGetValue(t.User_Id, out var use) ? use.Full_Name : "N/A",
+                        Subject_Id = t.Subject_Id
+                    };
+                }).ToList();
+
+                return teacher;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
         public async Task<TeacherViewModel> GetTeacherOfClass(int teacherId)
         {
-            var lstTea = await _httpClient.GetFromJsonAsync<Teacher>($"https://localhost:7187/api/Class/GetBy/{teacherId}");
-
-            if (lstTea == null)
-                return new TeacherViewModel();
-
-            var filterAns = new CommonFilterRequest
+            try
             {
-                Filters = new Dictionary<string, string>
+                var lstTea = await _httpClient.GetFromJsonAsync<Teacher>($"https://localhost:7187/api/Class/GetBy/{teacherId}");
+
+                if (lstTea == null)
+                    return new TeacherViewModel();
+
+                var filterAns = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
                 {
                      { "Teacher_Id", string.Join(",", teacherId) },
                 },
-            };
+                };
 
-            var lstUser = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/User/common/get", filterAns);
+                var lstUser = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/User/common/get", filterAns);
 
-            if (!lstUser.IsSuccessStatusCode)
-            {
-                return new TeacherViewModel();
+                if (!lstUser.IsSuccessStatusCode)
+                {
+                    return new TeacherViewModel();
+                }
+
+                var user = (await lstUser.Content.ReadFromJsonAsync<List<Data_Base.Models.U.User>>()).First();
+
+                if (user == null)
+                    return new TeacherViewModel();
+
+                var teacher = new TeacherViewModel
+                {
+                    Teacher_Id = lstTea.Id,
+                    Teacher_Name = user.Full_Name ?? "N/A",
+                    Subject_Id = lstTea.Subject_Id
+                };
+
+                return teacher;
             }
-
-            var user = (await lstUser.Content.ReadFromJsonAsync<List<Data_Base.Models.U.User>>()).First();
-
-            if (user == null)
-                return new TeacherViewModel();
-
-            var teacher = new TeacherViewModel
+            catch (Exception ex)
             {
-                Teacher_Id = lstTea.Id,
-                Teacher_Name = user.Full_Name ?? "N/A",
-                Subject_Id = lstTea.Subject_Id
-            };
-
-            return teacher;
+                return null;
+            }
         }
         public async Task<List<HistDTO>> GetQuesTL(int subjectId, int packageTypeId, int classId)
         {

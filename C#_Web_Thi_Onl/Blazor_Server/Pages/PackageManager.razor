@@ -390,7 +390,18 @@
                                                                     <ul class="ms-4 mt-1 mb-0">
                                                                         @foreach (var ans in ques.Answers)
                                                                         {
-                                                                            <li class="text-muted small">- @ans.AnswersName</li>
+                                                                            @if (ans.AnswersName == "1")
+                                                                            {
+                                                                                <label class="form-control">Đúng</label>
+                                                                            }
+                                                                            else if (ans.AnswersName == "0")
+                                                                            {
+                                                                                <label class="form-control">Sai</label>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <label class="form-control">ans.AnswersName</label>
+                                                                            }
                                                                         }
                                                                     </ul>
                                                                 }
@@ -781,7 +792,7 @@
                         <!-- Hàng 1: Tên package + Bài thi -->
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
-                                <label for="packageName" class="block text-sm font-medium text-gray-700 mb-1">Tên Package</label>
+                                <label for="packageName" class="block text-sm font-medium text-gray-700 mb-1">Tên gói đề</label>
                                 <input type="text" id="packageName" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                                 @bind="updatePackageTestADO.Package_Name" />
                             </div>

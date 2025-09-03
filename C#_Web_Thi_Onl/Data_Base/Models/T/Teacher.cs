@@ -33,7 +33,6 @@ namespace Data_Base.Models.T
         public ICollection<Exam_Room_Teacher> Exam_Room_Teachers { get; set; } = new List<Exam_Room_Teacher>();
         [JsonIgnore]
         public ICollection<Review_Test> Review_Tests { get; set; } = new List<Review_Test>();
-        [JsonIgnore]
-        public ICollection<Teacher> Teachers { get; set; } = new List<Teacher>();
+
     }
 }

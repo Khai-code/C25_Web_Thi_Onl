@@ -111,7 +111,6 @@ namespace Blazor_Server.Services
                     Grade_Id = model.GradeId,
                     Teacher_Id = model.TeacherId,
                     Number = 0
-
                 };
 
                 var response = await _client.PostAsJsonAsync("api/Class/Post", newClass);

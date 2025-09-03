@@ -20,31 +20,38 @@ namespace Blazor_Server.Services
         public async Task<LoginResult> Login(string username, string password)
         {
 
-            var loginRequest = new { User_Name = username, User_Pass = password };
-
-            var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Auth/login", loginRequest);
-            var errorContent = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Lỗi từ server: {errorContent}");
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+                var loginRequest = new { User_Name = username, User_Pass = password };
 
-                // 🔥 Giải mã token để lấy Role_Id
-                var handler = new JwtSecurityTokenHandler();
-                var jsonToken = handler.ReadToken(result.Token) as JwtSecurityToken;
-                var roleClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Role");
+                var response = await _httpClient.PostAsJsonAsync($"https://localhost:7187/api/Auth/login", loginRequest);
+                var errorContent = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Lỗi từ server: {errorContent}");
 
-                int role = 0; // Mặc định nếu không tìm thấy role
-                if (roleClaim != null && int.TryParse(roleClaim.Value, out int parsedRole))
+                if (response.IsSuccessStatusCode)
                 {
-                    role = parsedRole;
+                    var result = await response.Content.ReadFromJsonAsync<LoginResult>();
+
+                    // 🔥 Giải mã token để lấy Role_Id
+                    var handler = new JwtSecurityTokenHandler();
+                    var jsonToken = handler.ReadToken(result.Token) as JwtSecurityToken;
+                    var roleClaim = jsonToken?.Claims.FirstOrDefault(c => c.Type == "Role");
+
+                    int role = 0; // Mặc định nếu không tìm thấy role
+                    if (roleClaim != null && int.TryParse(roleClaim.Value, out int parsedRole))
+                    {
+                        role = parsedRole;
+                    }
+
+                    return new LoginResult { Token = result.Token, Role = role };
                 }
 
-                return new LoginResult { Token = result.Token, Role = role };
+                return null;
             }
-
-            return null;
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
     }
 

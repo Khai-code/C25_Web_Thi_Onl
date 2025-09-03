@@ -35,359 +35,400 @@ namespace Blazor_Server.Services
         }
         public async Task<List<lispackage>> GetAllHistories(int idclass, int idsubject, DateTime start, DateTime end)
         {
-            var getallexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get");
-            var examroom = getallexamroom
-                .Where(x =>
-                {
-                    var roomStart = ConvertLong.ConvertLongToDateTime(x.Start_Time);
-                    var roomEnd = ConvertLong.ConvertLongToDateTime(x.End_Time);
-                    return roomEnd >= start && roomStart <= end;
-                }).ToList();
-
-            if (examroom == null || examroom.Count == 0) return new List<lispackage>();
-
-            var getallexamroompackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get");
-            var examroompackage = getallexamroompackage
-            .Where(x => examroom.Any(y => y.Id == x.Exam_Room_Id))
-            .ToList();
-
-            if (examroompackage == null || examroompackage.Count == 0) return new List<lispackage>();
-
-            var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
-            var package = getallpackage
-                .Where(x => x.Class_Id == idclass && x.Subject_Id == idsubject && examroompackage.Any(y => y.Package_Id == x.Id))
-            .ToList();
-
-            if (package == null || package.Count == 0) return new List<lispackage>();
-
-            var getallpackagetype = await _httpClient.GetFromJsonAsync<List<Package_Type>>("/api/Package_Type/Get");
-
-            var result = new List<lispackage>();
-
-            foreach (var pack in package)
+            try
             {
-                var type = getallpackagetype.FirstOrDefault(pt => pt.Id == pack.Package_Type_Id);
-                result.Add(new lispackage
-                {
-                    Id = pack.Id,
-                    Name_package = pack.Package_Name,
-                    Name_Package_Type = type?.Package_Type_Name
-                });
-            }
+                var getallexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get");
+                var examroom = getallexamroom
+                    .Where(x =>
+                    {
+                        var roomStart = ConvertLong.ConvertLongToDateTime(x.Start_Time);
+                        var roomEnd = ConvertLong.ConvertLongToDateTime(x.End_Time);
+                        return roomEnd >= start && roomStart <= end;
+                    }).ToList();
 
-            return result;
+                if (examroom == null || examroom.Count == 0) return new List<lispackage>();
+
+                var getallexamroompackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get");
+                var examroompackage = getallexamroompackage
+                .Where(x => examroom.Any(y => y.Id == x.Exam_Room_Id))
+                .ToList();
+
+                if (examroompackage == null || examroompackage.Count == 0) return new List<lispackage>();
+
+                var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
+                var package = getallpackage
+                    .Where(x => x.Class_Id == idclass && x.Subject_Id == idsubject && examroompackage.Any(y => y.Package_Id == x.Id))
+                .ToList();
+
+                if (package == null || package.Count == 0) return new List<lispackage>();
+
+                var getallpackagetype = await _httpClient.GetFromJsonAsync<List<Package_Type>>("/api/Package_Type/Get");
+
+                var result = new List<lispackage>();
+
+                foreach (var pack in package)
+                {
+                    var type = getallpackagetype.FirstOrDefault(pt => pt.Id == pack.Package_Type_Id);
+                    result.Add(new lispackage
+                    {
+                        Id = pack.Id,
+                        Name_package = pack.Package_Name,
+                        Name_Package_Type = type?.Package_Type_Name
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public async Task<List<listTest>> GetTests(int packageId)
         {
-            var getallTests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
-            var gettest = getallTests?.Where(x => x.Package_Id == packageId).ToList();
-            if (gettest == null || !gettest.Any()) return new();
-
-            var getallExamRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var getExamRoomStudents = getallExamRoomStudents?
-                .Where(x => gettest.Any(t => t.Id == x.Test_Id))
-                .ToList();
-            if (getExamRoomStudents == null || !getExamRoomStudents.Any()) return new();
-
-            var getallStudents = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
-            var getStudents = getallStudents?
-                .Where(x => getExamRoomStudents.Any(e => e.Student_Id == x.Id))
-                .ToList();
-            if (getStudents == null || !getStudents.Any()) return new();
-
-            var getallUsers = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get");
-            var getusers = getallUsers?
-                .Where(x => getStudents.Any(s => s.User_Id == x.Id))
-                .ToList();
-            if (getusers == null || !getusers.Any()) return new();
-
-            var getallexamHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
-            var getexamHistories = getallexamHistories?
-                .Where(x => getExamRoomStudents.Any(e => e.Id == x.Exam_Room_Student_Id))
-                .ToList();
-            if (getexamHistories == null || !getexamHistories.Any()) return new();
-            var getallReviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
-            var getreviewTests = getallReviewTests?
-                .Where(x => gettest.Any(t => t.Id == x.Test_Id))
-                .ToList();
-            var result = new List<listTest>();
-
-            foreach (var test in gettest)
+            try
             {
-                var examRoomStudents = getExamRoomStudents.Where(e => e.Test_Id == test.Id).ToList();
-                foreach (var examRoomStudent in examRoomStudents)
+                var getallTests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+                var gettest = getallTests?.Where(x => x.Package_Id == packageId).ToList();
+                if (gettest == null || !gettest.Any()) return new();
+
+                var getallExamRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var getExamRoomStudents = getallExamRoomStudents?
+                    .Where(x => gettest.Any(t => t.Id == x.Test_Id))
+                    .ToList();
+                if (getExamRoomStudents == null || !getExamRoomStudents.Any()) return new();
+
+                var getallStudents = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
+                var getStudents = getallStudents?
+                    .Where(x => getExamRoomStudents.Any(e => e.Student_Id == x.Id))
+                    .ToList();
+                if (getStudents == null || !getStudents.Any()) return new();
+
+                var getallUsers = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get");
+                var getusers = getallUsers?
+                    .Where(x => getStudents.Any(s => s.User_Id == x.Id))
+                    .ToList();
+                if (getusers == null || !getusers.Any()) return new();
+
+                var getallexamHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
+                var getexamHistories = getallexamHistories?
+                    .Where(x => getExamRoomStudents.Any(e => e.Id == x.Exam_Room_Student_Id))
+                    .ToList();
+                if (getexamHistories == null || !getexamHistories.Any()) return new();
+                var getallReviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+                var getreviewTests = getallReviewTests?
+                    .Where(x => gettest.Any(t => t.Id == x.Test_Id))
+                    .ToList();
+                var result = new List<listTest>();
+
+                foreach (var test in gettest)
                 {
-                    var student = getStudents.FirstOrDefault(s => s.Id == examRoomStudent.Student_Id);
-                    var user = getusers.FirstOrDefault(u => u.Id == student?.User_Id);
-                    var examHistory = getexamHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == examRoomStudent.Id);
-                    var getallScore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
-                    var scoreRecord = getallScore?.FirstOrDefault(s =>
-                        s.Student_Id == student.Id && s.Test_Id == test.Id);
-                    var reviewTest = getreviewTests?.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student?.Id);
-
-                    result.Add(new listTest
+                    var examRoomStudents = getExamRoomStudents.Where(e => e.Test_Id == test.Id).ToList();
+                    foreach (var examRoomStudent in examRoomStudents)
                     {
-                        Id = test.Id,
-                        IdReview = reviewTest?.Id ?? 0,
-                        comenteacher = reviewTest?.Reason_For_Refusal ?? "không có thông tin",
-                        statustest = reviewTest?.Status ?? 0,
-                        comenttest = reviewTest?.Reason_For_Sending ?? "không có thông tin",
-                        Idpackage = test.Package_Id,
-                        Test_Code = test.Test_Code ?? "N/A",
-                        Status = test.Status,
-                        Name_Student = user?.Full_Name ?? "Không rõ",
-                        score = examHistory?.Score ?? 0,
-                        Point = scoreRecord?.Point ?? 0,
-                        Check_Time = ConvertLong.ConvertLongToDateTime(examRoomStudent.Check_Time),
-                        End_Time = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time),
-                        Teacher_Id = reviewTest?.Teacher_Id ?? 0
-                    });
-                }
-            }
+                        var student = getStudents.FirstOrDefault(s => s.Id == examRoomStudent.Student_Id);
+                        var user = getusers.FirstOrDefault(u => u.Id == student?.User_Id);
+                        var examHistory = getexamHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == examRoomStudent.Id);
+                        var getallScore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
+                        var scoreRecord = getallScore?.FirstOrDefault(s =>
+                            s.Student_Id == student.Id && s.Test_Id == test.Id);
+                        var reviewTest = getreviewTests?.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student?.Id);
 
-            return result;
+                        result.Add(new listTest
+                        {
+                            Id = test.Id,
+                            IdReview = reviewTest?.Id ?? 0,
+                            comenteacher = reviewTest?.Reason_For_Refusal ?? "không có thông tin",
+                            statustest = reviewTest?.Status ?? 0,
+                            comenttest = reviewTest?.Reason_For_Sending ?? "không có thông tin",
+                            Idpackage = test.Package_Id,
+                            Test_Code = test.Test_Code ?? "N/A",
+                            Status = test.Status,
+                            Name_Student = user?.Full_Name ?? "Không rõ",
+                            score = examHistory?.Score ?? 0,
+                            Point = scoreRecord?.Point ?? 0,
+                            Check_Time = ConvertLong.ConvertLongToDateTime(examRoomStudent.Check_Time),
+                            End_Time = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time),
+                            Teacher_Id = reviewTest?.Teacher_Id ?? 0
+                        });
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public async Task<List<listquestion>> GetQuestions(int testId)
         {
-            // Lấy danh sách Test_Question theo testId
-            var testQuestions = await _httpClient.GetFromJsonAsync<List<Test_Question>>("/api/Test_Question/Get");
-            var testQuestionsFiltered = testQuestions?
-                .Where(x => x.Test_Id == testId)
-                .ToList();
-            var Review_Test = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
-            var reviewTest = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Status;
-            var reviewTestTeacherID = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Teacher_Id;
-            // Lấy danh sách Question liên quan đến Test
-            var questions = await _httpClient.GetFromJsonAsync<List<Question>>("/api/Question/Get");
-            var questionsFiltered = questions?
-                .Where(q => testQuestionsFiltered.Any(tq => tq.Question_Id == q.Id))
-                .ToList();
-
-            // Lấy loại câu hỏi
-            var question_type = await _httpClient.GetFromJsonAsync<List<Question_Type>>("/api/Question_Type/Get");
-            var question_typeFiltered = question_type?
-                .Where(qt => questionsFiltered.Any(q => q.Question_Type_Id == qt.Id))
-                .ToList();
-
-            // Lấy mức độ câu hỏi
-            var question_level = await _httpClient.GetFromJsonAsync<List<Question_Level>>("/api/Question_Level/Get");
-            var question_levelFiltered = question_level?
-                .Where(ql => questionsFiltered.Any(q => q.Question_Level_Id == ql.Id))
-                .ToList();
-
-            // Lấy danh sách học sinh tham gia thi
-            var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var examRoomStudentFiltered = examRoomStudents?
-                .Where(ers => ers.Test_Id == testId)
-                .ToList();
-
-            // Lấy lịch sử trả lời của học sinh
-            var histories = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>("/api/Exam_Room_Student_Answer_HisTory/Get");
-            var historiesFiltered = histories?
-                .Where(h => examRoomStudentFiltered.Any(a => a.Id == h.Exam_Room_Student_Id))
-                .ToList();
-
-            // Lấy các đáp án có liên quan tới câu hỏi và nằm trong lịch sử
-            var answers = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
-
-            List<Answers> relatedAnswers = new();
-            List<Exam_Room_Student_Answer_HisTory> relatedHistories = new();
-            // Tạo danh sách kết quả
-            var result = new List<listquestion>();
-
-            foreach (var question in questionsFiltered)
+            try
             {
-                var type = question_typeFiltered?.FirstOrDefault(qt => qt.Id == question.Question_Type_Id);
-                var level = question_levelFiltered?.FirstOrDefault(ql => ql.Id == question.Question_Level_Id);
-                if (type.Id == 4 || type.Id == 5)
-                {
-                    var answersFiltered = answers
-                .Where(a => historiesFiltered.Any(h => h.Answer_Id == a.Id) &&
-                            questionsFiltered.Any(q => q.Id == a.Question_Id))
-                .ToList();
-                    relatedAnswers = answersFiltered
-                     .Where(a => a.Question_Id == question.Id)
-                     .ToList();
+                // Lấy danh sách Test_Question theo testId
+                var testQuestions = await _httpClient.GetFromJsonAsync<List<Test_Question>>("/api/Test_Question/Get");
+                var testQuestionsFiltered = testQuestions?
+                    .Where(x => x.Test_Id == testId)
+                    .ToList();
+                var Review_Test = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+                var reviewTest = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Status;
+                var reviewTestTeacherID = Review_Test?.FirstOrDefault(rt => rt.Test_Id == testId)?.Teacher_Id;
+                // Lấy danh sách Question liên quan đến Test
+                var questions = await _httpClient.GetFromJsonAsync<List<Question>>("/api/Question/Get");
+                var questionsFiltered = questions?
+                    .Where(q => testQuestionsFiltered.Any(tq => tq.Question_Id == q.Id))
+                    .ToList();
 
-                    relatedHistories = historiesFiltered
-                        .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
-                        .ToList();
-                }
-                else
+                // Lấy loại câu hỏi
+                var question_type = await _httpClient.GetFromJsonAsync<List<Question_Type>>("/api/Question_Type/Get");
+                var question_typeFiltered = question_type?
+                    .Where(qt => questionsFiltered.Any(q => q.Question_Type_Id == qt.Id))
+                    .ToList();
+
+                // Lấy mức độ câu hỏi
+                var question_level = await _httpClient.GetFromJsonAsync<List<Question_Level>>("/api/Question_Level/Get");
+                var question_levelFiltered = question_level?
+                    .Where(ql => questionsFiltered.Any(q => q.Question_Level_Id == ql.Id))
+                    .ToList();
+
+                // Lấy danh sách học sinh tham gia thi
+                var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var examRoomStudentFiltered = examRoomStudents?
+                    .Where(ers => ers.Test_Id == testId)
+                    .ToList();
+
+                // Lấy lịch sử trả lời của học sinh
+                var histories = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>("/api/Exam_Room_Student_Answer_HisTory/Get");
+                var historiesFiltered = histories?
+                    .Where(h => examRoomStudentFiltered.Any(a => a.Id == h.Exam_Room_Student_Id))
+                    .ToList();
+
+                // Lấy các đáp án có liên quan tới câu hỏi và nằm trong lịch sử
+                var answers = await _httpClient.GetFromJsonAsync<List<Answers>>("/api/Answers/Get");
+
+                List<Answers> relatedAnswers = new();
+                List<Exam_Room_Student_Answer_HisTory> relatedHistories = new();
+                // Tạo danh sách kết quả
+                var result = new List<listquestion>();
+
+                foreach (var question in questionsFiltered)
                 {
-                    var answersFiltered = answers?
-                .Where(a => questionsFiltered.Any(q => q.Id == a.Question_Id))
-                .ToList();
-                    relatedAnswers = answersFiltered
-                        .Where(a => a.Question_Id == question.Id)
-                        .ToList();
-                    relatedHistories = historiesFiltered
-                        .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
-                        .ToList();
+                    var type = question_typeFiltered?.FirstOrDefault(qt => qt.Id == question.Question_Type_Id);
+                    var level = question_levelFiltered?.FirstOrDefault(ql => ql.Id == question.Question_Level_Id);
+                    if (type.Id == 4 || type.Id == 5)
+                    {
+                        var answersFiltered = answers
+                    .Where(a => historiesFiltered.Any(h => h.Answer_Id == a.Id) &&
+                                questionsFiltered.Any(q => q.Id == a.Question_Id))
+                    .ToList();
+                        relatedAnswers = answersFiltered
+                         .Where(a => a.Question_Id == question.Id)
+                         .ToList();
+
+                        relatedHistories = historiesFiltered
+                            .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
+                            .ToList();
+                    }
+                    else
+                    {
+                        var answersFiltered = answers?
+                    .Where(a => questionsFiltered.Any(q => q.Id == a.Question_Id))
+                    .ToList();
+                        relatedAnswers = answersFiltered
+                            .Where(a => a.Question_Id == question.Id)
+                            .ToList();
+                        relatedHistories = historiesFiltered
+                            .Where(h => relatedAnswers.Any(a => a.Id == h.Answer_Id))
+                            .ToList();
+                    }
+
+                    result.Add(new listquestion
+                    {
+                        Id = question.Id,
+                        statuss = reviewTest,
+                        question_type = type?.Package_Type_Id ?? 0,
+                        question_lever = level?.Question_Level_Name ?? "",
+                        Questions = question,
+                        Answers = relatedAnswers,
+                        Exam_Room_Student_Answer_HisTories = relatedHistories,
+                        Teacher_Id = reviewTestTeacherID
+                    });
                 }
 
-                result.Add(new listquestion
-                {
-                    Id = question.Id,
-                    statuss = reviewTest,
-                    question_type = type?.Package_Type_Id ?? 0,
-                    question_lever = level?.Question_Level_Name ?? "",
-                    Questions = question,
-                    Answers = relatedAnswers,
-                    Exam_Room_Student_Answer_HisTories = relatedHistories,
-                    Teacher_Id = reviewTestTeacherID
-                });
+                return result;
             }
-
-            return result;
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public async Task<bool> updateExamHis(int id, double score)
         {
-            var getExamRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var examRoomStudentList = getExamRoomStudents.Where(x => x.Test_Id == id).ToList();
-
-            if (!examRoomStudentList.Any())
+            try
             {
-                Console.WriteLine($"Không tìm thấy ExamRoomStudent cho Test_Id = {id}");
-                return false;
-            }
+                var getExamRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var examRoomStudentList = getExamRoomStudents.Where(x => x.Test_Id == id).ToList();
 
-            var getallexamhis = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
-            var examHisList = getallexamhis
-                .Where(x => examRoomStudentList.Any(s => s.Id == x.Exam_Room_Student_Id))
-                .ToList();
-
-            if (!examHisList.Any())
-            {
-                Console.WriteLine($"Không tìm thấy Exam_HisTory");
-                return false;
-            }
-
-            foreach (var examhis in examHisList)
-            {
-                examhis.Score = score;
-                var respon = await _httpClient.PutAsJsonAsync($"/api/Exam_HisTory/Pus/{examhis.Id}", examhis);
-                if (!respon.IsSuccessStatusCode)
+                if (!examRoomStudentList.Any())
                 {
-                    Console.WriteLine($"Cập nhật Exam_HisTory thất bại: {(int)respon.StatusCode} - {respon.ReasonPhrase}");
+                    Console.WriteLine($"Không tìm thấy ExamRoomStudent cho Test_Id = {id}");
                     return false;
                 }
-            }
 
-            var getTests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
-            var testList = getTests.Where(x => x.Id == id).ToList();
+                var getallexamhis = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
+                var examHisList = getallexamhis
+                    .Where(x => examRoomStudentList.Any(s => s.Id == x.Exam_Room_Student_Id))
+                    .ToList();
 
-            if (!testList.Any())
-            {
-                Console.WriteLine("Không tìm thấy test");
-                return false;
-            }
-
-            var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
-            var packageList = getallpackage
-                .Where(p => testList.Any(t => t.Package_Id == p.Id))
-                .ToList();
-
-            if (!packageList.Any())
-            {
-                Console.WriteLine("Không tìm thấy package");
-                return false;
-            }
-
-            var getallsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
-            var subjectList = getallsubject
-                .Where(s => packageList.Any(p => p.Subject_Id == s.Id))
-                .ToList();
-
-            if (!subjectList.Any())
-            {
-                Console.WriteLine("Không tìm thấy subject");
-                return false;
-            }
-
-            var getallpointtype_subject = await _httpClient.GetFromJsonAsync<List<Point_Type_Subject>>("/api/Point_Type_Subject/Get");
-            var ptsList = getallpointtype_subject
-                .Where(pts => subjectList.Any(s => s.Id == pts.Subject_Id))
-                .ToList();
-
-            if (!ptsList.Any())
-            {
-                Console.WriteLine("Không tìm thấy pointtype_subject");
-                return false;
-            }
-
-            var getallpointype = await _httpClient.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get");
-            var pointypeList = getallpointype
-                .Where(pt => ptsList.Any(pts => pts.Point_Type_Id == pt.Id))
-                .ToList();
-
-            if (!pointypeList.Any())
-            {
-                Console.WriteLine("Không tìm thấy pointype");
-                return false;
-            }
-
-            var getallscore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
-            var scoreList = getallscore
-                .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id) && subjectList.Any(sj => sj.Id == s.Subject_Id) && examRoomStudentList.Any(exstd => exstd.Student_Id == s.Student_Id))
-                .ToList();
-
-            if (!scoreList.Any())
-            {
-                Console.WriteLine("Không tìm thấy allscore");
-                return false;
-            }
-            foreach (var s in scoreList)
-            {
-                s.Point = score;
-                var updatescore = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{s.Id}", s);
-                if (!updatescore.IsSuccessStatusCode)
+                if (!examHisList.Any())
                 {
-                    Console.WriteLine($"Cập nhật điểm thất bại: {(int)updatescore.StatusCode} - {updatescore.ReasonPhrase}");
+                    Console.WriteLine($"Không tìm thấy Exam_HisTory");
                     return false;
                 }
-            }
 
-            return true;
+                foreach (var examhis in examHisList)
+                {
+                    examhis.Score = score;
+                    var respon = await _httpClient.PutAsJsonAsync($"/api/Exam_HisTory/Pus/{examhis.Id}", examhis);
+                    if (!respon.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Cập nhật Exam_HisTory thất bại: {(int)respon.StatusCode} - {respon.ReasonPhrase}");
+                        return false;
+                    }
+                }
+
+                var getTests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+                var testList = getTests.Where(x => x.Id == id).ToList();
+
+                if (!testList.Any())
+                {
+                    Console.WriteLine("Không tìm thấy test");
+                    return false;
+                }
+
+                var getallpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
+                var packageList = getallpackage
+                    .Where(p => testList.Any(t => t.Package_Id == p.Id))
+                    .ToList();
+
+                if (!packageList.Any())
+                {
+                    Console.WriteLine("Không tìm thấy package");
+                    return false;
+                }
+
+                var getallsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");
+                var subjectList = getallsubject
+                    .Where(s => packageList.Any(p => p.Subject_Id == s.Id))
+                    .ToList();
+
+                if (!subjectList.Any())
+                {
+                    Console.WriteLine("Không tìm thấy subject");
+                    return false;
+                }
+
+                var getallpointtype_subject = await _httpClient.GetFromJsonAsync<List<Point_Type_Subject>>("/api/Point_Type_Subject/Get");
+                var ptsList = getallpointtype_subject
+                    .Where(pts => subjectList.Any(s => s.Id == pts.Subject_Id))
+                    .ToList();
+
+                if (!ptsList.Any())
+                {
+                    Console.WriteLine("Không tìm thấy pointtype_subject");
+                    return false;
+                }
+
+                var getallpointype = await _httpClient.GetFromJsonAsync<List<Point_Type>>("/api/Point_Type/Get");
+                var pointypeList = getallpointype
+                    .Where(pt => ptsList.Any(pts => pts.Point_Type_Id == pt.Id))
+                    .ToList();
+
+                if (!pointypeList.Any())
+                {
+                    Console.WriteLine("Không tìm thấy pointype");
+                    return false;
+                }
+
+                var getallscore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
+                var scoreList = getallscore
+                    .Where(s => pointypeList.Any(pt => pt.Id == s.Point_Type_Id) && subjectList.Any(sj => sj.Id == s.Subject_Id) && examRoomStudentList.Any(exstd => exstd.Student_Id == s.Student_Id))
+                    .ToList();
+
+                if (!scoreList.Any())
+                {
+                    Console.WriteLine("Không tìm thấy allscore");
+                    return false;
+                }
+                foreach (var s in scoreList)
+                {
+                    s.Point = score;
+                    var updatescore = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{s.Id}", s);
+                    if (!updatescore.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine($"Cập nhật điểm thất bại: {(int)updatescore.StatusCode} - {updatescore.ReasonPhrase}");
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
         public async Task<bool> SaveAllScoresByTestId(int testId, double totalScore)
         {
-            // Lấy Score với TestId
-            var filterScore = new CommonFilterRequest
+            try
             {
-                Filters = new Dictionary<string, string>
-        {
-            { "Test_Id", testId.ToString() }
+                // Lấy Score với TestId
+                var filterScore = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                {
+                    { "Test_Id", testId.ToString() }
+                }
+                };
+                var scoreRep = await _httpClient.PostAsJsonAsync("/api/Score/common/get", filterScore);
+                if (!scoreRep.IsSuccessStatusCode) return false;
+
+                var scoreToUpdate = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).SingleOrDefault();
+                if (scoreToUpdate == null) return false;
+
+                scoreToUpdate.Point = totalScore;
+                var updateScoreResp = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{scoreToUpdate.Id}", scoreToUpdate);
+
+                return updateScoreResp.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
         }
-            };
-            var scoreRep = await _httpClient.PostAsJsonAsync("/api/Score/common/get", filterScore);
-            if (!scoreRep.IsSuccessStatusCode) return false;
-
-            var scoreToUpdate = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).SingleOrDefault();
-            if (scoreToUpdate == null) return false;
-
-            scoreToUpdate.Point = totalScore;
-            var updateScoreResp = await _httpClient.PutAsJsonAsync($"/api/Score/Pus/{scoreToUpdate.Id}", scoreToUpdate);
-
-            return updateScoreResp.IsSuccessStatusCode;
-        }
-
 
         public async Task<bool> updatecomemt(int id, string? text)
         {
-            var existing = await _httpClient.GetFromJsonAsync<Question>($"/api/Question/GetBy/{id}");
-            if (existing == null) return false;
-            existing.Note = text;
-            var update = await _httpClient.PutAsJsonAsync($"/api/Question/Pus/{id}", existing);
-            if (!update.IsSuccessStatusCode)
+            try
             {
-                Console.WriteLine($"Cập nhật thất bại: {(int)update.StatusCode} - {update.ReasonPhrase}");
+                var existing = await _httpClient.GetFromJsonAsync<Question>($"/api/Question/GetBy/{id}");
+                if (existing == null) return false;
+                existing.Note = text;
+                var update = await _httpClient.PutAsJsonAsync($"/api/Question/Pus/{id}", existing);
+                if (!update.IsSuccessStatusCode)
+                {
+                    Console.WriteLine($"Cập nhật thất bại: {(int)update.StatusCode} - {update.ReasonPhrase}");
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
                 return false;
             }
-            return true;
         }
 
 
@@ -395,159 +436,172 @@ namespace Blazor_Server.Services
 
         public async Task<List<lispackage>> GetAllHistoriesForStudent(string studentCode, int subjectId, DateTime start, DateTime end)
         {
-            var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
-            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
-            if (student == null) return new List<lispackage>();
-
-            var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var examRoomStudentList = examRoomStudents.Where(x => x.Student_Id == student.Id).ToList();
-            if (!examRoomStudentList.Any()) return new List<lispackage>();
-
-            var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
-            var examRoomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get");
-            var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
-            var packageTypes = await _httpClient.GetFromJsonAsync<List<Package_Type>>("/api/Package_Type/Get");
-            var examRooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get");
-            var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get") ?? new List<Review_Test>();
-
-            var studentTests = tests.Where(t => examRoomStudentList.Any(ers => ers.Test_Id == t.Id)).ToList();
-            var packageIds = studentTests.Select(x => x.Package_Id).Distinct().ToList();
-
-            var packagesFiltered = packages
-                .Where(x => packageIds.Contains(x.Id) && x.Subject_Id == subjectId)
-                .ToList();
-
-            var result = new List<lispackage>();
-
-            foreach (var pack in packagesFiltered)
+            try
             {
-                // Lấy danh sách bài test của học sinh thuộc package này
-                var studentTestsInPackage = studentTests.Where(t => t.Package_Id == pack.Id).ToList();
+                var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
+                var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+                if (student == null) return new List<lispackage>();
 
-                // Đếm số lần review thành công (status == 2) của học sinh cho package này
-                int countReview = studentTestsInPackage.Count(test =>
-                     reviewTests.Any(rt =>
-                         rt.Test_Id == test.Id &&
-                         rt.Student_Id == student.Id &&
-                         (rt.Status == 2 || rt.Status == 3)
-                     )
-                 );
+                var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var examRoomStudentList = examRoomStudents.Where(x => x.Student_Id == student.Id).ToList();
+                if (!examRoomStudentList.Any()) return new List<lispackage>();
 
+                var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+                var examRoomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get");
+                var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get");
+                var packageTypes = await _httpClient.GetFromJsonAsync<List<Package_Type>>("/api/Package_Type/Get");
+                var examRooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get");
+                var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get") ?? new List<Review_Test>();
 
-                var type = packageTypes.FirstOrDefault(pt => pt.Id == pack.Package_Type_Id);
+                var studentTests = tests.Where(t => examRoomStudentList.Any(ers => ers.Test_Id == t.Id)).ToList();
+                var packageIds = studentTests.Select(x => x.Package_Id).Distinct().ToList();
 
-                result.Add(new lispackage
+                var packagesFiltered = packages
+                    .Where(x => packageIds.Contains(x.Id) && x.Subject_Id == subjectId)
+                    .ToList();
+
+                var result = new List<lispackage>();
+
+                foreach (var pack in packagesFiltered)
                 {
-                    Id = pack.Id,
-                    countReview = countReview,
-                    Name_package = pack.Package_Name,
-                    Name_Package_Type = type?.Package_Type_Name
-                });
-            }
+                    // Lấy danh sách bài test của học sinh thuộc package này
+                    var studentTestsInPackage = studentTests.Where(t => t.Package_Id == pack.Id).ToList();
 
-            // Lọc theo thời gian exam room
-            if (start != default && end != default)
-            {
-                var examRoomIds = examRoomPackages
-                    .Where(x => packagesFiltered.Any(p => p.Id == x.Package_Id))
-                    .Select(x => x.Exam_Room_Id)
-                    .Distinct()
-                    .ToList();
+                    // Đếm số lần review thành công (status == 2) của học sinh cho package này
+                    int countReview = studentTestsInPackage.Count(test =>
+                         reviewTests.Any(rt =>
+                             rt.Test_Id == test.Id &&
+                             rt.Student_Id == student.Id &&
+                             (rt.Status == 2 || rt.Status == 3)
+                         )
+                     );
 
-                var examRoomsFiltered = examRooms
-                    .Where(er => examRoomIds.Contains(er.Id))
-                    .Where(er =>
+
+                    var type = packageTypes.FirstOrDefault(pt => pt.Id == pack.Package_Type_Id);
+
+                    result.Add(new lispackage
                     {
-                        var roomStart = ConvertLong.ConvertLongToDateTime(er.Start_Time);
-                        var roomEnd = ConvertLong.ConvertLongToDateTime(er.End_Time);
-                        return roomEnd >= start && roomStart <= end;
-                    }).ToList();
+                        Id = pack.Id,
+                        countReview = countReview,
+                        Name_package = pack.Package_Name,
+                        Name_Package_Type = type?.Package_Type_Name
+                    });
+                }
 
-                var validPackageIds = examRoomPackages
-                    .Where(x => examRoomsFiltered.Any(er => er.Id == x.Exam_Room_Id))
-                    .Select(x => x.Package_Id)
-                    .Distinct()
-                    .ToList();
+                // Lọc theo thời gian exam room
+                if (start != default && end != default)
+                {
+                    var examRoomIds = examRoomPackages
+                        .Where(x => packagesFiltered.Any(p => p.Id == x.Package_Id))
+                        .Select(x => x.Exam_Room_Id)
+                        .Distinct()
+                        .ToList();
 
-                result = result.Where(x => validPackageIds.Contains(x.Id)).ToList();
+                    var examRoomsFiltered = examRooms
+                        .Where(er => examRoomIds.Contains(er.Id))
+                        .Where(er =>
+                        {
+                            var roomStart = ConvertLong.ConvertLongToDateTime(er.Start_Time);
+                            var roomEnd = ConvertLong.ConvertLongToDateTime(er.End_Time);
+                            return roomEnd >= start && roomStart <= end;
+                        }).ToList();
+
+                    var validPackageIds = examRoomPackages
+                        .Where(x => examRoomsFiltered.Any(er => er.Id == x.Exam_Room_Id))
+                        .Select(x => x.Package_Id)
+                        .Distinct()
+                        .ToList();
+
+                    result = result.Where(x => validPackageIds.Contains(x.Id)).ToList();
+                }
+
+                return result;
             }
-
-            return result;
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
-
 
         public async Task<List<listTest>> GetTestsForStudent(int packageId, string studentCode)
         {
-            // Lấy danh sách học sinh và user
-            var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new List<Student>();
-            var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
-
-            // Tìm student đúng code
-            var student = students.FirstOrDefault(s =>
-                !string.IsNullOrWhiteSpace(s.Student_Code) &&
-                s.Student_Code.Trim().Equals(studentCode.Trim(), StringComparison.OrdinalIgnoreCase));
-            if (student == null)
+            try
             {
-                Console.WriteLine($"Không tìm thấy student với Student_Code: [{studentCode}]");
-                return new List<listTest>();
-            }
+                // Lấy danh sách học sinh và user
+                var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new List<Student>();
+                var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
 
-            // Lấy tên từ bảng User
-            var user = users.FirstOrDefault(u => u.Id == student.User_Id);
-            string studentName = user?.Full_Name ?? "N/A";
-
-            // Lấy dữ liệu từ các bảng liên quan
-            var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get") ?? new List<Data_Base.Models.T.Test>();
-            var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get") ?? new List<Exam_Room_Student>();
-            var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get") ?? new List<Exam_HisTory>();
-            var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get") ?? new List<Review_Test>();
-
-            // Lọc ra các bài test thuộc gói thi
-            var filteredTests = tests.Where(t => t.Package_Id == packageId).ToList();
-
-            var result = new List<listTest>();
-
-            foreach (var test in filteredTests)
-            {
-                // Kiểm tra học sinh có trong danh sách phân công thi không
-                var examStudent = examRoomStudents.FirstOrDefault(e => e.Test_Id == test.Id && e.Student_Id == student.Id);
-                if (examStudent == null)
-                    continue; // Bỏ qua nếu học sinh không được phân công thi bài này
-
-                // Tìm bản review test nếu có
-                var reviewTest = reviewTests.FirstOrDefault(rt => rt.Student_Id == student.Id && rt.Test_Id == test.Id);
-
-                double score = 0;
-                DateTime checkTime = DateTime.MinValue;
-                DateTime endTime = DateTime.MinValue;
-
-                if (examStudent.Check_Time != null)
-                    checkTime = ConvertLong.ConvertLongToDateTime(examStudent.Check_Time);
-
-                var examHistory = examHistories.FirstOrDefault(e => e.Exam_Room_Student_Id == examStudent.Id);
-                if (examHistory != null)
+                // Tìm student đúng code
+                var student = students.FirstOrDefault(s =>
+                    !string.IsNullOrWhiteSpace(s.Student_Code) &&
+                    s.Student_Code.Trim().Equals(studentCode.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (student == null)
                 {
-                    score = examHistory.Score;
-                    endTime = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time);
+                    Console.WriteLine($"Không tìm thấy student với Student_Code: [{studentCode}]");
+                    return new List<listTest>();
                 }
 
-                result.Add(new listTest
-                {
-                    Id = test.Id,
-                    studnetid = student.Id,
-                    IdReview = reviewTest?.Id ?? 0,
-                    Idpackage = test.Package_Id,
-                    Test_Code = test.Test_Code ?? "N/A",
-                    Status = test.Status,
-                    statustest = reviewTest?.Status ?? 0,
-                    Name_Student = studentName,
-                    score = score,
-                    Check_Time = checkTime,
-                    End_Time = endTime
-                });
-            }
+                // Lấy tên từ bảng User
+                var user = users.FirstOrDefault(u => u.Id == student.User_Id);
+                string studentName = user?.Full_Name ?? "N/A";
 
-            return result;
+                // Lấy dữ liệu từ các bảng liên quan
+                var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get") ?? new List<Data_Base.Models.T.Test>();
+                var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get") ?? new List<Exam_Room_Student>();
+                var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get") ?? new List<Exam_HisTory>();
+                var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get") ?? new List<Review_Test>();
+
+                // Lọc ra các bài test thuộc gói thi
+                var filteredTests = tests.Where(t => t.Package_Id == packageId).ToList();
+
+                var result = new List<listTest>();
+
+                foreach (var test in filteredTests)
+                {
+                    // Kiểm tra học sinh có trong danh sách phân công thi không
+                    var examStudent = examRoomStudents.FirstOrDefault(e => e.Test_Id == test.Id && e.Student_Id == student.Id);
+                    if (examStudent == null)
+                        continue; // Bỏ qua nếu học sinh không được phân công thi bài này
+
+                    // Tìm bản review test nếu có
+                    var reviewTest = reviewTests.FirstOrDefault(rt => rt.Student_Id == student.Id && rt.Test_Id == test.Id);
+
+                    double score = 0;
+                    DateTime checkTime = DateTime.MinValue;
+                    DateTime endTime = DateTime.MinValue;
+
+                    if (examStudent.Check_Time != null)
+                        checkTime = ConvertLong.ConvertLongToDateTime(examStudent.Check_Time);
+
+                    var examHistory = examHistories.FirstOrDefault(e => e.Exam_Room_Student_Id == examStudent.Id);
+                    if (examHistory != null)
+                    {
+                        score = examHistory.Score;
+                        endTime = ConvertLong.ConvertLongToDateTime(examHistory.Create_Time);
+                    }
+
+                    result.Add(new listTest
+                    {
+                        Id = test.Id,
+                        studnetid = student.Id,
+                        IdReview = reviewTest?.Id ?? 0,
+                        Idpackage = test.Package_Id,
+                        Test_Code = test.Test_Code ?? "N/A",
+                        Status = test.Status,
+                        statustest = reviewTest?.Status ?? 0,
+                        Name_Student = studentName,
+                        score = score,
+                        Check_Time = checkTime,
+                        End_Time = endTime
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public async Task<Review_Test> Getinforreview(int idstudent, int idtest)
@@ -759,39 +813,46 @@ namespace Blazor_Server.Services
 
         public async Task<listTest> GetTestByCodeAsync(string testCode, string studentCode)
         {
-            // Lấy tất cả bài test của học sinh (có thể tối ưu bằng API riêng nếu server hỗ trợ)
-            var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
-            var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
-            if (student == null) return null;
-
-            var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
-            var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-            var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
-            var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
-
-            var test = tests.FirstOrDefault(t => t.Test_Code == testCode);
-            if (test == null) return null;
-
-            var examStudent = examRoomStudents.FirstOrDefault(e => e.Test_Id == test.Id && e.Student_Id == student.Id);
-            if (examStudent == null) return null;
-
-            var reviewTest = reviewTests.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student.Id);
-            var examHistory = examHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == examStudent.Id);
-
-            return new listTest
+            try
             {
-                Id = test.Id,
-                studnetid = student.Id,
-                IdReview = reviewTest?.Id ?? 0,
-                Idpackage = test.Package_Id,
-                Test_Code = test.Test_Code,
-                Status = test.Status,
-                statustest = reviewTest?.Status ?? 0,
-                Name_Student = student.Student_Code,
-                score = examHistory?.Score ?? 0,
-                Check_Time = ConvertLong.ConvertLongToDateTime(examStudent.Check_Time),
-                End_Time = examHistory != null ? ConvertLong.ConvertLongToDateTime(examHistory.Create_Time) : DateTime.MinValue
-            };
+                // Lấy tất cả bài test của học sinh (có thể tối ưu bằng API riêng nếu server hỗ trợ)
+                var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
+                var student = students.FirstOrDefault(s => s.Student_Code == studentCode);
+                if (student == null) return null;
+
+                var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get");
+                var examRoomStudents = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
+                var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get");
+
+                var test = tests.FirstOrDefault(t => t.Test_Code == testCode);
+                if (test == null) return null;
+
+                var examStudent = examRoomStudents.FirstOrDefault(e => e.Test_Id == test.Id && e.Student_Id == student.Id);
+                if (examStudent == null) return null;
+
+                var reviewTest = reviewTests.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student.Id);
+                var examHistory = examHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == examStudent.Id);
+
+                return new listTest
+                {
+                    Id = test.Id,
+                    studnetid = student.Id,
+                    IdReview = reviewTest?.Id ?? 0,
+                    Idpackage = test.Package_Id,
+                    Test_Code = test.Test_Code,
+                    Status = test.Status,
+                    statustest = reviewTest?.Status ?? 0,
+                    Name_Student = student.Student_Code,
+                    score = examHistory?.Score ?? 0,
+                    Check_Time = ConvertLong.ConvertLongToDateTime(examStudent.Check_Time),
+                    End_Time = examHistory != null ? ConvertLong.ConvertLongToDateTime(examHistory.Create_Time) : DateTime.MinValue
+                };
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public async Task<bool> UpdateReviewedQuestionAns(ListQuesAnsReview ado)
@@ -862,9 +923,9 @@ namespace Blazor_Server.Services
                     var filterTQ = new CommonFilterRequest
                     {
                         Filters = new Dictionary<string, string>
-        {
-            { "Test_Id", test.Id.ToString() }
-        }
+                        {
+                            { "Test_Id", test.Id.ToString() }
+                        }
                     };
                     var TQ = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test_Question/common/get", filterTQ);
                     var lstTQ = await TQ.Content.ReadFromJsonAsync<List<Test_Question>>();
@@ -879,9 +940,9 @@ namespace Blazor_Server.Services
                         var filterAns = new CommonFilterRequest
                         {
                             Filters = new Dictionary<string, string>
-            {
-                { "Question_Id", questionId.ToString() }
-            }
+                            {
+                                { "Question_Id", questionId.ToString() }
+                            }
                         };
                         var ansResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Answers/common/get", filterAns);
                         var answers = await ansResponse.Content.ReadFromJsonAsync<List<Answers>>();
@@ -908,10 +969,10 @@ namespace Blazor_Server.Services
                     var filterScore = new CommonFilterRequest
                     {
                         Filters = new Dictionary<string, string>
-        {
-            { "Student_Id", studentId.ToString() },
-            { "Test_Id", test.Id.ToString() }
-        }
+                        {
+                            { "Student_Id", studentId.ToString() },
+                            { "Test_Id", test.Id.ToString() }
+                        }
                     };
 
                     var responseScore = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Score/common/get", filterScore);
@@ -955,47 +1016,60 @@ namespace Blazor_Server.Services
 
         public async Task<List<TeacherWithName>> GetListTeacherSubJect(int packageId)
         {
-            var pkg = await GetPackageAsync(packageId);
-            if (pkg == null) return new List<TeacherWithName>();
-
-            int subjectId = pkg.Subject_Id;
-            int classId = pkg.Class_Id;
-            int GVRaDe = pkg.Teacher_Id;
-
-            var clas = await _httpClient.GetFromJsonAsync<Class>($"/api/Class/GetBy/{classId}");
-            int GVCNId = clas?.Teacher_Id ?? 0;
-
-            var allTeachers = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get") ?? new List<Teacher>();
-
-            var filtered = allTeachers
-                .Where(t => t.Subject_Id == subjectId)       // đúng môn của package
-                .Where(t => t.Id != GVCNId)              // không phải GVCN của lớp
-                .Where(t=>t.Id != GVRaDe)              // không phải giáo viên ra đề
-                .ToList();
-
-            // Map tên 1 lượt để tránh gọi API theo từng teacher
-            var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
-            return filtered.Select(t => new TeacherWithName
+            try
             {
-                Id = t.Id,
-                FullName = users.FirstOrDefault(u => u.Id == t.User_Id)?.Full_Name ?? $"Teacher #{t.Id}"
-            }).ToList();
-        }
+                var pkg = await GetPackageAsync(packageId);
+                if (pkg == null) return new List<TeacherWithName>();
 
+                int subjectId = pkg.Subject_Id;
+                int classId = pkg.Class_Id;
+                int GVRaDe = pkg.Teacher_Id;
+
+                var clas = await _httpClient.GetFromJsonAsync<Class>($"/api/Class/GetBy/{classId}");
+                int GVCNId = clas?.Teacher_Id ?? 0;
+
+                var allTeachers = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get") ?? new List<Teacher>();
+
+                var filtered = allTeachers
+                    .Where(t => t.Subject_Id == subjectId)       // đúng môn của package
+                    .Where(t => t.Id != GVCNId)              // không phải GVCN của lớp
+                    .Where(t => t.Id != GVRaDe)              // không phải giáo viên ra đề
+                    .ToList();
+
+                // Map tên 1 lượt để tránh gọi API theo từng teacher
+                var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
+                return filtered.Select(t => new TeacherWithName
+                {
+                    Id = t.Id,
+                    FullName = users.FirstOrDefault(u => u.Id == t.User_Id)?.Full_Name ?? $"Teacher #{t.Id}"
+                }).ToList();
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
 
         public async Task<bool> AssignReviewToTeacherAsync(int reviewId, int teacherId, string? note = null)
         {
-            // Lấy record review hiện tại
-            var review = await _httpClient.GetFromJsonAsync<Review_Test>($"/api/Review_Tests/GetBy/{reviewId}");
-            if (review == null) return false;
+            try
+            {
+                // Lấy record review hiện tại
+                var review = await _httpClient.GetFromJsonAsync<Review_Test>($"/api/Review_Tests/GetBy/{reviewId}");
+                if (review == null) return false;
 
-            if (review.Teacher_Id != null && review.Teacher_Id > 0)
+                if (review.Teacher_Id != null && review.Teacher_Id > 0)
+                    return false;
+
+                review.Teacher_Id = teacherId;
+
+                var resp = await _httpClient.PutAsJsonAsync($"/api/Review_Tests/Pus/{reviewId}", review);
+                return resp.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
                 return false;
-
-            review.Teacher_Id = teacherId;
-
-            var resp = await _httpClient.PutAsJsonAsync($"/api/Review_Tests/Pus/{reviewId}", review);
-            return resp.IsSuccessStatusCode;
+            }
         }
 
         public async Task<Teacher?> GetTeacherByUserIdAsync(int userId)
