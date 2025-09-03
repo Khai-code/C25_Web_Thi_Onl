@@ -493,19 +493,7 @@
                                             <span class="input-group-text">
                                                 <input type="radio" name="tfanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
                                             </span>
-                                            @if (ans.Name == "1")
-                                            {
-                                                <label class="form-control">Đúng</label>
-                                            }
-                                            else if (ans.Name == "0")
-                                            {
-                                                <label class="form-control">Sai</label>
-                                            }
-                                            else
-                                            {
-                                                <label class="form-control">ans.AnswersName</label>
-                                            }
-                                            @* <input class="form-control" type="text" @bind="ans.Name" /> *@
+                                            <input class="form-control" type="text" @bind="ans.Name" />
                                         </div>
                                     }
                                 </div>
@@ -574,10 +562,39 @@
                                                                     <ul class="ms-3 mt-1 mb-0">
                                                                         @foreach (var ans in ques.Answers)
                                                                         {
-                                                                            <li>- @ans.AnswersName @if (ans.Right_Answer == 1)
-                                                                                {
-                                                                                    <span class="badge bg-success ms-1">✔</span>
-                                                                                }</li>
+                                                                            @if (ans.AnswersName == "1")
+                                                                            {
+                                                                                <li>
+                                                                                    <label class="form-control">Đúng</label>
+                                                                                    @if (ans.Right_Answer == 1)
+                                                                                    {
+                                                                                        <span class="badge bg-success ms-1">✔</span>
+                                                                                    } </li>
+                                                                                
+                                                                            }
+                                                                            else if (ans.AnswersName == "0")
+                                                                            {
+                                                                                
+                                                                                <li>
+                                                                                    <label class="form-control">Sai</label>
+                                                                                    @if (ans.Right_Answer == 1)
+                                                                                    {
+                                                                                        <span class="badge bg-success ms-1">✔</span>
+                                                                                    }
+                                                                                </li>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <li>
+                                                                                    <label class="form-control">ans.AnswersName</label>
+                                                                                    @if (ans.Right_Answer == 1)
+                                                                                    {
+                                                                                        <span class="badge bg-success ms-1">✔</span>
+                                                                                    }
+                                                                                </li>
+                                                                                
+                                                                            }
+                                                                            
                                                                         }
                                                                     </ul>
                                                                 }
@@ -655,13 +672,38 @@
                                     <ul class="list-unstyled ps-3 mb-0">
                                         @foreach (var ans in question.Answers ?? new())
                                         {
-                                            <li class="mb-1">
-                                                <span class="text-secondary">•</span> @ans.AnswersName
-                                                @if (ans.Right_Answer == 1)
-                                                {
-                                                    <span class="badge bg-success ms-2">Đúng</span>
-                                                }
-                                            </li>
+                                            @if (ans.AnswersName == "1")
+                                            {
+                                                <li>
+                                                    <label class="form-control">Đúng</label>
+                                                    @if (ans.Right_Answer == 1)
+                                                    {
+                                                        <span class="badge bg-success ms-1">✔</span>
+                                                    }
+                                                </li>
+
+                                            }
+                                            else if (ans.AnswersName == "0")
+                                            {
+
+                                                <li>
+                                                    <label class="form-control">Sai</label>
+                                                    @if (ans.Right_Answer == 1)
+                                                    {
+                                                        <span class="badge bg-success ms-1">✔</span>
+                                                    }
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li>
+                                                    <label class="form-control">ans.AnswersName</label>
+                                                    @if (ans.Right_Answer == 1)
+                                                    {
+                                                        <span class="badge bg-success ms-1">✔</span>
+                                                    }
+                                                </li>
+                                            }
                                         }
                                     </ul>
                                 }
