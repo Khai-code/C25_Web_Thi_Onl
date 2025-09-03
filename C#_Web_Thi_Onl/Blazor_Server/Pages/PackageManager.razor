@@ -493,7 +493,19 @@
                                             <span class="input-group-text">
                                                 <input type="radio" name="tfanswer" checked="@Equals(selectedAnswer, ans)" @onchange="@(() => selectedAnswer = ans)" />
                                             </span>
-                                            <input class="form-control" type="text" @bind="ans.Name" />
+                                            @if (ans.Name == "1")
+                                            {
+                                                <label class="form-control">Đúng</label>
+                                            }
+                                            else if (ans.Name == "0")
+                                            {
+                                                <label class="form-control">Sai</label>
+                                            }
+                                            else
+                                            {
+                                                <label class="form-control">ans.AnswersName</label>
+                                            }
+                                            @* <input class="form-control" type="text" @bind="ans.Name" /> *@
                                         </div>
                                     }
                                 </div>
