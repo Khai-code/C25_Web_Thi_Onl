@@ -52,7 +52,7 @@
                         <th class="col-sobai">Số bài</th>
                         <th class="col-gvthi">GV coi thi 1</th>
                         <th class="col-gvcn">GV coi thi 2</th>
-                        <th class="col-gvcn">GV gia đề</th>
+                        <th class="col-gvcn">GV ra đề</th>
                         <th class="col-batdau">Bắt đầu</th>
                         <th class="col-ketthuc">Kết thúc</th>
                         <th class="col-trangthai">Trạng thái</th>
@@ -260,7 +260,7 @@
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                 <div>
-                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên gia đề</label>
+                                    <label for="teacher" class="block font-medium text-green-700 mb-1">Giáo viên ra đề</label>
                                     <select id="teacher" name="teacher" class="w-full border border-green-300 rounded-lg px-3 py-2 hover:border-green-500 focus:ring-2 focus:ring-green-400" @bind="packageTestADO.Package.Teacher_Id">
                                         <option value="">-- Chọn giáo viên coi thi --</option>
                                         @foreach (var tea in teacherViewModels.Where(o => o.Subject_Id == SubjectId && o.Teacher_Id != Homeroom_Teacher))
@@ -894,7 +894,7 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             <div>
-                                <label for="exam" class="block text-sm font-medium text-gray-700 mb-1">Giảo viên gia đề</label>
+                                <label for="exam" class="block text-sm font-medium text-gray-700 mb-1">Giảo viên ra đề</label>
                                 <select id="teacher" class="w-full border border-gray-300 rounded-md px-3 py-2"
                                 @bind="updatePackageTestADO.TeacherPackage_Id">
                                     <option value="">-- Chọn giáo viên --</option>
