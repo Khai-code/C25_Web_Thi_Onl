@@ -1,19 +1,92 @@
-﻿using Data_Base.GenericRepositories;
+﻿using Data_Base.Filters;
+using Data_Base.GenericRepositories;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
 using Microsoft.AspNetCore.Components.Forms;
 using System.Globalization;
 using System.Text;
+using static Blazor_Server.Services.PackageManager;
 
 namespace Blazor_Server.Services
 {
     public class TeacherManagerService
     {
         private readonly HttpClient _httpClient;
+        public string ErrorMes { get; set; }
         public TeacherManagerService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+        }
+        public async Task<bool> CheckAccTeacher(listteacher user)
+        {
+            bool result = true;
+            try
+            {
+                if (user == null)
+                {
+                    result = false;
+                    ErrorMes = "Không có thông tin giáo viên";
+                    return result;
+                }
+
+                var filterUser = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                         { "Role_Id", "2" },
+                    },
+                };
+
+                var lstUserResul = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/User/common/get", filterUser);
+
+                if (!lstUserResul.IsSuccessStatusCode)
+                {
+                    result = false;
+                    ErrorMes = "Gọi api kiểm tra thông tin giáo viên thất bại";
+                    return result;
+                }
+
+                List<User> lstUser = await lstUserResul.Content.ReadFromJsonAsync<List<Data_Base.Models.U.User>>();
+
+                if (lstUser != null || lstUser.Count > 0)
+                {
+                    foreach (var item in lstUser)
+                    {
+                        if (item.User_Name == user.User_name)
+                        {
+                            result = false;
+                            ErrorMes = "Tên tài khoản đã tồn tại";
+                            return result;
+                        }
+                        else if (item.Email == user.Email)
+                        {
+                            result = false;
+                            ErrorMes = "Email đã được sử dụng";
+                            return result;
+                        }
+                        else if (item.Phone_Number == user.Phone_Number)
+                        {
+                            result = false;
+                            ErrorMes = "Số điện thoại đã được sử dụng";
+                            return result;
+                        }
+                        else if (item.Phone_Number == user.Phone_Number)
+                        {
+                            result = false;
+                            ErrorMes = "Số điện thoại đã được sử dụng";
+                            return result;
+                        }
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                ErrorMes = ex.Message;
+                return false;
+            }
         }
         public async Task<List<Subject>> GetAllSubject()
         {

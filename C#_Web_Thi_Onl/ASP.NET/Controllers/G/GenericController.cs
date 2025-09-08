@@ -71,6 +71,8 @@ namespace ASP.NET.Controllers.G
                     return await HandleExamRoomTeacher(request.Filters);
                 case "Teacher":
                     return await HandleTeacher(request.Filters);
+                case "User":
+                    return await HandleUser(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -564,7 +566,6 @@ namespace ASP.NET.Controllers.G
 
             return Ok(result);
         }
-
         private async Task<IActionResult> HandleScoreFilter(Dictionary<string, string> filters)
         {
             int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
@@ -611,6 +612,16 @@ namespace ASP.NET.Controllers.G
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.T.Teacher>(a =>
                 (!userId.HasValue || a.User_Id == userId)
+            );
+
+            return Ok(result);
+        }
+        private async Task<IActionResult> HandleUser(Dictionary<string, string> filters)
+        {
+            int? Role_Id = filters.ContainsKey("Role_Id") ? int.Parse(filters["Role_Id"]) : null;
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.U.User>(a =>
+                (!Role_Id.HasValue || a.Role_Id == Role_Id)
             );
 
             return Ok(result);

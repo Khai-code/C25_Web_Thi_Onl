@@ -8,6 +8,7 @@
 @inject Notification notification
 @inject TeacherManagerService TeacherMangersee
 @inject ProtectedSessionStorage SessionStorage
+@inject Blazored.Toast.Services.IToastService toastService
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
     @if (status != "2" && status != "3")
     {
@@ -52,9 +53,9 @@
                             <td class="text-muted">@(@item.index + 1)</td>
                             <td>
                                 <img src="@item.teacher.Avatar"
-                                     class="rounded-circle border border-2 border-primary shadow-sm"
-                                     style="width: 48px; height: 48px; object-fit: cover;"
-                                     alt="Avatar" />
+                                class="rounded-circle border border-2 border-primary shadow-sm"
+                                style="width: 48px; height: 48px; object-fit: cover;"
+                                alt="Avatar" />
                             </td>
                             <td class="fw-semibold text-truncate" style="max-width: 180px;">@item.teacher.Full_Name</td>
                             <td class="text-truncate" style="max-width: 220px;">@item.teacher.Email</td>
@@ -82,18 +83,18 @@
                                 @if (status != "2" && status != "3")
                                 {
                                     <button class="btn btn-sm btn-outline-primary me-1" title="Sửa"
-                                            @onclick="() => EditTeacher(item.teacher.Id)">
+                                    @onclick="() => EditTeacher(item.teacher.Id)">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
                                     <button class="btn btn-sm btn-outline-danger" title="Xóa"
-                                            @onclick="() => ConfirmDelete(item.teacher.Id)">
+                                    @onclick="() => ConfirmDelete(item.teacher.Id)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 }
                                 else
                                 {
                                     <button class="btn btn-sm btn-outline-info" title="Xem"
-                                            @onclick="() => EditTeacher(item.teacher.Id)">
+                                    @onclick="() => EditTeacher(item.teacher.Id)">
                                         <i class="bi bi-eye"></i>
                                     </button>
                                 }
@@ -141,7 +142,7 @@
     </div>
     <div class="offcanvas-body">
         <EditForm Model="currentTeacher" OnValidSubmit="@(isReadOnly ? null : SaveTeacher)">
-                    <DataAnnotationsValidator />
+            <DataAnnotationsValidator />
             <ValidationSummary />
             <div class="mb-3 d-flex align-items-start gap-3">
                 @if (!isReadOnly)
@@ -171,67 +172,67 @@
             <div class="mb-3">
                 <label for="name" class="form-label">Họ tên</label>
                 <InputText class="form-control"
-                           id="name"
-                           @bind-Value="currentTeacher.Full_Name"
-                           disabled="@isReadOnly"
-                           required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập họ tên')"
-                           oninput="this.setCustomValidity('')" />
+                id="name"
+                @bind-Value="currentTeacher.Full_Name"
+                disabled="@isReadOnly"
+                required
+                oninvalid="this.setCustomValidity('Vui lòng nhập họ tên')"
+                oninput="this.setCustomValidity('')" />
             </div>
 
             <div class="mb-3">
                 <label for="email" class="form-label">Email</label>
                 <InputText type="email" class="form-control" id="email" @bind-Value="currentTeacher.Email" disabled="@isReadOnly" required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
-                           oninput="this.setCustomValidity('')" />
+                oninvalid="this.setCustomValidity('Vui lòng nhập email hợp lệ')"
+                oninput="this.setCustomValidity('')" />
             </div>
 
             <div class="mb-3">
                 <label for="Username" class="form-label">Tài khoản</label>
                 <InputText class="form-control" id="Username" @bind-Value="currentTeacher.User_name" disabled="@isReadOnly" required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập tài khoản')"
-                           oninput="this.setCustomValidity('')" />
+                oninvalid="this.setCustomValidity('Vui lòng nhập tài khoản')"
+                oninput="this.setCustomValidity('')" />
             </div>
 
             <div class="mb-3">
                 <label for="Password" class="form-label">Mật khẩu</label>
                 <InputText type="password" class="form-control" id="Password" @bind-Value="currentTeacher.PassWord" disabled="@isReadOnly" required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập mật khẩu')"
-                           oninput="this.setCustomValidity('')" />
+                oninvalid="this.setCustomValidity('Vui lòng nhập mật khẩu')"
+                oninput="this.setCustomValidity('')" />
             </div>
 
             <div class="mb-3">
                 <label for="Phone" class="form-label">Số điện thoại</label>
                 <InputText class="form-control" id="Phone"
-                           @bind-Value="currentTeacher.Phone_Number"
-                           disabled="@isReadOnly"
-                           inputmode="numeric"
-                           pattern="0[0-9]{9}"
-                           required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ, bắt đầu bằng 0 và đủ 10 chữ số')"
-                           oninput="this.setCustomValidity(''); this.value=this.value.replace(/[^0-9]/g,'');" />
+                @bind-Value="currentTeacher.Phone_Number"
+                disabled="@isReadOnly"
+                inputmode="numeric"
+                pattern="0[0-9]{9}"
+                required
+                oninvalid="this.setCustomValidity('Vui lòng nhập số điện thoại hợp lệ, bắt đầu bằng 0 và đủ 10 chữ số')"
+                oninput="this.setCustomValidity(''); this.value=this.value.replace(/[^0-9]/g,'');" />
 
             </div>
 
             <div class="mb-3">
                 <label for="DateOfBirth" class="form-label">Ngày sinh</label>
                 <InputDate class="form-control" id="DateOfBirth" @bind-Value="currentTeacher.date_of_bith" disabled="@isReadOnly" required
-                           oninvalid="this.setCustomValidity('Vui lòng chọn ngày sinh')"
-                           oninput="this.setCustomValidity('')" />
+                oninvalid="this.setCustomValidity('Vui lòng chọn ngày sinh')"
+                oninput="this.setCustomValidity('')" />
             </div>
 
             <div class="mb-3">
                 <label for="Address" class="form-label">Địa chỉ</label>
                 <InputText class="form-control" id="Address" @bind-Value="currentTeacher.Address" disabled="@isReadOnly" required
-                           oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
-                           oninput="this.setCustomValidity('')" />
+                oninvalid="this.setCustomValidity('Vui lòng nhập địa chỉ')"
+                oninput="this.setCustomValidity('')" />
             </div>
 
             <div class="mb-3">
                 <label for="Status" class="form-label">Chức vụ</label>
                 <InputSelect class="form-select" id="Status" @bind-Value="currentTeacher.Position" disabled="@isReadOnly" required
-                             oninvalid="this.setCustomValidity('Vui lòng chọn chức vụ giáo viên')"
-                             oninput="this.setCustomValidity('')">
+                oninvalid="this.setCustomValidity('Vui lòng chọn chức vụ giáo viên')"
+                oninput="this.setCustomValidity('')">
                     <option value="">-- Chọn chức vụ --</option>
                     <option value="0">Quản lý</option>
                     <option value="1">Giáo viên bộ môn</option>
@@ -242,8 +243,8 @@
                 <div class="mb-3">
                     <label for="idsubject" class="form-label">Bộ môn</label>
                     <InputSelect class="form-select" id="idsubject" @bind-Value="currentTeacher.idsubject" disabled="@isReadOnly" required
-                                 oninvalid="this.setCustomValidity('Vui lòng chọn bộ môn')"
-                                 oninput="this.setCustomValidity('')">
+                    oninvalid="this.setCustomValidity('Vui lòng chọn bộ môn')"
+                    oninput="this.setCustomValidity('')">
                         <option value="">-- Chọn bộ môn --</option>
                         @foreach (var subject in allSubject)
                         {
@@ -405,6 +406,14 @@
                 return;
             }
 
+            bool checkAcc = await TeacherMangersee.CheckAccTeacher(currentTeacher);
+
+            if (!checkAcc)
+            {
+                toastService.ShowError(TeacherMangersee.ErrorMes);
+                return;
+            }
+
             if (isEditing)
             {
                 var updateResult = await TeacherMangersee.UpdateTeacherAsync(currentTeacher.Id, currentTeacher, selectedFile);
@@ -419,7 +428,7 @@
                     allTeachers = await TeacherMangersee.GetAllTeacher();
                 }
             }
-            else
+            else 
             {
                 var result = await TeacherMangersee.CreateTeacherAsync(currentTeacher, selectedFile);
 
