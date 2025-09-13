@@ -6,3 +6,16 @@
     document.getElementById('createTime').value = localTime;
     };
 
+window.showAlert = function (title, message, icon) {
+    return Swal.fire({
+        title: title,
+        text: message,
+        icon: icon,
+        confirmButtonText: 'Yes',
+        showCancelButton: false, // ❌ ẩn nút No
+        allowOutsideClick: false, // không cho click ra ngoài
+        allowEscapeKey: false     // không cho ấn ESC để thoát
+    }).then((result) => {
+        return result.isConfirmed; // chỉ có Yes => true
+    });
+};

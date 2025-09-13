@@ -235,6 +235,9 @@ namespace Blazor_Server.Services
 
                 Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
                 test.Test_Code = string.Empty;
+                test.Modifi_Time = 0;
+                test.Is_Check_Review = 0;
+                test.Is_Check_Cheat= 0;
                 test.Package_Id = packages.Id;
                 test.Student_Id = student.Id;
                 test.Status = 0;
@@ -315,6 +318,7 @@ namespace Blazor_Server.Services
 
                 ERStudent.Exam_Room_Package_Id = ExamRoomPackage.Id;
                 ERStudent.Student_Id = student.Id;
+                ERStudent.Is_Check_Out = 0;
                 ERStudent.Check_Time = time;
                 ERStudent.Test_Id = testId;
 

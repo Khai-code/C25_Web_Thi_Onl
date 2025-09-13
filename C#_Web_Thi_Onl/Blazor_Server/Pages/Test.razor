@@ -163,7 +163,19 @@ else
             await JSRuntime.InvokeVoidAsync("startPersistentFullscreen");
         }
     }
-
+    [JSInvokable]
+    public async Task<bool> Showinfor_cheat()
+    {
+        if (isSubmittedNormally) return false; // bỏ qua gian lận nếu kết thúc hợp lệ
+            // Gian lận thật
+            if (histDTO.PackageTypeId == 1)
+            {
+                await TestService.UpdateTestShowInfor(histDTO.TestId);
+            }
+            else
+                await TestService.UpdateTestShowInfor(histDTO.TestId);
+            return true;
+    }
     [JSInvokable]
     public async Task<bool> load()
     {

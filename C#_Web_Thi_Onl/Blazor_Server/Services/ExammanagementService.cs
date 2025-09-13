@@ -215,104 +215,132 @@ namespace Blazor_Server.Services
                 return null;
             }
         }
-
-
         public async Task<List<listStudent>> GetAllStudent(int Id)
         {
             try
             {
-                var Listpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
-                var package = Listpackage.FirstOrDefault(x => x.Id == Id);
+                var listpackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get")
+                                  ?? new List<Data_Base.Models.P.Package>();
+                var package = listpackage.FirstOrDefault(x => x.Id == Id);
                 if (package == null) return new List<listStudent>();
-                var Lisclass = await _httpClient.GetFromJsonAsync<List<Class>>("/api/Class/Get") ?? new List<Class>();
-                var classpackage = Lisclass.FirstOrDefault(x => x.Id == package.Class_Id);
-                if (classpackage == null) return new List<listStudent>();
-                var Liststdclass = await _httpClient.GetFromJsonAsync<List<Student_Class>>("/api/Student_Class/Get") ?? new List<Student_Class>();
-                var studentClasses = Liststdclass.Where(x => x.Class_Id == classpackage.Id).ToList();
-                if (!studentClasses.Any()) return new List<listStudent>();
-                var Liststudent = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new List<Student>();
-                var Listuser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
-                var Listexroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
+
+                var listclass = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.C.Class>>("/api/Class/Get")
+                                ?? new List<Data_Base.Models.C.Class>();
+                var classs = listclass.FirstOrDefault(x => x.Id == package.Class_Id);
+                if (classs == null) return new List<listStudent>();
+
+                var liststudentclass = await _httpClient.GetFromJsonAsync<List<Student_Class>>("/api/Student_Class/Get")
+                                      ?? new List<Student_Class>();
+                var studentclass = liststudentclass.Where(x => x.Class_Id == classs.Id).ToList();
+                if (!studentclass.Any()) return new List<listStudent>();
+
+                var Listtest = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get")
+                              ?? new List<Data_Base.Models.T.Test>();
+                var test = Listtest.Where(x => x.Package_Id == package.Id).ToList();
+
+                var Listexroompk = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get")
+                                  ?? new List<Exam_Room_Package>();
                 var expk = Listexroompk.FirstOrDefault(x => x.Package_Id == package.Id);
                 if (expk == null) return new List<listStudent>();
-                var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
+
+                var Listexamroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")
+                                  ?? new List<Exam_Room>();
                 var exroom = Listexamroom.FirstOrDefault(x => x.Id == expk.Exam_Room_Id);
                 if (exroom == null) return new List<listStudent>();
-                var Listexroomstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get") ?? new List<Exam_Room_Student>();
-                var Listexhistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get") ?? new List<Exam_HisTory>();
-                var result = new List<listStudent>();
-                foreach (var studentClass in studentClasses)
-                {
-                    var student = Liststudent.FirstOrDefault(s => s.Id == studentClass.Student_Id);
-                    if (student == null) continue;
 
-                    var user = Listuser.FirstOrDefault(u => u.Id == student.User_Id);
+                var Listexroomstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get")
+                                       ?? new List<Exam_Room_Student>();
+
+                var Listexhistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get")
+                                     ?? new List<Exam_HisTory>();
+
+                var liststudent = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.S.Student>>("/api/Student/Get")
+                                  ?? new List<Data_Base.Models.S.Student>();
+                var students = liststudent.Where(s => studentclass.Any(a => a.Student_Id == s.Id)).ToList();
+                if (!students.Any()) return new List<listStudent>();
+
+                var listUser = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get")
+                               ?? new List<User>();
+                var Users = listUser.Where(u => students.Any(s => s.User_Id == u.Id)).ToList();
+                if (!Users.Any()) return new List<listStudent>();
+
+                var result = new List<listStudent>();
+
+                foreach (var s in students)
+                {
+                    var user = Users.FirstOrDefault(u => u.Id == s.User_Id);
                     if (user == null) continue;
 
-                    var exstd = Listexroomstudent.FirstOrDefault(x => x.Exam_Room_Package_Id == expk.Id && x.Student_Id == studentClass.Student_Id);
+                    var studentTest = test.FirstOrDefault(t => t.Student_Id == s.Id);
+                    Exam_Room_Student exstd = null;
+                    if (studentTest != null)
+                    {
+                        exstd = Listexroomstudent.FirstOrDefault(x =>
+                            x.Exam_Room_Package_Id == expk.Id && x.Student_Id == studentTest.Student_Id);
+                    }
 
                     string status = "Chưa thi";
-
-                    if (exstd != null)
+                    int isCheat = 0;
+                    int idTest = 0;
+                    if (studentTest != null)
                     {
-                        var startTime = ConvertLong.ConvertLongToDateTime(exroom.Start_Time);
-                        var endTime = ConvertLong.ConvertLongToDateTime(exroom.End_Time);
-                        var checkTime = ConvertLong.ConvertLongToDateTime(exstd.Check_Time);
-
-                        var studentHistories = Listexhistories
-                            .Where(h => h.Exam_Room_Student_Id == exstd.Id)
-                            .ToList();
-
-                        if (DateTime.Now < startTime)
+                        idTest = studentTest.Id;
+                        isCheat = studentTest.Is_Check_Cheat;
+                        if (isCheat != 0)
                         {
-                            status = "Chưa thi";
-                        }
-                        else if (studentHistories.Any(h => h.Actual_Execution_Time == 0))
-                        {
-                            var cheatTime = studentHistories.First(h => h.Actual_Execution_Time == 0).Create_Time;
-                            var cheatDateTime = ConvertLong.ConvertLongToDateTime(cheatTime);
-                            status = $"Đã phát hiện gian lận lúc {cheatDateTime:HH:mm:ss dd/MM/yyyy}";
-                        }
-                        else if (studentHistories.Any(h =>
-                         ConvertLong.ConvertLongToDateTime(h.Create_Time) >= startTime &&
-                         ConvertLong.ConvertLongToDateTime(h.Create_Time) <= endTime))
-                        {
-                            var finishHistory = studentHistories.First(h =>
-                                ConvertLong.ConvertLongToDateTime(h.Create_Time) >= startTime &&
-                                ConvertLong.ConvertLongToDateTime(h.Create_Time) <= endTime);
-
-                            var finishTime = ConvertLong.ConvertLongToDateTime(finishHistory.Create_Time);
-                            status = $"Đã hoàn thành bài thi lúc {finishTime:HH:mm:ss dd/MM/yyyy}";
-                        }
-
-                        else if (checkTime >= startTime && checkTime < endTime)
-                        {
-                            status = $"Đang thi lúc{checkTime:HH:mm:ss dd/MM/yyyy}";
+                            status = "Đã phát hiện gian lận";
                         }
                         else
                         {
-                            status = "Đã thi";
+                            var history = Listexhistories.FirstOrDefault(h => h.Exam_Room_Student_Id == exstd.Id);
+
+                            if (history != null && history.Create_Time != null)
+                            {
+                                status = $"Đã hoàn thành bài thi";
+                            }
+                            else if (exstd != null && exroom.Start_Time <= exstd.Check_Time && exstd.Check_Time < exroom.End_Time)
+                            {
+                                status = "Đang thi";
+                            }
+                            else
+                            {
+                                status = "Đã thi";
+                            }
                         }
                     }
 
 
                     result.Add(new listStudent
                     {
-                        Id = student.Id,
+                        Id = s.Id,
+                        IdTest = idTest,
+                        packagecode = package.Id,
                         NameStudent = user.Full_Name,
-                        packagecode = package.Package_Code,
-                        status = status
+                        status = status,
+                        Is_cheat = isCheat
                     });
                 }
 
-                return result.ToList();
+                return result;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return null;
+                return new List<listStudent>();
             }
         }
 
+        public async Task<bool> UpdateTestShow(int id)
+        {
+            var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
+            if (existingTest == null)
+            {
+                return false;
+            }
+            existingTest.Is_Check_Cheat = 2;
+            var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
+
+            return response.IsSuccessStatusCode;
+        }
         public async Task<bool> UpdateExamRoomTime(int id, Exam_Room exam_Room)
         {
             try
@@ -811,9 +839,11 @@ namespace Blazor_Server.Services
         public class listStudent
         {
             public int Id { get; set; }
+            public int IdTest { get; set; }
             public int packagecode { get; set; }
             public string NameStudent { get; set; }
             public string status { get; set; }
+            public int Is_cheat { get; set; }
         }
         public class ExamModel
         {

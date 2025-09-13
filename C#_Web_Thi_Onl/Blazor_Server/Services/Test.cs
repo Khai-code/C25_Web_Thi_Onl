@@ -24,6 +24,18 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<bool> UpdateTestShowInfor(int id)
+        {
+            var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
+            if (existingTest == null)
+            {
+                return false;
+            }
+            existingTest.Is_Check_Cheat = 1;
+            var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
+
+            return response.IsSuccessStatusCode;
+        }
         public async Task<bool> UpdateTestAsync(int id)
         {
             var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
@@ -32,6 +44,7 @@ namespace Blazor_Server.Services
                 return false; 
             }
             existingTest.Status = 2;
+            existingTest.Is_Check_Cheat = 1;
             var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
 
             return response.IsSuccessStatusCode;

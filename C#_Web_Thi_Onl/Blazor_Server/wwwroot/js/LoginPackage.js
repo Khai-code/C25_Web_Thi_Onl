@@ -52,6 +52,7 @@ window.startPersistentFullscreen = function () {
                 callResetTimeAndRedirect();
             } else {
                 showWarningModal(`⚠️ Phát hiện bạn rời khỏi bài thi.<br>Lần vi phạm: ${violationCount}/${maxViolations}.<br>Nếu vượt quá giới hạn, bài thi sẽ kết thúc.`);
+                callshowinfor_cheat();
             }
         }
     });
@@ -96,6 +97,7 @@ window.startPersistentFullscreen = function () {
                 callResetTimeAndRedirect();
             } else {
                 showWarningModal(`⚠️ Phát hiện bạn dùng Alt+Tab.<br>Lần vi phạm: ${violationCount}/${maxViolations}.<br>Nếu vượt quá giới hạn, bài thi sẽ kết thúc.`);
+                callshowinfor_cheat();
             }
             event.preventDefault();
             event.stopPropagation();
@@ -132,7 +134,19 @@ function callResetTimeAndRedirect() {
         console.log("Chưa có dotnetHelper. Điều hướng luôn.");
     }
 }
-
+function callshowinfor_cheat() {
+    if (window.dotnetHelper) {
+        window.dotnetHelper.invokeMethodAsync('Showinfor_cheat')
+            .then(() => {
+                console.log("Đã gọi Showinfor_cheat bên Blazor");
+            })
+            .catch(err => {
+                console.error("Lỗi gọi Showinfor_cheat:", err);
+            });
+    } else {
+        console.log("Chưa có dotnetHelper. Điều hướng luôn.");
+    }
+}
 function showFullscreenModal(goFullscreen) {
     const existing = document.getElementById("fullscreen-modal");
     if (existing) existing.remove();
