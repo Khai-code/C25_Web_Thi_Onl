@@ -1050,7 +1050,20 @@
         lstQuesAns = null;
         validationMessage = "";
     }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var resuilt = await SessionStorage.GetAsync<string>("Id");
+            if (resuilt.Success && !string.IsNullOrEmpty(resuilt.Value))
+            {
+                iduser = int.Parse(resuilt.Value);
 
+                _currentTeacher = await pm.TeacherGives(iduser) ?? null;
+            };
+        }
+      
+    }
     protected override async Task OnInitializedAsync()
     {
         await this.VPackage();
@@ -1065,13 +1078,7 @@
         //await QuestionTypeViewModels();
         await QuestionlevelViewModel();
         //_currentTeacher = await TeacherGivesQuestion();
-        var resuilt = await SessionStorage.GetAsync<string>("Id");
-        if (resuilt.Success && !string.IsNullOrEmpty(resuilt.Value))
-        {
-            iduser = int.Parse(resuilt.Value);
-
-            _currentTeacher = await pm.TeacherGives(iduser) ?? null;
-        }
+        
     }
 
     private async Task VPackage()

@@ -217,6 +217,14 @@
 
         <div class="bottom-panel">
             <h6 class="title text-warning">🎓 Danh sách học sinh</h6>
+
+            @if (isLoading)
+            {
+                <div class="progress-container mb-2">
+                    <div class="progress-bar rainbow"></div>
+                </div>
+            }
+
             @if (SelectedPackage != null)
             {
                 <ul class="list-group">
@@ -233,7 +241,7 @@
                                 </div>
                             </div>
                             <button class="btn btn-sm d-flex align-items-center
-                                         @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
+                                 @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
                             @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
                             disabled="@(student.status.StartsWith("Đã hoàn thành"))"
                             title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
@@ -634,12 +642,13 @@
     {
         try
         {
+            
             _timer = new System.Threading.Timer(async _ => await RefreshData(), null, 0, 5000);
             await LoadCurrentTeacherAsync();
             exams = await exammanagement.GetallExam();
             await Subject();
-
             AllRooms = await exammanagement.GetAllRooms();
+            isLoading = false;
         }
         catch { }
 
@@ -730,11 +739,15 @@
         SelectedExam = id;
         Listpackages = await exammanagement.GetallPackage(id, from, to);
         listStudents = new List<listStudent>();
+        SelectedPackage = 0;
+        isLoading = false;
     }
     private System.Threading.Timer? _timer;
+    private bool isLoading = false;
     private async Task RefreshData()
     {
         try{
+            isLoading = true;
             if (SelectedPackage != 0)
             {
                 listStudents = await exammanagement.GetAllStudent(SelectedPackage);
@@ -746,22 +759,26 @@
                         var confirm = await JS.InvokeAsync<bool>(
                             "showAlert",
                             "Phát hiện học sinh",
-                            $"⚠️ {item.NameStudent} gian lận",
+                            $"⚠️ {item.NameStudent} có hành vi gian lận yêu cầu giáo viên xác nhận và xử lý",
                             "warning"
-                        );
 
+                        );
+        
                         if (confirm) 
                         {
                             await exammanagement.UpdateTestShow(item.IdTest);
                         }
+                       
                     }
+                   
                 }
 
                 listExamRoomStudents = await exammanagement.GetExamRoomStudentsByPackageId(SelectedPackage);
                 await InvokeAsync(StateHasChanged);
             }
-        }catch(Exception){
-
+        }
+        catch(Exception){
+           
         }
        
     }

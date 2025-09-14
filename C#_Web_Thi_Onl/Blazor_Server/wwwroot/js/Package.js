@@ -12,7 +12,7 @@ window.showAlert = function (title, message, icon) {
         text: message,
         icon: icon,
         confirmButtonText: 'Yes',
-        showCancelButton: false, // ❌ ẩn nút No
+        showCancelButton: true, // ❌ ẩn nút No
         allowOutsideClick: false, // không cho click ra ngoài
         allowEscapeKey: false     // không cho ấn ESC để thoát
     }).then((result) => {
