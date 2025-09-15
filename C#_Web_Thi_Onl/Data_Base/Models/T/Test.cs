@@ -32,6 +32,7 @@ namespace Data_Base.Models.T
         [JsonIgnore]
         public Student? Student { get; set; }
         public int Student_Id { get; set; }
+        public string Reason { get; set; }
         [JsonIgnore]
         public ICollection<Test_Question> Test_Questions { get; set; } = new List<Test_Question>();
         [JsonIgnore]

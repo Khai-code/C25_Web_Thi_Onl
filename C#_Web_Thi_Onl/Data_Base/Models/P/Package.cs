@@ -51,6 +51,10 @@ namespace Data_Base.Models.P
         [JsonIgnore]
         public Teacher? Teachers { get; set; }
         public int Teacher_Id { get; set; }// giáo viên gia đề
+        [ForeignKey("Teacher_Mark_Id")]
+        [JsonIgnore]
+        public Teacher? Teacher_Mark { get; set; }
+        public int? Teacher_Mark_Id { get; set; } // giáo viên chấm bài
         [JsonIgnore]
         public ICollection<Question>? Questions { get; set; } = new List<Question>();
         [JsonIgnore]

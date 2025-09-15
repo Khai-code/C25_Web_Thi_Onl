@@ -23,5 +23,7 @@ namespace Data_Base.Models.E
         [JsonIgnore]
         public Exam_Room? Exam_Rooms { get; set; }
         public int Exam_Room_Id { get; set; }
+        [JsonIgnore]
+        public ICollection<Exam_Room_Student> Exam_Room_Students { get; set; } = new List<Exam_Room_Student>();
     }
 }
