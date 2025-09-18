@@ -226,11 +226,15 @@ namespace Blazor_Server.Services
 
                 var exsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filterEXS);
 
-                var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
-                if (exs != null)
+                var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).ToList();
+
+                foreach (var item in exs)
                 {
-                    ErrorMes = string.Format("Học sinh có mã (0) đã vào thi, không thể đăng nhập lại", student.Student_Code);
-                    return false;
+                    if (item.Is_Check_Out == 0)
+                    {
+                        ErrorMes = string.Format("Học sinh có mã (0) đã vào thi, không thể đăng nhập lại", student.Student_Code);
+                        return false;
+                    }
                 }
 
                 Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();

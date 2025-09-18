@@ -63,7 +63,8 @@ namespace Blazor_Server.Services
                             return null;
                         }
 
-                        var lstScore = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).Where(s => s.Point == 0).FirstOrDefault();
+                        //var lstScore = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).Where(s => s.Point == 0).FirstOrDefault();
+                        var lstScore = (await scoreRep.Content.ReadFromJsonAsync<List<Score>>()).OrderBy(s => s.Point).FirstOrDefault();
 
                         Data_Base.Models.S.Score score = new Score();
                         score.Id = lstScore.Id;
