@@ -167,14 +167,14 @@ else
     public async Task<bool> Showinfor_cheat()
     {
         if (isSubmittedNormally) return false; // bỏ qua gian lận nếu kết thúc hợp lệ
-            // Gian lận thật
-            if (histDTO.PackageTypeId == 1)
-            {
-                await TestService.UpdateTestShowInfor(histDTO.TestId);
-            }
-            else
-                await TestService.UpdateTestShowInfor(histDTO.TestId);
-            return true;
+        int cheat = 1;
+        if (histDTO.PackageTypeId == 1)
+        {
+            await TestService.UpdateTestShowInfor(histDTO.TestId,cheat);
+        }
+        else
+            await TestService.UpdateTestShowInfor(histDTO.TestId,cheat);
+        return true;
     }
     [JSInvokable]
     public async Task<bool> load()
@@ -184,14 +184,17 @@ else
         bool abc = await TestService.GetExamHis(histDTO.TestId);
         if (abc == true)
         {
+            int cheat = 3;
             // Gian lận thật
             if (histDTO.PackageTypeId == 1){
                 await SaveAllAnswers();
                 await TestService.UpdateTestAsync(histDTO.TestId);
+                await TestService.UpdateTestShowInfor(histDTO.TestId, cheat);
             }
         else
                 await CreateStudentAns(selectedAnsIds);
             await TestService.UpdateTestAsync(histDTO.TestId);
+            await TestService.UpdateTestShowInfor(histDTO.TestId, cheat);
 
             toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");
             Navigation.NavigateTo("/His");
@@ -220,17 +223,19 @@ else
                 countdownTimer.Dispose();  // Dừng bộ đếm thời gian
             }
             isTimeUp = true;  // Đánh dấu hết thời gian
-
+            int cheat = 3;
             // Lưu kết quả (nếu chưa lưu)
             if (histDTO.PackageTypeId == 1)
             {
                 await SaveAllAnswers();
                 await TestService.UpdateTestAsync(histDTO.TestId);
+                await TestService.UpdateTestShowInfor(histDTO.TestId, cheat);
             }
             else
             {
                 await CreateStudentAns(selectedAnsIds);
                 await TestService.UpdateTestAsync(histDTO.TestId);
+                await TestService.UpdateTestShowInfor(histDTO.TestId, cheat);
             }
 
             toastService.ShowError("Đã phát hiện gian lận, bài thi đã kết thúc.");

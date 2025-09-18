@@ -224,13 +224,14 @@
                     <div class="progress-bar rainbow"></div>
                 </div>
             }
-
             @if (SelectedPackage != null)
             {
-                <ul class="list-group">
+                <ul class="list-group border-0">
                     @foreach (var student in listStudents)
                     {
-                        <li class="list-group-item d-flex justify-content-between align-items-center p-3 rounded shadow-sm">
+                        <li class="list-group-item d-flex justify-content-between align-items-center p-3 mb-2 rounded shadow-sm border-0">
+
+                            <!-- Thông tin học sinh -->
                             <div class="d-flex align-items-center">
                                 <div class="avatar bg-primary rounded-circle d-flex justify-content-center align-items-center me-3" style="width: 40px; height: 40px;">
                                     <i class="bi bi-person-circle"></i>
@@ -240,17 +241,37 @@
                                     <small class="@GetStatusClass(student.status)">@student.status</small>
                                 </div>
                             </div>
-                            <button class="btn btn-sm d-flex align-items-center
-                                 @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
-                            @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
-                            disabled="@(student.status.StartsWith("Đã hoàn thành"))"
-                            title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
-                                <i class="fas fa-times me-1"></i> Hủy thi
-                            </button>
+
+                            <!-- Các nút thao tác -->
+                            <div class="d-flex gap-2">
+                                <!-- Nút Hủy thi -->
+                                @if (student.Is_cheat == 0)
+                                {
+                                    <button class="btn btn-sm d-flex align-items-center shadow-sm
+                        @(student.status.StartsWith("Đã hoàn thành") ? "btn-secondary" : "btn-outline-danger")"
+                                    @onclick="() => TriggerStopTest(student.Id, student.packagecode)"
+                                    disabled="@(student.status.StartsWith("Đã hoàn thành"))"
+                                    title="@(student.status.StartsWith("Đã hoàn thành") ? "Không thể hủy, bài thi đã hoàn thành" : "Hủy thi")">
+                                        <i class="fas fa-times me-2"></i> Hủy thi
+                                    </button>
+                                }
+                                @if ((student.Is_cheat == 1 || student.Is_cheat == 3) && student.Is_checkOut == 0)
+                                {
+                                    <!-- Nút Kích hoạt thi -->
+                                    <button @onclick="() => openModalTests(student.IdTest)"
+                                            type="button"
+                                            class="btn btn-success btn-sm shadow-sm d-flex align-items-center px-3">
+                                        <i class="bi bi-play-circle-fill me-2"></i>
+                                        Kích hoạt
+                                    </button>
+                                }
+
+                            </div>
                         </li>
                     }
                 </ul>
             }
+
         </div>
     </div>
 
@@ -520,8 +541,110 @@
         </div>
     </div>
 }
+<EditForm Model="@studentModel" OnValidSubmit="updatecheate">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
 
+    <div class="modal fade @(CheatModalOpen ? "show d-block animate__animated animate__fadeInDown" : "")"
+    id="fadeModal" tabindex="-1"
+    aria-labelledby="fadeModalLabel"
+    aria-hidden="@(CheatModalOpen ? "false" : "true")"
+    style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0 rounded-3">
 
+                <!-- Header -->
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title fw-bold" id="fadeModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Xác nhận xử lý bài thi
+                    </h5>
+
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nội dung</label>
+                        <InputText class="form-control form-control-lg border-danger shadow-sm"
+                        placeholder="Nhập tên học sinh..."
+                        @bind-Value="studentModel.Name" 
+                        required
+                        oninvalid="this.setCustomValidity('Vui lòng nhập thông tin')"
+                        oninput="this.setCustomValidity('')" />
+                    </div>
+                    <div class="alert alert-warning d-flex align-items-center mt-3" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Vui lòng xác nhận xử lý vi phạm gian lận trước khi tiếp tục.
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" @onclick="close">
+                        <i class="bi bi-x-circle me-1"></i> Đóng
+                    </button>
+                    <button type="submit" class="btn btn-danger px-4 rounded-pill">
+                        <i class="bi bi-check2-circle me-1 "></i> Lưu xử lý
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</EditForm>
+<EditForm Model="@studentModel" OnValidSubmit="openTest">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="modal fade @(CheatModalOpenTest ? "show d-block animate__animated animate__fadeInDown" : "")"
+    id="fadeModal" tabindex="-1"
+    aria-labelledby="fadeModalLabel"
+    aria-hidden="@(CheatModalOpenTest ? "false" : "true")"
+    style="background: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow-lg border-0 rounded-3">
+
+                <!-- Header -->
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title fw-bold" id="fadeModalLabel">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Xác nhận kích hoạt bài thi
+                    </h5>
+
+                </div>
+
+                <!-- Body -->
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nội dung</label>
+                        <InputText class="form-control form-control-lg border-danger shadow-sm"
+                        placeholder="Nhập thông tin..."
+                        @bind-Value="studentModel.Name"
+                        required
+                        oninvalid="this.setCustomValidity('Vui lòng nhập thông tin')"
+                        oninput="this.setCustomValidity('')" />
+                    </div>
+                    <div class="alert alert-warning d-flex align-items-center mt-3" role="alert">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        Vui lòng xác nhận xử lý vi phạm gian lận trước khi tiếp tục.
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary px-4 rounded-pill" @onclick="close">
+                        <i class="bi bi-x-circle me-1"></i> Đóng
+                    </button>
+                    <button type="submit" class="btn btn-success px-4 rounded-pill">
+                        <i class="bi bi-check2-circle me-1 "></i> Lưu xử lý
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</EditForm>
 @code {
     [Parameter] public EventCallback OnStopTest { get; set; }
     private List<listexam> exams = new List<listexam>();
@@ -562,7 +685,9 @@
             var s when s.StartsWith("Chưa thi") => "text-secondary fw-bold",
             var s when s.StartsWith("Đang thi") => "text-primary fw-bold",
             var s when s.StartsWith("Đã hoàn thành bài thi") => "text-success fw-bold",
-            var s when s.StartsWith("Đã phát hiện gian lận") => "text-danger fw-bold",
+            var s when s.StartsWith("Bài thi có cảnh báo gian lận nhưng đã được hoàn thành") => "text-warning fw-bold",
+            var s when s.StartsWith("Đang thi (có cảnh báo gian lận)") => "text-warning fw-bold",
+            var s when s.StartsWith("Bài thi gian lận đã bị hủy") => "text-danger fw-bold",
             var s when s.StartsWith("Đã thi") => "text-info fw-bold",
             _ => "text-muted"
         };
@@ -642,7 +767,7 @@
     {
         try
         {
-            
+
             _timer = new System.Threading.Timer(async _ => await RefreshData(), null, 0, 5000);
             await LoadCurrentTeacherAsync();
             exams = await exammanagement.GetallExam();
@@ -742,47 +867,120 @@
         SelectedPackage = 0;
         isLoading = false;
     }
+    public class StudentModel
+    {
+
+        public string Name { get; set; } = string.Empty;
+    }
+    private StudentModel studentModel = new();
+    private bool CheatModalOpen = false;
+    private bool CheatModalOpenTest = false;
     private System.Threading.Timer? _timer;
     private bool isLoading = false;
     private async Task RefreshData()
     {
-        try{
+        try
+        {
             isLoading = true;
+
             if (SelectedPackage != 0)
             {
                 listStudents = await exammanagement.GetAllStudent(SelectedPackage);
 
                 foreach (var item in listStudents)
                 {
+                    // 🚫 Nếu modal đang mở => không mở thêm alert nào khác
+                    if (CheatModalOpen)
+                    {
+                        return;
+                        StateHasChanged();
+                    }
+
+                    // 🚫 nếu = 3 thì tắt modal + đóng alert
+                    if (item.Is_cheat == 3)
+                    {
+                        CheatModalOpen = false;
+                        await JS.InvokeVoidAsync("closeAlert");
+                        continue;
+                    }
+
+                    // ⚠️ nếu = 1 thì hiện cảnh báo
                     if (item.Is_cheat == 1)
                     {
                         var confirm = await JS.InvokeAsync<bool>(
                             "showAlert",
                             "Phát hiện học sinh",
-                            $"⚠️ {item.NameStudent} có hành vi gian lận yêu cầu giáo viên xác nhận và xử lý",
+                            $"⚠️ {item.NameStudent} có hành vi gian lận, yêu cầu giáo viên xác nhận và xử lý",
                             "warning"
-
                         );
-        
-                        if (confirm) 
+
+                        if (confirm)
                         {
-                            await exammanagement.UpdateTestShow(item.IdTest);
+                            // Giáo viên chọn "Hủy thi"
+                            var result = TriggerStopTest(item.Id, item.packagecode);
+                            if (result != null)
+                            {
+                                await exammanagement.UpdateTestShow(item.IdTest, 3,"");
+                                toastService.ShowInfo($"Đã hủy bài thi của {item.NameStudent}.");
+                            }
                         }
-                       
+                        else
+                        {
+                            // Giáo viên chọn "Xác nhận" => mở modal xử lý
+                            CheatModalOpen = true;
+                            idtest = item.IdTest;
+                        }
+
+                        // 🚨 chỉ xử lý 1 học sinh / lần
+                        break;
                     }
-                   
                 }
 
                 listExamRoomStudents = await exammanagement.GetExamRoomStudentsByPackageId(SelectedPackage);
                 await InvokeAsync(StateHasChanged);
             }
         }
-        catch(Exception){
-           
+        catch (Exception ex)
+        {
+            Console.WriteLine("Lỗi RefreshData: " + ex.Message);
         }
-       
+        finally
+        {
+            isLoading = false;
+        }
+    }
+    private void openModalTests(int id){
+        CheatModalOpenTest = true;
+        idtest = id;
+    }
+    private async Task openTest()
+    {
+        var result= exammanagement.UpdateOpenTest(idtest, studentModel.Name);
+        if (result != null)
+        {
+            toastService.ShowSuccess("Kích hoạt thi thành công!");
+            CheatModalOpen = false;
+        }
+        else
+            toastService.ShowError("Kích hoạt thi thất bại!");
     }
 
+    private int idtest;
+    private async Task updatecheate(){
+        var result=await exammanagement.UpdateTestShow(idtest, 2, studentModel.Name);
+        if (result)
+        {
+            toastService.ShowSuccess("Lưu xử lý thành công!");
+            CheatModalOpen = false;
+        }
+        else
+            toastService.ShowError("Lưu xử lý thất bại!");
+    }
+
+    private void close(){
+        CheatModalOpen = false;
+        CheatModalOpenTest = false;
+    }
 
 
     private async Task SelectPackage(int id)

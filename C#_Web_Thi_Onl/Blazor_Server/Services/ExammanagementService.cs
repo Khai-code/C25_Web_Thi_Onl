@@ -286,25 +286,39 @@ namespace Blazor_Server.Services
                     {
                         idTest = studentTest.Id;
                         isCheat = studentTest.Is_Check_Cheat;
-                        if (isCheat != 0)
+
+                        if (isCheat == 2)
                         {
-                            status = "Đã phát hiện gian lận";
+                            var history = Listexhistories.FirstOrDefault(h => h.Exam_Room_Student_Id == exstd.Id);
+
+                            if (history?.Create_Time != null)
+                            {
+                                status = "Bài thi có cảnh báo gian lận nhưng đã được hoàn thành";
+                            }
+                            else if (exstd != null && exroom.Start_Time <= exstd.Check_Time && exstd.Check_Time < exroom.End_Time)
+                            {
+                                status = "Đang thi (có cảnh báo gian lận)";
+                            }
+                            else
+                            {
+                                status = "Đã phát hiện cảnh báo gian lận được giáo viên xác nhận";
+                            }
+                        }
+                        else if (isCheat == 3)
+                        {
+                            status = "Bài thi gian lận đã bị hủy";
                         }
                         else
                         {
                             var history = Listexhistories.FirstOrDefault(h => h.Exam_Room_Student_Id == exstd.Id);
 
-                            if (history != null && history.Create_Time != null)
+                            if (history?.Create_Time != null&& isCheat==0)
                             {
-                                status = $"Đã hoàn thành bài thi";
+                                status = "Đã hoàn thành bài thi";
                             }
                             else if (exstd != null && exroom.Start_Time <= exstd.Check_Time && exstd.Check_Time < exroom.End_Time)
                             {
                                 status = "Đang thi";
-                            }
-                            else
-                            {
-                                status = "Đã thi";
                             }
                         }
                     }
@@ -317,6 +331,7 @@ namespace Blazor_Server.Services
                         packagecode = package.Id,
                         NameStudent = user.Full_Name,
                         status = status,
+                        Is_checkOut = exstd?.Is_Check_Out ?? 0,
                         Is_cheat = isCheat
                     });
                 }
@@ -328,18 +343,51 @@ namespace Blazor_Server.Services
                 return new List<listStudent>();
             }
         }
-
-        public async Task<bool> UpdateTestShow(int id)
+        public async Task<bool> UpdateOpenTest(int id, string? info)
         {
-            var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
-            if (existingTest == null)
+            try
+            {
+                var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
+                if (existingTest == null)
+                {
+                    return false;
+                }
+                existingTest.Reason = info;
+                var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
+                var getallexamstudent= await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var examstudent = getallexamstudent.FirstOrDefault(x => x.Test_Id == id);
+                if (examstudent == null)
+                    return false;
+                examstudent.Is_Check_Out = 1;
+                var response1 = await _httpClient.PutAsJsonAsync($"/api/Exam_Room_Student/Pus/{examstudent.Id}", examstudent);
+                return response.IsSuccessStatusCode && response1.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
             {
                 return false;
-            }
-            existingTest.Is_Check_Cheat = 2;
-            var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
 
-            return response.IsSuccessStatusCode;
+            }
+        }
+        public async Task<bool> UpdateTestShow(int id, int cheat, string? info)
+        {
+            try
+            {
+                var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
+                if (existingTest == null)
+                {
+                    return false;
+                }
+                existingTest.Is_Check_Cheat = cheat;
+                existingTest.Reason = info;
+                var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
+
+                return response.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                return false;
+
+            }
         }
         public async Task<bool> UpdateExamRoomTime(int id, Exam_Room exam_Room)
         {
@@ -841,6 +889,7 @@ namespace Blazor_Server.Services
             public int Id { get; set; }
             public int IdTest { get; set; }
             public int packagecode { get; set; }
+            public int Is_checkOut { get; set; }
             public string NameStudent { get; set; }
             public string status { get; set; }
             public int Is_cheat { get; set; }

@@ -238,6 +238,7 @@ namespace Blazor_Server.Services
                 test.Modifi_Time = 0;
                 test.Is_Check_Review = 0;
                 test.Is_Check_Cheat= 0;
+                test.Reason = string.Empty;
                 test.Package_Id = packages.Id;
                 test.Student_Id = student.Id;
                 test.Status = 0;

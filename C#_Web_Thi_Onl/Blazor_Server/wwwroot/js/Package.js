@@ -11,11 +11,18 @@ window.showAlert = function (title, message, icon) {
         title: title,
         text: message,
         icon: icon,
-        confirmButtonText: 'Yes',
-        showCancelButton: true, // ❌ ẩn nút No
-        allowOutsideClick: false, // không cho click ra ngoài
-        allowEscapeKey: false     // không cho ấn ESC để thoát
+        confirmButtonText: 'Hủy thi',
+        cancelButtonText: 'Xác nhận',
+        showCancelButton: true,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        confirmButtonColor: '#d33',   // 🔴 đỏ cho "Hủy thi"
+        cancelButtonColor: '#3085d6'  // 🔵 xanh cho "Xác nhận"
     }).then((result) => {
-        return result.isConfirmed; // chỉ có Yes => true
+        return result.isConfirmed; // bấm "Hủy thi" => true
     });
 };
+window.closeAlert = function () {
+    Swal.close();
+};
+

@@ -24,14 +24,14 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
-        public async Task<bool> UpdateTestShowInfor(int id)
+        public async Task<bool> UpdateTestShowInfor(int id, int cheat)
         {
             var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
             if (existingTest == null)
             {
                 return false;
             }
-            existingTest.Is_Check_Cheat = 1;
+            existingTest.Is_Check_Cheat = cheat;
             var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
 
             return response.IsSuccessStatusCode;
