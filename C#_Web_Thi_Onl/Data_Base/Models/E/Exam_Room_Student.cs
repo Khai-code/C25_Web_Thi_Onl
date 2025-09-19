@@ -21,6 +21,7 @@ namespace Data_Base.Models.E
         [Range(19000101000000, 20991231235959, ErrorMessage = "Ngày tháng năm không hợp lệ")]
         public long Check_Time { get; set; }
         public int Is_Check_Out { get; set; }
+        public int Is_Check_Review { get; set; }
         [ForeignKey("Exam_Room_Package_Id")]
         [JsonIgnore]
         public Exam_Room_Package? Exam_Room_Packages { get; set; }

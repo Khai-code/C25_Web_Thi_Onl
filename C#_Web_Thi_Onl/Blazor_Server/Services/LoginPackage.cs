@@ -228,7 +228,7 @@ namespace Blazor_Server.Services
 
                 var exs = (await exsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).ToList();
 
-                foreach (var item in exs)
+                foreach (var item in exs.Where(o => o.Is_Check_Review == 0))
                 {
                     if (item.Is_Check_Out == 0)
                     {
@@ -240,7 +240,6 @@ namespace Blazor_Server.Services
                 Data_Base.Models.T.Test test = new Data_Base.Models.T.Test();
                 test.Test_Code = string.Empty;
                 test.Modifi_Time = 0;
-                test.Is_Check_Review = 0;
                 test.Is_Check_Cheat= 0;
                 test.Reason = string.Empty;
                 test.Package_Id = packages.Id;
@@ -324,6 +323,7 @@ namespace Blazor_Server.Services
                 ERStudent.Exam_Room_Package_Id = ExamRoomPackage.Id;
                 ERStudent.Student_Id = student.Id;
                 ERStudent.Is_Check_Out = 0;
+                ERStudent.Is_Check_Review = 0;
                 ERStudent.Check_Time = time;
                 ERStudent.Test_Id = testId;
 

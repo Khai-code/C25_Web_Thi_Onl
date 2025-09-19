@@ -687,6 +687,7 @@
             bool check = await HistoriesExam.UpdateReviewedQuestionAns(lstQuesAns);
             if (check)
             {
+                totalScore = HistoriesExam.doubleScore;
                 isEditing = false;
                 lstQuesAns = null;
                 validationMessage = "";
@@ -745,7 +746,7 @@
             if (!confirmed)
                 return;
 
-            var respon = await HistoriesExam.UpdateReviewforteacher(id, status, comment, int.Parse(iduser));
+            var respon = await HistoriesExam.UpdateReviewforteacher(id, status, comment, int.Parse(iduser), totalScore);
             if (respon != null)
             {
                 toastService.ShowSuccess("✅ Cập nhật thành công");

@@ -247,7 +247,7 @@
                     int status = sa.Right_Answer == 1 ? 1 : 0;
                     await review.UpdateReview(sa.Id, status);
                 }
-                await historiesExam.updateExamHis(item.idtest,Convert.ToDouble(TotalScore));
+                await historiesExam.updateExamHis(item.idtest,TotalScore ?? 0);
             }
 
             await infor.ShowSweetAlert("Đã lưu thay đổi thành công!", "success");
@@ -260,7 +260,7 @@
         }
     }
 
-    private long? TotalScore = 0;
+    private double? TotalScore = 0;
 
     private async Task SelectAnswer(int questionId, int answerId, bool isChecked)
     {

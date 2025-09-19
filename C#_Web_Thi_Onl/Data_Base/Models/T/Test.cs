@@ -21,7 +21,7 @@ namespace Data_Base.Models.T
         public int Id { get; set; }
         public string Test_Code { get; set; }
         public long Modifi_Time { get; set; }
-        public int Is_Check_Review { get; set; }
+        
         public int Is_Check_Cheat { get; set; }
         public int Status { get; set; }
         [ForeignKey("Package_Id")]

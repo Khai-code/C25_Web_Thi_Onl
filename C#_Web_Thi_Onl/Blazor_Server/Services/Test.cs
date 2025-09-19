@@ -157,18 +157,53 @@ namespace Blazor_Server.Services
                 };
                 var lstTestsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Test/common/get", filterRequestTest);
 
-                var test = (await lstTestsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>()).SingleOrDefault();
+                var test = await lstTestsReq.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>();
+                Data_Base.Models.T.Test T = null;
 
-                #endregion
-
-                #region vế 2: lấy Questions và Answers
-                var filterRequestQuestion = new CommonFilterRequest
+                if (test != null && test.Count > 1)
                 {
-                    Filters = new Dictionary<string, string>
+                    foreach (var item in test)
+                    {
+                        var filtreERS = new CommonFilterRequest
+                        {
+                            Filters = new Dictionary<string, string>
+                            {
+                                { "Test_Id", item.Id.ToString() },
+                            },
+                        };
+
+                        var eRS = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filtreERS);
+
+                        if (eRS.IsSuccessStatusCode)
+                        {
+                            var listERS = await eRS.Content.ReadFromJsonAsync<List<Exam_Room_Student>>();
+                            if (listERS == null || listERS.Count == 0)
+                            {
+                                T = item;
+                                break; // chỉ lấy thằng đầu tiên
+                            }
+                        }
+                    }
+                }
+                else if (test != null && test.Count == 1)
+                {
+                    T = test.First();
+                }
+                else
+                {
+                    return null;
+                }
+
+                    #endregion
+
+                    #region vế 2: lấy Questions và Answers
+                    var filterRequestQuestion = new CommonFilterRequest
+                    {
+                        Filters = new Dictionary<string, string>
                     {
                         { "Package_Id", Vpackage.Id.ToString() }
                     },
-                };
+                    };
 
                 var questionsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQuestion);
 
@@ -180,7 +215,7 @@ namespace Blazor_Server.Services
                     {
                         Filters = new Dictionary<string, string>
                         {
-                            { "Test_Id", test.Id.ToString() },
+                            { "Test_Id", T.Id.ToString() },
                             { "Student_Id", student.Id.ToString() }
                         },
                     };
@@ -189,7 +224,7 @@ namespace Blazor_Server.Services
 
                     ers = (await rep.Content.ReadFromJsonAsync<List<Exam_Room_Student>>()).SingleOrDefault();
                     await _httpClient.DeleteAsync($"https://localhost:7187/api/Exam_Room_Student/Delete/{ers.Id}");
-                    await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{test.Id}");
+                    await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{T.Id}");
                     return null;
                 }
 
@@ -203,7 +238,7 @@ namespace Blazor_Server.Services
                 {
                     Test_Question tq = new Test_Question();
                     tq.Question_Id = question.Id;
-                    tq.Test_Id = test.Id;
+                    tq.Test_Id = T.Id;
 
                     lstTq.Add(tq);
                 }
@@ -235,7 +270,7 @@ namespace Blazor_Server.Services
                     {
                         await _httpClient.DeleteAsync($"https://localhost:7187/api/Test_Question/DeleteLst?{newLstTq.Select(o => o.Id).ToList()}");
                         await _httpClient.DeleteAsync($"https://localhost:7187/api/Exam_Room_Student/Delete/{ers.Id}");
-                        await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{test.Id}");
+                        await _httpClient.DeleteAsync($"https://localhost:7187/api/Test/Delete/{T.Id}");
                         return null;
                     }
                         
@@ -252,9 +287,9 @@ namespace Blazor_Server.Services
                         SubjectName = Vpackage.Subject_Name,
                         ClassName = Vpackage.Class_Name,
                         PointTypeId = Vpackage.Point_Type_Id,
-                        TestId = test.Id,
-                        TestCode = test.Test_Code,
-                        Status = test.Status,
+                        TestId = T.Id,
+                        TestCode = T.Test_Code,
+                        Status = T.Status,
                         Questions = randomQuestionIds.Select(Que => new Question
                         {
                             QuestionId = Que.Id,
@@ -282,9 +317,9 @@ namespace Blazor_Server.Services
                         SubjectName = Vpackage.Subject_Name,
                         ClassName = Vpackage.Class_Name,
                         PointTypeId = Vpackage.Point_Type_Id,
-                        TestId = test.Id,
-                        TestCode = test.Test_Code,
-                        Status = test.Status,
+                        TestId = T.Id,
+                        TestCode = T.Test_Code,
+                        Status = T.Status,
                         Questions = randomQuestionIds.Select(Que => new Question
                         {
                             QuestionId = Que.Id,

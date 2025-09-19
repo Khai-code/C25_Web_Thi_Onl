@@ -10,6 +10,7 @@ using Data_Base.Models.R;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using Data_Base.V_Model;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -21,6 +22,8 @@ namespace Blazor_Server.Services
     public class HistoriesExam
     {
         private readonly HttpClient _httpClient;
+        public string Error {  get; set; }
+        public double doubleScore { get; set; }
         public HistoriesExam(HttpClient httpClient)
         {
             _httpClient = httpClient;
@@ -615,7 +618,7 @@ namespace Blazor_Server.Services
             var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get");
             return students.FirstOrDefault(s => s.User_Id == userId); // hoặc s.Id == userId, tuỳ DB
         }
-        public async Task<bool> UpdateReviewforteacher(int id, int status, string reply, int userid)
+        public async Task<bool> UpdateReviewforteacher(int id, int status, string reply, int userid, double totalScore)
         {
             try
             {
@@ -634,7 +637,8 @@ namespace Blazor_Server.Services
                 var response = await _httpClient.PutAsJsonAsync($"/api/Review_Tests/Pus/{id}", reviewTest);
                 if (response.IsSuccessStatusCode)
                 {
-                    return true;
+                    int TestId = (int)(await response.Content.ReadFromJsonAsync<Review_Test>()).Test_Id;
+                    return await CreateDraft(TestId, totalScore);
                 }
                 else
                 {
@@ -646,6 +650,125 @@ namespace Blazor_Server.Services
             {
                 Console.WriteLine($"Lỗi khi cập nhật đánh giá: {ex.Message}");
                 return false;
+            }
+        }
+        public async Task<bool> CreateDraft(int idtest, double totalScore)
+        {
+            bool resu = false;
+            try
+            {
+                if (idtest == null || idtest < 0)
+                {
+                    Error = "Không xác định được bài thi, xác nhận phúc thảo thất bại";
+                    return resu;
+                }
+
+                var filter = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                         { "Test_Id", idtest.ToString() },
+                    },
+                };
+
+                var lstExamRoomStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", filter);
+
+                if (!lstExamRoomStudent.IsSuccessStatusCode)
+                {
+                    Error = "Lỗi gọi api!";
+                    return resu;
+                }
+
+                var examRoomStudent = (await lstExamRoomStudent.Content.ReadFromJsonAsync<List<Exam_Room_Student>>()).Where(o => o.Is_Check_Review == 0).SingleOrDefault();
+
+                Exam_Room_Student ers = new Exam_Room_Student();
+                ers.Student_Id = examRoomStudent.Student_Id;
+                ers.Is_Check_Out = 0;
+                ers.Exam_Room_Package_Id = examRoomStudent.Exam_Room_Package_Id;
+                ers.Check_Time = examRoomStudent.Check_Time;
+                ers.Is_Check_Review = 1;
+                ers.Test_Id = examRoomStudent.Test_Id;
+
+                var examRoomStudentNew = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/Post", ers);
+                if (!examRoomStudentNew.IsSuccessStatusCode)
+                {
+                    Error = "lỗi gọi Api lưu bài thúc thảo thấy bại!";
+                    return resu;
+                }
+
+                var filterExamHist = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Exam_Room_Student_Id", examRoomStudent.Id.ToString() }
+                    },
+                };
+
+                var lstExamHist = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/common/get", filter);
+
+                if (!lstExamHist.IsSuccessStatusCode)
+                {
+                    Error = "Lỗi gọi api!!";
+                    return resu;
+                }
+
+                var examHis = (await lstExamRoomStudent.Content.ReadFromJsonAsync<List<Exam_HisTory>>()).SingleOrDefault();
+
+                Exam_HisTory eh = new Exam_HisTory();
+                eh.Exam_Room_Student_Id = (await examRoomStudentNew.Content.ReadFromJsonAsync<List<Exam_Room_Student>>()).SingleOrDefault().Id;
+                eh.Actual_Execution_Time = examHis.Actual_Execution_Time;
+                eh.Score = totalScore;
+                eh.Create_Time = examHis.Create_Time;
+
+                var examHisNew = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", eh);
+                if (!examHisNew.IsSuccessStatusCode)
+                {
+                    Error = "lỗi gọi Api lưu bài thúc thảo thấy bại!!";
+                    return resu;
+                }
+
+                var filterERSAH = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Exam_Room_Student_Id", examRoomStudent.Id.ToString() }
+                    },
+                };
+
+                var lstERSAH = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/common/get", filterERSAH);
+
+                if (!lstERSAH.IsSuccessStatusCode)
+                {
+                    Error = "Lỗi gọi api!!!";
+                    return resu;
+                }
+
+                var ERSAH = await lstExamRoomStudent.Content.ReadFromJsonAsync<List<Exam_Room_Student_Answer_HisTory>>();
+
+                List<Exam_Room_Student_Answer_HisTory> lstanHis = new List<Exam_Room_Student_Answer_HisTory>();
+                foreach (var item in ERSAH)
+                {
+                    Exam_Room_Student_Answer_HisTory anHis = new Exam_Room_Student_Answer_HisTory();
+                    anHis.Answer_Id = item.Answer_Id;
+                    anHis.Exam_Room_Student_Id = (await examRoomStudentNew.Content.ReadFromJsonAsync<List<Exam_Room_Student>>()).SingleOrDefault().Id;
+
+                    lstanHis.Add(anHis);
+                }
+
+                var lstanHisNew = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student_Answer_HisTory/PostList", lstanHis);
+                if (!lstanHisNew.IsSuccessStatusCode)
+                {
+                    Error = "lỗi gọi Api lưu bài thúc thảo thấy bại!!!";
+                    return resu;
+                }
+
+                resu = true;
+                return resu;
+            }
+            catch (Exception ex)
+            {
+                Error = ex.Message;
+                return resu;
             }
         }
         public async Task<bool> UpdateReviewAsync(int id, int status)
@@ -964,6 +1087,7 @@ namespace Blazor_Server.Services
 
                     double pointsPerQuestion = totalQuestions == 0 ? 0 : 10.0 / totalQuestions;
                     double newPoints = pointsPerQuestion * correctCount;
+                    doubleScore = newPoints;
 
                     // 7. Lọc Score cần update
                     var filterScore = new CommonFilterRequest
