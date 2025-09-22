@@ -64,10 +64,10 @@
                     </div>
                     <div class="dropdown">
                         <span class=" text-white d-flex align-items-center dropdown-toggle"
-                        type="button" id="filterDropdown"
-                        data-bs-toggle="dropdown" aria-expanded="false"
-                        title="Lọc loại gói đề"
-                        style="position: relative;">
+                              type="button" id="filterDropdown"
+                              data-bs-toggle="dropdown" aria-expanded="false"
+                              title="Lọc loại gói đề"
+                              style="position: relative;">
                             <i class="bi bi-funnel-fill me-1"></i> <span>Lọc</span>
                         </span>
                         <ul class="dropdown-menu dropdown-menu-end p-3" aria-labelledby="filterDropdown" style="min-width: 250px;">
@@ -81,10 +81,10 @@
                             {
                                 <li class="form-check mb-1">
                                     <input class="form-check-input"
-                                    type="checkbox"
-                                    id="@type"
-                                    checked="@selectedTypes.Contains(type)"
-                                    @onchange="@(() => ToggleFilter(type))" />
+                                           type="checkbox"
+                                           id="@type"
+                                           checked="@selectedTypes.Contains(type)"
+                                           @onchange="@(() => ToggleFilter(type))" />
                                     <label class="form-check-label" for="@type">@type</label>
                                 </li>
                             }
@@ -97,7 +97,7 @@
                     @foreach (var exam in FilteredPackages)
                     {
                         <li class="list-group-item d-flex justify-content-between align-items-center list-hover"
-                        @onclick="() => SelectExam(exam.Id)">
+                            @onclick="() => SelectExam(exam.Id)">
                             <div>
                                 <i class="bi bi-journal-text me-2 text-primary"></i>@exam.Name_package (@exam.Name_Package_Type)
                             </div>
@@ -122,7 +122,7 @@
 
                     <div class="card-body">
                         <input type="text" class="form-control mb-3" placeholder="🔍 Tìm kiếm bài thi..."
-                        @bind="studentSearch" />
+                               @bind="studentSearch" />
 
                         @if (listTests.Any(r => r.Idpackage == selectedExamId && MatchesSearch(r.Test_Code)))
                         {
@@ -140,7 +140,7 @@
                                         @foreach (var r in listTests)
                                         {
                                             <tr class="@((selectedStudent == r.Id ? "table-info" : "")) text-center"
-                                            @onclick="() => SelectStudent(r.Id)">
+                                                @onclick="() => SelectStudent(r.Id)">
                                                 <td>@r.Name_Student</td>
                                                 <td>@r.Test_Code</td>
                                                 <td>@($"{r.score:0.00}")</td>
@@ -205,11 +205,16 @@
                                                                         <i class="bi bi-eye"></i> Xem chi tiết
                                                                     </button>
 
+                                                                    <button class="btn btn-sm btn-outline-secondary mt-2"
+                                                                            @onclick="() => ShowReviewedHistory(r.studnetid, r.Id)">
+                                                                        <i class="bi bi-clock-history"></i> Xem lịch sử phúc khảo
+                                                                    </button>
+
                                                                 </div>
                                                             </div>
 
                                                             @if (IsAdmin || // admin luôn thấy
-                                                          (CurrentTeacherId.HasValue && r.Teacher_Id == CurrentTeacherId.Value)) // giáo viên đúng bài)
+                                                           (CurrentTeacherId.HasValue && r.Teacher_Id == CurrentTeacherId.Value)) // giáo viên đúng bài)
                                                             {
                                                                 <!-- Cột phải: Phúc khảo -->
                                                                 <div class="col-md-6 mb-3">
@@ -302,10 +307,10 @@
 
                             @if (item.question_type == 2)
                             {
-                                @if (item.statuss == 1 && (IsAdmin || (CurrentTeacherId.HasValue && item.Teacher_Id == CurrentTeacherId.Value)))
+                                @if (!viewingReviewedDetail && item.statuss == 1 && (IsAdmin || (CurrentTeacherId.HasValue && item.Teacher_Id == CurrentTeacherId.Value)))
                                 {
                                     <button class="btn btn-warning btn-sm"
-                                    @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
+                                            @onclick="() => StartEditQuestion(MapToListQuesAnsReview(item))">
                                         Sửa
                                     </button>
                                 }
@@ -356,12 +361,12 @@
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhập điểm</label>
                                                                 <input type="number"
-                                                                min="0"
-                                                                max="@item.Questions.Maximum_Score"
-                                                                step="0.1"
-                                                                value="@(answerScores.TryGetValue(ans.Id, out var s) ? s : (ans.Points_Earned?.ToString(CultureInfo.InvariantCulture) ?? ""))"
-                                                                oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString(), item.Questions.Maximum_Score))"
-                                                                class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")" />
+                                                                       min="0"
+                                                                       max="@item.Questions.Maximum_Score"
+                                                                       step="0.1"
+                                                                       value="@(answerScores.TryGetValue(ans.Id, out var s) ? s : (ans.Points_Earned?.ToString(CultureInfo.InvariantCulture) ?? ""))"
+                                                                       oninput="@((ChangeEventArgs e) => UpdateAnswerScore(ans.Id, e.Value?.ToString(), item.Questions.Maximum_Score))"
+                                                                       class="form-control form-control-sm @(errorMessages.ContainsKey(ans.Id) ? "is-invalid" : "")" />
 
                                                                 @if (errorMessages.TryGetValue(ans.Id, out var msg))
                                                                 {
@@ -372,9 +377,9 @@
                                                             <div class="col-md-6 mb-2">
                                                                 <label class="form-label">Nhận xét</label>
                                                                 <input type="text"
-                                                                @bind="answerComments[item.Questions.Id]"
-                                                                class="form-control form-control-sm"
-                                                                placeholder="Nhận xét tại đây..." />
+                                                                       @bind="answerComments[item.Questions.Id]"
+                                                                       class="form-control form-control-sm"
+                                                                       placeholder="Nhận xét tại đây..." />
                                                             </div>
                                                         </div>
                                                     }
@@ -382,7 +387,7 @@
                                                     {
                                                         <div class="row">
                                                             <div class="col-md-6 mb-2">
-                                                                <label class="form-label">Kết quả</label>   
+                                                                <label class="form-label">Kết quả</label>
                                                                 <span>@ans.Points_Earned</span>
                                                             </div>
                                                             <div class="col-md-6 mb-2">
@@ -466,16 +471,16 @@
             <div class="modal-content shadow-lg rounded-4 border-0 position-relative">
                 <!-- Nút đóng (X) -->
                 <button type="button"
-                class="btn-close position-absolute top-0 end-0 m-3"
-                aria-label="Close"
-                @onclick="CancelEdit">
+                        class="btn-close position-absolute top-0 end-0 m-3"
+                        aria-label="Close"
+                        @onclick="CancelEdit">
                 </button>
                 <form onsubmit="return false" class="p-4">
                     <div class="mb-4">
                         <label class="form-label fw-bold fs-5">Câu hỏi:</label>
                         <input type="text" class="form-control form-control-lg"
-                        @bind="lstQuesAns.QuestionName"
-                        placeholder="Nhập nội dung câu hỏi..." />
+                               @bind="lstQuesAns.QuestionName"
+                               placeholder="Nhập nội dung câu hỏi..." />
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold fs-5">Danh sách đáp án:</label>
@@ -485,16 +490,16 @@
                             <div class="d-flex mb-3 align-items-center">
                                 <span class="me-2 fw-bold">@((char)(65 + i)).</span>
                                 <input type="text"
-                                class="form-control me-3"
-                                value="@lstQuesAns.Answers[i].AnswersName"/>
+                                       class="form-control me-3"
+                                       value="@lstQuesAns.Answers[i].AnswersName" />
                                 @if (lstQuesAns.QuestionTypeId == 1 || lstQuesAns.QuestionTypeId == 2)
                                 {
                                     <div class="form-check">
                                         <input class="form-check-input"
-                                        type="radio"
-                                        name="correctAnswer"
-                                        checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
-                                        @onclick="() => SetCorrectAnswer(index)" />
+                                               type="radio"
+                                               name="correctAnswer"
+                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                               @onclick="() => SetCorrectAnswer(index)" />
                                         <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
                                     </div>
                                 }
@@ -502,9 +507,9 @@
                                 {
                                     <div class="form-check">
                                         <input class="form-check-input"
-                                        type="checkbox"
-                                        checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
-                                        @onclick="() => ToggleCorrectAnswer(index)" />
+                                               type="checkbox"
+                                               checked="@(lstQuesAns.Answers[i].Right_Answer == 1)"
+                                               @onclick="() => ToggleCorrectAnswer(index)" />
                                         <label class="form-check-label ms-1 text-success fw-semibold">✔️ Đúng</label>
                                     </div>
                                 }
@@ -521,13 +526,13 @@
 
                     <div class="d-flex justify-content-end mt-4">
                         <button type="button"
-                        class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill"
-                        @onclick="CancelEdit">
+                                class="btn btn-outline-secondary me-2 px-4 py-2 rounded-pill"
+                                @onclick="CancelEdit">
                             ❌ Hủy
                         </button>
                         <button type="button"
-                        class="btn btn-primary px-4 py-2 rounded-pill"
-                        @onclick="SaveEditedQuestion">
+                                class="btn btn-primary px-4 py-2 rounded-pill"
+                                @onclick="SaveEditedQuestion">
                             💾 Lưu
                         </button>
                     </div>
@@ -550,7 +555,7 @@
                     <div class="mb-3">
                         <label class="form-label">Chọn giáo viên</label>
                         <select class="form-select"
-                        @bind="selectedTeacherIdForAssign">
+                                @bind="selectedTeacherIdForAssign">
                             <option value="0">-- Chọn giáo viên --</option>
                             @foreach (var t in teachers)
                             {
@@ -570,6 +575,69 @@
         </div>
     </div>
 }
+
+@if (showReviewedModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">Lịch sử phúc khảo</h5>
+                    <button type="button" class="btn-close" @onclick="CloseReviewedModal"></button>
+                </div>
+                <div class="modal-body">
+                    @if (reviewedTests != null && reviewedTests.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr class="text-center">
+                                        <th>Lần phúc khảo</th>
+                                        <th>Mã bài thi</th>
+                                        <th>Điểm (bản phúc khảo)</th>
+                                        <th>Điểm hiện tại</th>
+                                        <th>Thời gian nộp</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (var i = 0; i < reviewedTests.Count; i++)
+                                    {
+                                        var t = reviewedTests[i];
+                                        <tr class="text-center">
+                                            <td>@(i + 1)</td>
+                                            <td>@t.Test_Code</td>
+                                            <td>@($"{t.score:0.00}")</td>
+                                            <td>@($"{t.Point:0.00}")</td>
+                                            <td>@t.End_Time</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary"
+                                                        title="Xem chi tiết bản phúc khảo"
+                                                        @onclick="() => ShowReviewedQuestions(t.ExamRoomStudentId)">
+                                                    <i class="bi bi-eye"></i> Xem chi tiết
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mb-0">
+                            Chưa có bài nào được phúc khảo cho học sinh này.
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CloseReviewedModal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 
 
 @code
@@ -604,42 +672,42 @@
     private ListQuesAnsReview MapToListQuesAnsReview(listquestion item)
     {
         return new ListQuesAnsReview
-                {
-                    QuestionId = item.Questions.Id,
-                    QuestionName = item.Questions.Question_Name,
-                    QuestionTypeId = item.question_type,
-                    PackageId = item.Questions.Package_Id,
-                    MaximumScore = item.Questions.Maximum_Score,
+            {
+                QuestionId = item.Questions.Id,
+                QuestionName = item.Questions.Question_Name,
+                QuestionTypeId = item.question_type,
+                PackageId = item.Questions.Package_Id,
+                MaximumScore = item.Questions.Maximum_Score,
             // Leva = item.question_lever,
-                    Answers = item.Answers?.Select(a => new AnswerReview
-                    {
-                        AnswerId = a.Id,
-                        AnswersName = a.Answers_Name,
-                        Right_Answer = a.Right_Answer,
-                        QuestionId = a.Question_Id
-                    }).ToList() ?? new List<AnswerReview>()
-                };
+                Answers = item.Answers?.Select(a => new AnswerReview
+                {
+                    AnswerId = a.Id,
+                    AnswersName = a.Answers_Name,
+                    Right_Answer = a.Right_Answer,
+                    QuestionId = a.Question_Id
+                }).ToList() ?? new List<AnswerReview>()
+            };
     }
 
 
     private void StartEditQuestion(ListQuesAnsReview question)
     {
         lstQuesAns = new ListQuesAnsReview
+            {
+                QuestionId = question.QuestionId,
+                QuestionName = question.QuestionName,
+                QuestionTypeId = question.QuestionTypeId,
+                PackageId = question.PackageId,
+                MaximumScore = question.MaximumScore,
+                Leva = question.Leva,
+                Answers = question.Answers.Select(a => new AnswerReview
                 {
-                    QuestionId = question.QuestionId,
-                    QuestionName = question.QuestionName,
-                    QuestionTypeId = question.QuestionTypeId,
-                    PackageId = question.PackageId,
-                    MaximumScore = question.MaximumScore,
-                    Leva = question.Leva,
-                    Answers = question.Answers.Select(a => new AnswerReview
-                    {
-                        AnswerId = a.AnswerId,
-                        AnswersName = a.AnswersName,
-                        Right_Answer = a.Right_Answer,
-                        QuestionId = a.QuestionId
-                    }).ToList()
-                };
+                    AnswerId = a.AnswerId,
+                    AnswersName = a.AnswersName,
+                    Right_Answer = a.Right_Answer,
+                    QuestionId = a.QuestionId
+                }).ToList()
+            };
         validationMessage = "";
         isEditing = true;
     }
@@ -752,7 +820,7 @@
                 toastService.ShowSuccess("✅ Cập nhật thành công");
                 if (selectedExamId.HasValue)
                 {
-                    await LoadListTests(selectedExamId.Value); 
+                    await LoadListTests(selectedExamId.Value);
                 }
             }
             else
@@ -871,86 +939,86 @@
         }
     }
 
-        private void ToggleFilter(string type)
+    private void ToggleFilter(string type)
+    {
+        if (selectedTypes.Contains(type))
         {
-            if (selectedTypes.Contains(type))
-            {
-                selectedTypes.Remove(type);
-                listTests = new List<listTest>();
-                selectedExamId = 0;
-            }
-
-            else
-                selectedTypes.Add(type);
+            selectedTypes.Remove(type);
+            listTests = new List<listTest>();
+            selectedExamId = 0;
         }
 
-        private void ToggleSelectAll()
+        else
+            selectedTypes.Add(type);
+    }
+
+    private void ToggleSelectAll()
+    {
+        if (selectedTypes.Count < packageTypes.Count)
         {
-            if (selectedTypes.Count < packageTypes.Count)
-            {
-                selectedTypes = packageTypes.ToHashSet(); // chọn hết
-                listTests = new List<listTest>();
-                selectedExamId = 0;
-            }
-
-            else
-            {
-                selectedTypes.Clear();
-                listTests = new List<listTest>();
-                selectedExamId = 0;// bỏ chọn hết
-            }
-
+            selectedTypes = packageTypes.ToHashSet(); // chọn hết
+            listTests = new List<listTest>();
+            selectedExamId = 0;
         }
 
-        private IEnumerable<lispackage> FilteredPackages =>
-            selectedTypes.Count == 0
-                ? Enumerable.Empty<lispackage>()
-                : packagess.Where(p => selectedTypes.Contains(p.Name_Package_Type));
-        private async Task OnSearch()
+        else
         {
-            if (selectedClassId <= 0)
-            {
-                toastService.ShowWarning("vui lòng chọn lớp!");
-                return;
-            }
-
-            if (selectedSubjectId <= 0)
-            {
-                toastService.ShowWarning("vui lòng chọn môn học!");
-                return;
-            }
-
-            if (startDate == default || endDate == default)
-            {
-                toastService.ShowWarning("vui lòng chọn khoảng thời gian hợp lệ!");
-                return;
-            }
-
-            if (startDate > endDate)
-            {
-                toastService.ShowWarning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
-                return;
-            }
-
-            packagess = await HistoriesExam.GetAllHistories(selectedClassId, selectedSubjectId, startDate, endDate);
-            selectedExamId = null;
-            packageTypes = packagess.Select(p => p.Name_Package_Type).Distinct().OrderBy(x => x).ToList();
-            selectedTypes = packageTypes.ToHashSet();
-            if (packagess.Count == 0)
-            {
-                toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
-            }
+            selectedTypes.Clear();
+            listTests = new List<listTest>();
+            selectedExamId = 0;// bỏ chọn hết
         }
 
-        private async Task<bool> UpdateScoreByTestId(int testId, double totalScore)
+    }
+
+    private IEnumerable<lispackage> FilteredPackages =>
+        selectedTypes.Count == 0
+            ? Enumerable.Empty<lispackage>()
+            : packagess.Where(p => selectedTypes.Contains(p.Name_Package_Type));
+    private async Task OnSearch()
+    {
+        if (selectedClassId <= 0)
         {
-            // Gọi đúng API update Score với TestId truyền vào
-            var result = await HistoriesExam.SaveAllScoresByTestId(testId, totalScore);
-            return result;
+            toastService.ShowWarning("vui lòng chọn lớp!");
+            return;
         }
 
-        private async Task updateexamhis(int id, double score)
+        if (selectedSubjectId <= 0)
         {
+            toastService.ShowWarning("vui lòng chọn môn học!");
+            return;
+        }
+
+        if (startDate == default || endDate == default)
+        {
+            toastService.ShowWarning("vui lòng chọn khoảng thời gian hợp lệ!");
+            return;
+        }
+
+        if (startDate > endDate)
+        {
+            toastService.ShowWarning("Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc!");
+            return;
+        }
+
+        packagess = await HistoriesExam.GetAllHistories(selectedClassId, selectedSubjectId, startDate, endDate);
+        selectedExamId = null;
+        packageTypes = packagess.Select(p => p.Name_Package_Type).Distinct().OrderBy(x => x).ToList();
+        selectedTypes = packageTypes.ToHashSet();
+        if (packagess.Count == 0)
+        {
+            toastService.ShowInfo("Không có bài thi nào trong khoảng thời gian này!");
+        }
+    }
+
+    private async Task<bool> UpdateScoreByTestId(int testId, double totalScore)
+    {
+        // Gọi đúng API update Score với TestId truyền vào
+        var result = await HistoriesExam.SaveAllScoresByTestId(testId, totalScore);
+        return result;
+    }
+
+    private async Task updateexamhis(int id, double score)
+    {
 
         if (invalidAnswerIds.Count > 0)
         {
@@ -958,102 +1026,110 @@
             return;
         }
 
-            if (score > 10)
-            {
-                toastService.ShowWarning("⚠️ Điểm bạn nhập vượt quá thang điểm 10!");
-                return;
-            }
-
-            var respon = await UpdateScoreByTestId(id, score); // Chỉ gọi update Score
-            var resspon = await SubmitComments();
-
-            if (respon && resspon)
-            {
-                toastService.ShowSuccess("✅ Cập nhật điểm thành công!");
-            }
-            else
-            {
-                toastService.ShowError("❌ Cập nhật điểm thất bại! Vui lòng thử lại.");
-            }
-        }
-
-
-        private async Task<bool> SubmitComments()
+        if (score > 10)
         {
-            foreach (var entry in answerComments)
+            toastService.ShowWarning("⚠️ Điểm bạn nhập vượt quá thang điểm 10!");
+            return;
+        }
+
+        var respon = await UpdateScoreByTestId(id, score); // Chỉ gọi update Score
+        var resspon = await SubmitComments();
+
+        if (respon && resspon)
+        {
+            toastService.ShowSuccess("✅ Cập nhật điểm thành công!");
+        }
+        else
+        {
+            toastService.ShowError("❌ Cập nhật điểm thất bại! Vui lòng thử lại.");
+        }
+    }
+
+
+    private async Task<bool> SubmitComments()
+    {
+        foreach (var entry in answerComments)
+        {
+            int answerId = entry.Key;
+            string? comment = entry.Value;
+
+            bool success = await HistoriesExam.updatecomemt(answerId, comment);
+
+            if (!success)
             {
-                int answerId = entry.Key;
-                string? comment = entry.Value;
-
-                bool success = await HistoriesExam.updatecomemt(answerId, comment);
-
-                if (!success)
-                {
-                    Console.WriteLine($"Không thể cập nhật comment cho AnswerId {answerId}");
-                    return false;
-                }
+                Console.WriteLine($"Không thể cập nhật comment cho AnswerId {answerId}");
+                return false;
             }
-
-            return true;
         }
 
-        private async Task gettest(int id)
+        return true;
+    }
+
+    private async Task gettest(int id)
+    {
+        try
         {
-            try
-            {
-                listTests = await HistoriesExam.GetTests(id);
-                teachers = await HistoriesExam.GetListTeacherSubJect(id); // 🔹 nạp danh sách GV của package
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Lỗi khi lấy bài thi: {ex.Message}");
-            }
-
+            listTests = await HistoriesExam.GetTests(id);
+            teachers = await HistoriesExam.GetListTeacherSubJect(id); // 🔹 nạp danh sách GV của package
         }
-        bool showQuestionModal = false;
-        List<listquestion> selectedQuestions;
-
-        async Task ShowQuestions(int testId)
+        catch (Exception ex)
         {
-            selectedQuestions = await HistoriesExam.GetQuestions(testId);
-            answerComments = selectedQuestions
-          .Where(x => x.Questions != null)
-          .ToDictionary(
-              x => x.Questions.Id,
-              x => x.Questions.Note ?? ""
-          );
-            idtest = testId;
-            totalScore = listTests.FirstOrDefault()?.score ?? 0;
-            answerScores = new Dictionary<int, string>();
-            showQuestionModal = true;
+            Console.WriteLine($"Lỗi khi lấy bài thi: {ex.Message}");
         }
 
-        void CloseModal()
+    }
+    bool showQuestionModal = false;
+    List<listquestion> selectedQuestions;
+
+    async Task ShowQuestions(int testId)
+    {
+        selectedQuestions = await HistoriesExam.GetQuestions(testId);
+        answerComments = selectedQuestions
+      .Where(x => x.Questions != null)
+      .ToDictionary(
+          x => x.Questions.Id,
+          x => x.Questions.Note ?? ""
+      );
+        idtest = testId;
+        totalScore = listTests.FirstOrDefault()?.score ?? 0;
+        answerScores = new Dictionary<int, string>();
+        showQuestionModal = true;
+    }
+
+    void CloseModal()
+    {
+        showQuestionModal = false;
+        selectedQuestions = null;
+
+        // nếu đi từ lịch sử thì bật lại modal lịch sử
+        if (reopenReviewedAfterQuestions)
         {
-            showQuestionModal = false;
-            selectedQuestions = null;
+            showReviewedModal = true;
+            reopenReviewedAfterQuestions = false;
         }
+        viewingReviewedDetail = false;
+    }
 
-        int? selectedExamId = null;
-        int? selectedStudent = null;
-        string studentSearch = "";
+    int? selectedExamId = null;
+    int? selectedStudent = null;
+    string studentSearch = "";
 
-        private async Task SelectExam(int id)
-        {
-            await gettest(id);
-            selectedExamId = selectedExamId == id ? null : id;
-            selectedStudent = null;
-            studentSearch = "";
+    private async Task SelectExam(int id)
+    {
+        await gettest(id);
+        selectedExamId = selectedExamId == id ? null : id;
+        selectedStudent = null;
+        studentSearch = "";
 
-        }
+    }
 
-        void SelectStudent(int name)
-        {
-            selectedStudent = selectedStudent == name ? null : name;
-        }
+    void SelectStudent(int name)
+    {
+        selectedStudent = selectedStudent == name ? null : name;
+    }
 
-        bool MatchesSearch(string name) =>
-            string.IsNullOrWhiteSpace(studentSearch) || name.Contains(studentSearch, StringComparison.OrdinalIgnoreCase);
+    bool MatchesSearch(string name) =>
+        string.IsNullOrWhiteSpace(studentSearch) || name.Contains(studentSearch, StringComparison.OrdinalIgnoreCase);
 
 
     // === Phân quyền (modal) ===
@@ -1110,6 +1186,43 @@
     {
         var t = teachers.FirstOrDefault(x => x.Id == teacherId);
         return t?.FullName ?? "Chưa rõ";
+    }
+
+    // === Lịch sử phúc khảo ===
+    bool showReviewedModal = false;
+    List<listTest> reviewedTests = new();
+    int? reviewedSelectedErsId = null;
+
+    private async Task ShowReviewedHistory(int studentId, int testId)
+    {
+        reviewedTests = await HistoriesExam.GetReviewedTestsForStudentIdAndTestId(studentId, testId) ?? new();
+        showReviewedModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseReviewedModal()
+    {
+        showReviewedModal = false;
+        reviewedTests = new();
+        reviewedSelectedErsId = null;
+    }
+
+    bool viewingReviewedDetail = false;
+    bool reopenReviewedAfterQuestions = false;
+
+    // Mở chi tiết câu hỏi của bản phúc khảo (theo ERS Id)
+    async Task ShowReviewedQuestions(int examRoomStudentId)
+    {
+        showReviewedModal = false;
+        viewingReviewedDetail = true;
+        reopenReviewedAfterQuestions = true;
+        selectedQuestions = await HistoriesExam.GetQuestionsByExamRoomStudentId(examRoomStudentId);
+        // tái sử dụng modal câu hỏi hiện có
+        idtest = reviewedTests.FirstOrDefault(x => x.ExamRoomStudentId == examRoomStudentId)?.Id ?? 0;
+        totalScore = reviewedTests.FirstOrDefault(x => x.ExamRoomStudentId == examRoomStudentId)?.score ?? 0;
+        answerScores = new Dictionary<int, string>();
+        showQuestionModal = true;
+        StateHasChanged();
     }
 
 }
