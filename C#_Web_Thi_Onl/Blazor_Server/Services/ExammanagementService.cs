@@ -247,9 +247,28 @@ namespace Blazor_Server.Services
                                   ?? new List<Exam_Room>();
                 var exroom = Listexamroom.FirstOrDefault(x => x.Id == expk.Exam_Room_Id);
                 if (exroom == null) return new List<listStudent>();
+                var filterERS = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Is_Check_Out", "0" }
+                    },
+                };
+                var ListexroomstudentRepo = await _httpClient.PostAsJsonAsync("/api/Exam_Room_Student/common/get", filterERS);
+                if (!ListexroomstudentRepo.IsSuccessStatusCode)
+                {
+                    return new List<listStudent>();
+                }                     
+                var ERSs = await ListexroomstudentRepo.Content.ReadFromJsonAsync<List<Exam_Room_Student>>();
 
-                var Listexroomstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get")
-                                       ?? new List<Exam_Room_Student>();
+                if(ERSs == null || ERSs.Count == 0)
+                {
+                    return new List<listStudent>();
+                }
+
+                List<int> testIds = ERSs.Select(o => o.Test_Id).ToList();
+
+                test = test.Where(o => testIds.Contains(o.Id)).ToList();
 
                 var Listexhistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get")
                                      ?? new List<Exam_HisTory>();
@@ -275,8 +294,8 @@ namespace Blazor_Server.Services
                     Exam_Room_Student exstd = null;
                     if (studentTest != null)
                     {
-                        exstd = Listexroomstudent.FirstOrDefault(x =>
-                            x.Exam_Room_Package_Id == expk.Id && x.Student_Id == studentTest.Student_Id);
+                        exstd = ERSs.FirstOrDefault(x =>
+                            x.Exam_Room_Package_Id == expk.Id && x.Student_Id == studentTest.Student_Id && x.Is_Check_Out == 0);
                     }
 
                     string status = "Chưa thi";

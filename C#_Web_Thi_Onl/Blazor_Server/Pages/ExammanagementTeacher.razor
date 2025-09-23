@@ -255,8 +255,8 @@
                                         <i class="fas fa-times me-2"></i> Hủy thi
                                     </button>
                                 }
-                                @if ((student.Is_cheat == 1 || student.Is_cheat == 3) && student.Is_checkOut == 0)
-                                {
+                               @*  @if ((student.Is_cheat == 1 || student.Is_cheat == 3) && student.Is_checkOut == 0)
+                                { *@
                                     <!-- Nút Kích hoạt thi -->
                                     <button @onclick="() => openModalTests(student.IdTest)"
                                             type="button"
@@ -264,7 +264,7 @@
                                         <i class="bi bi-play-circle-fill me-2"></i>
                                         Kích hoạt
                                     </button>
-                                }
+                                @* } *@
 
                             </div>
                         </li>
