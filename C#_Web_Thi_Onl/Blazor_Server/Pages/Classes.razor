@@ -1233,33 +1233,43 @@
         }
     }
 
-    private async Task<bool> CheckIfUserExists(string userName, string phoneNumber, string email)
+    private async Task<bool> CheckIfUserExists(string userName, string phoneNumber, string email, int? currentUserId = null)
     {
         try
         {
-            // Kiểm tra trùng tài khoản
+            // Lấy tất cả user
             var existingUser = await ClassService.GetAllUser();
-            if (existingUser.Any(u => u.User_Name.Equals(userName, StringComparison.OrdinalIgnoreCase)))
+            if (existingUser == null || !existingUser.Any())
+                return false;
+
+            // Kiểm tra trùng username (loại trừ chính nó nếu update)
+            if (existingUser.Any(u =>
+                u.User_Name.Equals(userName, StringComparison.OrdinalIgnoreCase) &&
+                (currentUserId == null || u.Id != currentUserId)))
             {
                 toastService.ShowWarning("Tài khoản đã tồn tại.");
                 return true;
             }
 
             // Kiểm tra trùng số điện thoại
-            if (existingUser.Any(u => u.Phone_Number == phoneNumber))
+            if (existingUser.Any(u =>
+                u.Phone_Number == phoneNumber &&
+                (currentUserId == null || u.Id != currentUserId)))
             {
                 toastService.ShowWarning("Số điện thoại đã tồn tại.");
                 return true;
             }
 
             // Kiểm tra trùng email
-            if (existingUser.Any(u => u.Email == email))
+            if (existingUser.Any(u =>
+                u.Email == email &&
+                (currentUserId == null || u.Id != currentUserId)))
             {
                 toastService.ShowWarning("Email đã tồn tại.");
                 return true;
             }
 
-            return false; // Nếu không trùng
+            return false; // Không trùng
         }
         catch (Exception ex)
         {
@@ -1287,11 +1297,7 @@
                 return;
             }
 
-            bool isUserExist = await CheckIfUserExists(currentStudent.User_Name, currentStudent.Phone_Number, currentStudent.Email);
-            if (isUserExist)
-            {
-                return;
-            }
+           
 
             currentStudent.Data_Of_Birth = ConvertDateTimeToLong(birthDate.Value) ?? 0;
             currentStudent.Last_Mordification_Time = ConvertDateTimeToLong(DateTime.Now) ?? 0;
@@ -1302,6 +1308,12 @@
 
             if (isEditMode)
             {
+                if (await CheckIfUserExists(currentStudent.User_Name, currentStudent.Phone_Number, currentStudent.Email, currentStudent.Id))
+                {
+                    toastService.ShowError("Không thể cập nhật học sinh.");
+                    return; // Có trùng với người khác -> dừng
+                }
+
                 // ✅ Gọi hàm cập nhật
                 success = await ClassService.UpdateStudent(currentStudent.Id, currentStudent, selectedFile);
                 if (success)
@@ -1316,6 +1328,11 @@
             }
             else
             {
+                bool isUserExist = await CheckIfUserExists(currentStudent.User_Name, currentStudent.Phone_Number, currentStudent.Email);
+                if (isUserExist)
+                {
+                    return;
+                }
                 // ✅ Gọi hàm tạo mới
                 var studentId = await ClassService.CreateStuent(currentStudent, selectedFile);
                 if (studentId == null)
