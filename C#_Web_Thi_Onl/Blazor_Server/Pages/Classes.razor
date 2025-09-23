@@ -1233,6 +1233,42 @@
         }
     }
 
+    private async Task<bool> CheckIfUserExists(string userName, string phoneNumber, string email)
+    {
+        try
+        {
+            // Kiểm tra trùng tài khoản
+            var existingUser = await ClassService.GetAllUser();
+            if (existingUser.Any(u => u.User_Name.Equals(userName, StringComparison.OrdinalIgnoreCase)))
+            {
+                toastService.ShowWarning("Tài khoản đã tồn tại.");
+                return true;
+            }
+
+            // Kiểm tra trùng số điện thoại
+            if (existingUser.Any(u => u.Phone_Number == phoneNumber))
+            {
+                toastService.ShowWarning("Số điện thoại đã tồn tại.");
+                return true;
+            }
+
+            // Kiểm tra trùng email
+            if (existingUser.Any(u => u.Email == email))
+            {
+                toastService.ShowWarning("Email đã tồn tại.");
+                return true;
+            }
+
+            return false; // Nếu không trùng
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError($"Lỗi khi kiểm tra trùng tài khoản: {ex.Message}");
+            return true;
+        }
+    }
+
+
     private async Task SaveStudent()
     {
         try
@@ -1248,6 +1284,12 @@
             if (!birthDate.HasValue || birthDate.Value.Year < 1900)
             {
                 toastService.ShowWarning("Ngày sinh không hợp lệ.");
+                return;
+            }
+
+            bool isUserExist = await CheckIfUserExists(currentStudent.User_Name, currentStudent.Phone_Number, currentStudent.Email);
+            if (isUserExist)
+            {
                 return;
             }
 
@@ -1590,6 +1632,46 @@
     private void CloseStudentDetailScoreModal()
     {
         showStudentDetailModal = false;
+    }
+
+    private async Task<bool> CheckIfExcelDataExists(List<User> students)
+    {
+        try
+        {
+            // Lấy tất cả user trong hệ thống
+            var existingUsers = await ClassService.GetAllUser();
+
+            foreach (var student in students)
+            {
+                // Kiểm tra trùng tài khoản
+                if (existingUsers.Any(u => u.User_Name.Equals(student.User_Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    toastService.ShowWarning($"Tài khoản {student.User_Name} đã tồn tại.");
+                    return true;
+                }
+
+                // Kiểm tra trùng số điện thoại
+                if (existingUsers.Any(u => u.Phone_Number == student.Phone_Number))
+                {
+                    toastService.ShowWarning($"Số điện thoại {student.Phone_Number} đã tồn tại.");
+                    return true;
+                }
+
+                // Kiểm tra trùng email
+                if (existingUsers.Any(u => u.Email == student.Email))
+                {
+                    toastService.ShowWarning($"Email {student.Email} đã tồn tại.");
+                    return true;
+                }
+            }
+
+            return false; // Không có trùng lặp
+        }
+        catch (Exception ex)
+        {
+            toastService.ShowError($"Lỗi khi kiểm tra dữ liệu Excel: {ex.Message}");
+            return true;
+        }
     }
 
     private async Task HandleFileSelectedExcel(InputFileChangeEventArgs e)

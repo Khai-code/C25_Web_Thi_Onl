@@ -93,6 +93,26 @@ namespace ASP.NET.Controllers.E
                         }
                     }
 
+                    var userNameExists = await db_Context.Users.AnyAsync(u => u.User_Name == sheet.Cells[row, 3].Text.Trim());
+                    var phoneNumberExists = await db_Context.Users.AnyAsync(u => u.Phone_Number == sheet.Cells[row, 7].Text.Trim());
+                    var emailExists = await db_Context.Users.AnyAsync(u => u.Email == sheet.Cells[row, 5].Text.Trim());
+
+                    if (userNameExists)
+                    {
+                        return BadRequest($"Tài khoản {sheet.Cells[row, 3].Text?.Trim()} đã tồn tại.");
+                    }
+
+                    if (phoneNumberExists)
+                    {
+                        return BadRequest($"Số điện thoại {sheet.Cells[row, 7].Text?.Trim()} đã tồn tại.");
+                    }
+
+                    if (emailExists)
+                    {
+                        return BadRequest($"Email {sheet.Cells[row, 5].Text?.Trim()} đã tồn tại.");
+                    }
+
+
                     studentsDto.Add(new UserStudentImportDTO
                     {
                         Full_Name = sheet.Cells[row, 2].Text?.Trim(),
