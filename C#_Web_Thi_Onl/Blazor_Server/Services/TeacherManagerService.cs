@@ -18,69 +18,54 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
-        public async Task<bool> CheckAccTeacher(listteacher user)
+        public async Task<bool> CheckAccTeacher(listteacher user, int? currentId = null)
         {
-            bool result = true;
             try
             {
                 if (user == null)
                 {
-                    result = false;
                     ErrorMes = "Không có thông tin giáo viên";
-                    return result;
+                    return false;
                 }
 
                 var filterUser = new CommonFilterRequest
                 {
                     Filters = new Dictionary<string, string>
-                    {
-                         { "Role_Id", "2" },
-                    },
+            {
+                { "Role_Id", "2" },
+            },
                 };
 
                 var lstUserResul = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/User/common/get", filterUser);
 
                 if (!lstUserResul.IsSuccessStatusCode)
                 {
-                    result = false;
                     ErrorMes = "Gọi api kiểm tra thông tin giáo viên thất bại";
-                    return result;
+                    return false;
                 }
 
-                List<User> lstUser = await lstUserResul.Content.ReadFromJsonAsync<List<Data_Base.Models.U.User>>();
+                var lstUser = await lstUserResul.Content.ReadFromJsonAsync<List<User>>();
 
-                if (lstUser != null || lstUser.Count > 0)
+                if (lstUser != null && lstUser.Count > 0)
                 {
-                    foreach (var item in lstUser)
+                    if (lstUser.Any(u => u.User_Name == user.User_name && u.Id != currentId))
                     {
-                        if (item.User_Name == user.User_name)
-                        {
-                            result = false;
-                            ErrorMes = "Tên tài khoản đã tồn tại";
-                            return result;
-                        }
-                        else if (item.Email == user.Email)
-                        {
-                            result = false;
-                            ErrorMes = "Email đã được sử dụng";
-                            return result;
-                        }
-                        else if (item.Phone_Number == user.Phone_Number)
-                        {
-                            result = false;
-                            ErrorMes = "Số điện thoại đã được sử dụng";
-                            return result;
-                        }
-                        else if (item.Phone_Number == user.Phone_Number)
-                        {
-                            result = false;
-                            ErrorMes = "Số điện thoại đã được sử dụng";
-                            return result;
-                        }
+                        ErrorMes = "Tên tài khoản đã tồn tại";
+                        return false;
+                    }
+                    if (lstUser.Any(u => u.Email == user.Email && u.Id != currentId))
+                    {
+                        ErrorMes = "Email đã được sử dụng";
+                        return false;
+                    }
+                    if (lstUser.Any(u => u.Phone_Number == user.Phone_Number && u.Id != currentId))
+                    {
+                        ErrorMes = "Số điện thoại đã được sử dụng";
+                        return false;
                     }
                 }
 
-                return result;
+                return true;
             }
             catch (Exception ex)
             {
@@ -88,6 +73,7 @@ namespace Blazor_Server.Services
                 return false;
             }
         }
+
         public async Task<List<Subject>> GetAllSubject()
         {
             var listsubject = await _httpClient.GetFromJsonAsync<List<Subject>>("/api/Subject/Get");

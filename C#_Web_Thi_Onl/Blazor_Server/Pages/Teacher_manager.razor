@@ -341,14 +341,33 @@
 
     private void EditTeacher(int id)
     {
-        currentTeacher = allTeachers.FirstOrDefault(t => t.Id == id);
-        if (currentTeacher != null)
+        var teacher = allTeachers.FirstOrDefault(t => t.Id == id);
+        if (teacher != null)
         {
+            // Tạo bản sao để edit, tránh trỏ trực tiếp vào list
+            currentTeacher = new listteacher
+                {
+                    Id = teacher.Id,
+                    User_name = teacher.User_name,
+                    Email = teacher.Email,
+                    Phone_Number = teacher.Phone_Number,
+                    Full_Name = teacher.Full_Name,
+                    Avatar = teacher.Avatar,
+                    PassWord = teacher.PassWord,
+                    date_of_bith = teacher.date_of_bith,
+                    Address = teacher.Address,
+                    Status = teacher.Status,
+                    subject_name = teacher.subject_name,
+                    idsubject = teacher.idsubject,
+                // copy thêm các field cần thiết khác...
+                };
+
             avatarPreview = currentTeacher.Avatar;
             isEditing = true;
             isFormVisible = true;
         }
     }
+
     private IBrowserFile selectedFile;
     private string? avatarPreview;
     private string? avatarBase64;
@@ -406,30 +425,52 @@
                 return;
             }
 
-            bool checkAcc = await TeacherMangersee.CheckAccTeacher(currentTeacher);
-
-            if (!checkAcc)
-            {
-                toastService.ShowError(TeacherMangersee.ErrorMes);
-                return;
-            }
+           
+            
 
             if (isEditing)
             {
-                var updateResult = await TeacherMangersee.UpdateTeacherAsync(currentTeacher.Id, currentTeacher, selectedFile);
-                if (updateResult)
-                {
-                    await notification.ShowSweetAlert($"Cập nhật giáo viên {currentTeacher.Full_Name} thành công!", "success");
-                    allTeachers = await TeacherMangersee.GetAllTeacher();
-                }
-                else
-                {
-                    await notification.ShowSweetAlert("Cập nhật giáo viên thất bại.", "error");
-                    allTeachers = await TeacherMangersee.GetAllTeacher();
-                }
+                
+                    bool checkAccs = await TeacherMangersee.CheckAccTeacher(currentTeacher, currentTeacher.Id);
+
+
+                if (!checkAccs)
+                    {
+                        // Có giáo viên khác trùng => Không cho update
+                        toastService.ShowError(TeacherMangersee.ErrorMes);
+                        return;
+                    }
+                    else
+                    {
+                        var updateResult = await TeacherMangersee.UpdateTeacherAsync(currentTeacher.Id, currentTeacher, selectedFile);
+                        if (updateResult)
+                        {
+                            await notification.ShowSweetAlert($"Cập nhật giáo viên {currentTeacher.Full_Name} thành công!", "success");
+                            allTeachers = await TeacherMangersee.GetAllTeacher();
+                            currentTeacher = new listteacher();
+                            isEditing = false;
+                            
+                        }
+                        else
+                        {
+                            await notification.ShowSweetAlert("Cập nhật giáo viên thất bại.", "error");
+                            allTeachers = await TeacherMangersee.GetAllTeacher();
+                      
+                        }
+                    }
+                
+
+
+                
             }
             else 
             {
+                bool checkAcc = await TeacherMangersee.CheckAccTeacher(currentTeacher);
+                if (!checkAcc)
+                {
+                    toastService.ShowError(TeacherMangersee.ErrorMes);
+                    return;
+                }
                 var result = await TeacherMangersee.CreateTeacherAsync(currentTeacher, selectedFile);
 
                 if (result != null)
