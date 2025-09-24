@@ -176,8 +176,8 @@ namespace Blazor_Server.Services
 
                         if (eRS.IsSuccessStatusCode)
                         {
-                            var listERS = await eRS.Content.ReadFromJsonAsync<List<Exam_Room_Student>>();
-                            if (listERS == null || listERS.Count == 0)
+                            var listERS = (await eRS.Content.ReadFromJsonAsync<List<Exam_Room_Student>>()).SingleOrDefault();
+                            if (listERS != null && listERS.Is_Check_Out == 0 )
                             {
                                 T = item;
                                 break; // chỉ lấy thằng đầu tiên
@@ -194,16 +194,16 @@ namespace Blazor_Server.Services
                     return null;
                 }
 
-                    #endregion
+                #endregion
 
-                    #region vế 2: lấy Questions và Answers
-                    var filterRequestQuestion = new CommonFilterRequest
-                    {
-                        Filters = new Dictionary<string, string>
+                #region vế 2: lấy Questions và Answers
+                var filterRequestQuestion = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
                     {
                         { "Package_Id", Vpackage.Id.ToString() }
                     },
-                    };
+                };
 
                 var questionsReq = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Question/common/get", filterRequestQuestion);
 
@@ -433,16 +433,21 @@ namespace Blazor_Server.Services
                     return false;
                 }
 
+                List<Data_Base.Models.T.Test> lsttestModel = new List<Data_Base.Models.T.Test>();
                 Data_Base.Models.T.Test testModel = new Data_Base.Models.T.Test();
                 testModel.Id = TestBy.Id;
                 testModel.Student_Id = TestBy.Student_Id;
                 testModel.Test_Code = TestBy.Test_Code;
                 testModel.Package_Id = TestBy.Package_Id;
+                testModel.Modifi_Time = TestBy.Modifi_Time;
+                testModel.Is_Check_Cheat = TestBy.Is_Check_Cheat;
+                testModel.Reason = TestBy.Reason;
                 testModel.Status = 1;
+                lsttestModel.Add(testModel);
+                //var updateTest = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Test/Pus/{TestBy.Id}", testModel);
+                var updateTests = await _httpClient.PutAsJsonAsync("https://localhost:7187/api/Test/PusList", lsttestModel);
 
-                var updateTest = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{TestBy.Id}", testModel);
-
-                if (updateTest == null)
+                if (updateTests == null)
                 {
                     return false;
                 }
@@ -482,14 +487,18 @@ namespace Blazor_Server.Services
                     return false;
                 }
 
-                var ers = (await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>()).SingleOrDefault();
+                var ers = await response.Content.ReadFromJsonAsync<List<Data_Base.Models.E.Exam_Room_Student>>();
+                if (ers.Count == 0)
+                {
+                    return false;
+                }
                 if (lstAns != null && lstAns.Count > 0)
                 {
                     foreach (var item in lstAns)
                     {
                         Data_Base.Models.E.Exam_Room_Student_Answer_HisTory examRoomStudentAnsHt = new Data_Base.Models.E.Exam_Room_Student_Answer_HisTory();
                         examRoomStudentAnsHt.Answer_Id = item;
-                        examRoomStudentAnsHt.Exam_Room_Student_Id = ers.Id;
+                        examRoomStudentAnsHt.Exam_Room_Student_Id = ers.FirstOrDefault().Id;
 
                         lstExamRoomStudentAnsHt.Add(examRoomStudentAnsHt);
                     }
@@ -556,7 +565,7 @@ namespace Blazor_Server.Services
                             {
                                 Filters = new Dictionary<string, string>
                                 {
-                                     { "Exam_Room_Student_Id", ers.Id.ToString() }
+                                     { "Exam_Room_Student_Id", ers.FirstOrDefault().Id.ToString() }
                                 }
                             };
 
@@ -571,12 +580,12 @@ namespace Blazor_Server.Services
                             if (hisTory == null)
                             {
                                 DateTime currentTime = DateTime.Now;
-                                int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
+                                int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.FirstOrDefault().Check_Time)).TotalSeconds;
 
                                 Exam_HisTory examHistory = new Exam_HisTory();
                                 examHistory.Score = Math.Round(pointPerQuestion, 2); /// điểm
                                 examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                                examHistory.Exam_Room_Student_Id = ers.Id;
+                                examHistory.Exam_Room_Student_Id = ers.FirstOrDefault().Id;
                                 examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
 
                                 var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);
@@ -593,12 +602,12 @@ namespace Blazor_Server.Services
                 else
                 {
                     DateTime currentTime = DateTime.Now;
-                    int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.Check_Time)).TotalSeconds;
+                    int time = (int)(currentTime - ConvertLong.ConvertLongToDateTime(ers.FirstOrDefault().Check_Time)).TotalSeconds;
 
                     Exam_HisTory examHistory = new Exam_HisTory();
                     examHistory.Score = Math.Round(pointPerQuestion, 2); /// điểm
                     examHistory.Create_Time = ConvertLong.ConvertDateTimeToLong(currentTime); // thời gian kết thúc
-                    examHistory.Exam_Room_Student_Id = ers.Id;
+                    examHistory.Exam_Room_Student_Id = ers.FirstOrDefault().Id;
                     examHistory.Actual_Execution_Time = time; /// thời gian thi thực tế            
 
                     var checkExHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/Post", examHistory);

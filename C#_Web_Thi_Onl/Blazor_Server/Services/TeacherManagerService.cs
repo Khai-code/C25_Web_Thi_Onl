@@ -101,6 +101,7 @@ namespace Blazor_Server.Services
                         {
                             Id = user.Id,
                             Full_Name = user.Full_Name,
+                            Teacher_Code = t.Teacher_Code,
                             User_name = user.User_Name,
                             PassWord = user.User_Pass,
                             Phone_Number = user.Phone_Number,
@@ -113,7 +114,8 @@ namespace Blazor_Server.Services
                             idsubject = subject?.Id ?? 0,
                             subject_name = subject != null ? subject.Subject_Name : "N/A",
                             Status = user.Status,
-                            Position=t.Position
+                            Position=t.Position,
+                            Teacher_Id = t.Id
                         });
                     }
                 }
@@ -368,6 +370,7 @@ namespace Blazor_Server.Services
         {
             public int Id { get; set; }
             public string Full_Name { get; set; }
+            public string Teacher_Code { get; set; }
             public string Phone_Number { get; set; }
             public string User_name { get; set; }
             public string PassWord { get; set; }
@@ -380,6 +383,7 @@ namespace Blazor_Server.Services
             public int Position { get; set; }
             public int? idsubject { get; set; } // Mã môn dạy
             public string subject_name { get; set; } // Tên môn dạy
+            public int Teacher_Id { get; set; }
         }
     }
 }

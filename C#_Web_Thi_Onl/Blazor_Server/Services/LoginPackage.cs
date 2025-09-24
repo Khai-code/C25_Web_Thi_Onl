@@ -287,6 +287,8 @@ namespace Blazor_Server.Services
                     packageModel.Package_Type_Id = packages.Package_Type_Id;
                     packageModel.Point_Type_Id = packages.Point_Type_Id;
                     packageModel.Teacher_Id = packages.TeacherPackage_Id;
+                    packageModel.Um_Lock = packages.Um_Lock;
+                    packageModel.Teacher_Mark_Id = packages.TeacherMark_Id;
 
                     var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageModel.Id}", packageModel);
                     if (!UpdatePackage.IsSuccessStatusCode)
@@ -296,21 +298,29 @@ namespace Blazor_Server.Services
                 }
                 else if (lstTest != null && lstTest.Count > 0 && lstTest.Count == packages.Number)
                 {
+                    List<Data_Base.Models.P.Package> lstpackageModel = new List<Data_Base.Models.P.Package>();
                     Data_Base.Models.P.Package packageModel = new Data_Base.Models.P.Package();
+
                     packageModel.Id = packages.Id;
+                    packageModel.Package_Name = packages.Package_Name;
                     packageModel.Package_Code = packages.Package_Code;
-                    packageModel.Create_Time = packageModel.Create_Time;
+                    packageModel.Create_Time = packages.Create_Time;          // ✅ fix
                     packageModel.Number_Of_Questions = packages.Number_Of_Questions;
-                    packageModel.ExecutionTime = packageModel.ExecutionTime;
+                    packageModel.ExecutionTime = packages.ExecutionTime;      // ✅ fix
                     packageModel.Status = 2;
                     packageModel.Subject_Id = packages.Subject_Id;
                     packageModel.Class_Id = packages.Class_Id;
                     packageModel.Package_Type_Id = packages.Package_Type_Id;
                     packageModel.Point_Type_Id = packages.Point_Type_Id;
                     packageModel.Teacher_Id = packages.TeacherPackage_Id;
+                    packageModel.Um_Lock = packages.Um_Lock;
+                    packageModel.Teacher_Mark_Id = packages.TeacherMark_Id;   // ✅ gọn hơn
 
-                    var UpdatePackage = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packages.Id}", packageModel);
-                    if (!UpdatePackage.IsSuccessStatusCode)
+                    lstpackageModel.Add(packageModel);
+
+                    var UpdatePackages = await _httpClient.PutAsJsonAsync("https://localhost:7187/api/Package/PusList", lstpackageModel);
+
+                    if (!UpdatePackages.IsSuccessStatusCode)
                     {
                         return false;
                     }

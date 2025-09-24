@@ -16,6 +16,7 @@ namespace Data_Base.V_Model
         public long Create_Time { get; set; }
         public int Number_Of_Questions { get; set; }
         public int ExecutionTime { get; set; }
+        public int Um_Lock { get; set; }
         public int Status { get; set; }
         public int Subject_Id { get; set; }
         public string Subject_Name { get; set; }
@@ -75,5 +76,15 @@ namespace Data_Base.V_Model
         public string TeacherPackage_Phone { get; set; }
         public string TeacherPackage_Address { get; set; }
         public long TeacherPackage_DoB { get; set; }
+
+        //Giáo viên chấm thi
+        public int? TeacherMark_Id { get; set; }
+        public string? TeacherMark_Code { get; set; }
+        public int? TeacherMark_User_Id { get; set; }
+        public string? TeacherMark_Name { get; set; }
+        public string? TeacherMark_Email { get; set; }
+        public string? TeacherMark_Phone { get; set; }
+        public string? TeacherMark_Address { get; set; }
+        public long? TeacherMark_DoB { get; set; }
     }
 }

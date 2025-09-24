@@ -4,13 +4,14 @@
 @using Data_Base.Models.S
 @using Data_Base.Models.U
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using System.IdentityModel.Tokens.Jwt
 @using static Blazor_Server.Services.TeacherManagerService
 @inject Notification notification
 @inject TeacherManagerService TeacherMangersee
 @inject ProtectedSessionStorage SessionStorage
 @inject Blazored.Toast.Services.IToastService toastService
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    @if (status != "2" && status != "3")
+    @if (status == "0")
     {
         <button class="btn btn-success" type="button" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions" @onclick="ShowAddForm">
             <i class="bi bi-plus-circle"></i> Thêm giáo viên
@@ -298,18 +299,48 @@
     private List<Subject> allSubject = new List<Subject>();
     private string searchText = "";
     private string status;
+    private string teacher_code;
     private List<listteacher> FilteredTeachers => string.IsNullOrWhiteSpace(searchText)
      ? allTeachers
      : allTeachers.Where(t =>
          t.Full_Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)||
          t.Phone_Number.Contains(searchText, StringComparison.OrdinalIgnoreCase)
      ).ToList();
+    private async Task LoadStudentCodeAndFullName()
+    {
+        var result = await SessionStorage.GetAsync<string>("authToken");
+
+        if (result.Success && !string.IsNullOrEmpty(result.Value))
+        {
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            var jsonToken = handler.ReadToken(result.Value) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
+
+            if (jsonToken != null)
+            {
+                var userIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Id");
+
+
+                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    var students = await TeacherMangersee.GetAllTeacher();
+                    var matchedStudent = students.FirstOrDefault(s => s.Id == userId);
+                    if (matchedStudent != null)
+                    {
+                        teacher_code = matchedStudent.Teacher_Code;
+                    }
+                    else
+                    {
+                        toastService.ShowWarning("lỗi");
+                    }
+                }
+            }
+        }
+    }
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            var result = await SessionStorage.GetAsync<string>("Status");
-            status = result.Success ? result.Value : string.Empty;
+           await LoadStudentCodeAndFullName();
             allTeachers = await TeacherMangersee.GetAllTeacher();
             allSubject = await TeacherMangersee.GetAllSubject();
         }
