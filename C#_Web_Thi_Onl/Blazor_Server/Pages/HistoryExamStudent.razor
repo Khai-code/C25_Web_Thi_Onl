@@ -264,7 +264,7 @@
                         <textarea class="form-control" rows="5"
                         placeholder="Nhập lý do phúc khảo tại đây..."
                         @bind="comment"
-                        disabled="@(statusssss == 1 || statusssss == 2 || statusssss == 3)">
+                        >
                         </textarea>
                     </div>
 
@@ -290,6 +290,13 @@
                         <button class="btn btn-success" @onclick="()=>updatereview(selectedIdForReview)">Xác nhận</button>
                     }else if(statusssss==0){
                         <button class="btn btn-success" @onclick="sendReview">Gửi yêu cầu</button>
+                    }
+
+                    @if (statusssss == 2 || statusssss == 3) // Sửa điều kiện để hiển thị nút "Phúc khảo thêm lần nữa"
+                    {
+                        <button class="btn btn-info" @onclick="() => sendReview()" title="Gửi phúc khảo thêm lần nữa">
+                            <i class="bi bi-envelope"></i> Gửi yêu cầu
+                        </button>
                     }
 
                 </div>
@@ -438,42 +445,76 @@
     private string comment;
     List<listquestion> selectedQuestions;
     private Review_Test review_Test = new Review_Test();
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Khôi phục studentCode
+            var savedCode = await SessionStorage.GetAsync<string>("studentCode");
+            if (savedCode.Success && !string.IsNullOrEmpty(savedCode.Value))
+            {
+                studentCode = savedCode.Value;
+            }
+            else
+            {
+                await LoadStudentCodeAndFullName();
+                if (!string.IsNullOrEmpty(studentCode))
+                    await SessionStorage.SetAsync("studentCode", studentCode);
+            }
 
+            // Lấy danh sách môn học
+            if (!string.IsNullOrEmpty(studentCode))
+            {
+                subjectList = await HistoriesExam.getallsubjects();
+            }
+
+            // Khôi phục selectedExamId
+            var savedExamId = await SessionStorage.GetAsync<string>("selectedExamId");
+            if (savedExamId.Success && int.TryParse(savedExamId.Value, out int examId))
+            {
+                selectedExamId = examId;
+                await GetTests(examId);
+            }
+
+            // Khôi phục studentSearch
+            var savedSearch = await SessionStorage.GetAsync<string>("studentSearch");
+            if (savedSearch.Success && !string.IsNullOrEmpty(savedSearch.Value))
+            {
+                studentSearch = savedSearch.Value;
+            }
+
+            // Xử lý query string testCode nếu có
+            var uri = new Uri(Navigation.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            var testCode = query["testCode"];
+
+            if (!string.IsNullOrEmpty(testCode))
+            {
+                var testDetail = await HistoriesExam.GetTestByCodeAsync(testCode, studentCode);
+                if (testDetail != null)
+                {
+                    packagess = await HistoriesExam.GetAllHistoriesForStudent(studentCode, 0, DateTime.Now.AddYears(-1), DateTime.Now);
+                    selectedExamId = testDetail.Idpackage;
+                    await GetTests(testDetail.Idpackage);
+                    studentSearch = testCode;
+
+                    await SessionStorage.SetAsync("selectedExamId", selectedExamId.ToString());
+                    await SessionStorage.SetAsync("studentSearch", studentSearch);
+                }
+            }
+
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+    
     protected override async Task OnInitializedAsync()
     {
-        await LoadStudentCodeAndFullName();
-        if (!string.IsNullOrEmpty(studentCode))
-        {
-            subjectList = await HistoriesExam.getallsubjects();
-        }
+        
+        
 
         // Lấy testCode từ query string
-        var uri = new Uri(Navigation.Uri);
-        var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-        var testCode = query["testCode"];
-
-        if (!string.IsNullOrEmpty(testCode))
-        {
-            var testDetail = await HistoriesExam.GetTestByCodeAsync(testCode, studentCode);
-            if (testDetail != null)
-            {
-                // Gọi lịch sử package theo subject để hiển thị danh sách
-                packagess = await HistoriesExam.GetAllHistoriesForStudent(studentCode, 0, DateTime.Now.AddYears(-1), DateTime.Now);
-
-                // Chọn package chứa test
-                selectedExamId = testDetail.Idpackage;
-
-                // Lấy danh sách test trong package
-                await GetTests(testDetail.Idpackage);
-
-                // Tự động filter theo testCode
-                studentSearch = testCode;
-
-                StateHasChanged();
-            }
-        }
-
-        isLoading = false;
+        
     }
     private async Task Getreview(int idstudent,int idtest,int? status,int idreview){
         isClosing = false;
@@ -483,6 +524,9 @@
         statusssss = status;
         selectedIdForReview = idreview;
         showReview_Test = true;
+        selectdStudentId = idstudent;
+        selectedTestId = idtest;
+        statusssss = status;
     }
     private async Task updatereview(int id){
         try{
@@ -679,7 +723,7 @@
             errorMessage = "Không tìm thấy học sinh tương ứng.";
         }
     }
-    void OpenModal(int studentid,int testid,int? status)
+    private async Task OpenModal(int studentid,int testid,int? status)
     {
         selectdStudentId = studentid;
         selectedTestId = testid;
@@ -696,4 +740,6 @@
         showReview_Test = false;
         isClosing = false;
     }
+
+
 }

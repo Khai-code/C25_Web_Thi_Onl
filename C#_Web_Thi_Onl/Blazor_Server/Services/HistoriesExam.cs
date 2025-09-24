@@ -121,7 +121,7 @@ namespace Blazor_Server.Services
                 if (getexamHistories == null || !getexamHistories.Any()) return new();
                 var getallReviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get");
                 var getreviewTests = getallReviewTests?
-                    .Where(x => gettest.Any(t => t.Id == x.Test_Id))
+                    .Where(x => gettest.Any(t => t.Id == x.Test_Id&& x.Teacher_Id==null))
                     .ToList();
                 var result = new List<listTest>();
 
@@ -136,7 +136,7 @@ namespace Blazor_Server.Services
                         var getallScore = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get");
                         var scoreRecord = getallScore?.FirstOrDefault(s =>
                             s.Student_Id == student.Id && s.Test_Id == test.Id);
-                        var reviewTest = getreviewTests?.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student?.Id);
+                        var reviewTest = await Task.Run(()=> getreviewTests?.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student?.Id));
 
                         result.Add(new listTest
                         {
@@ -568,7 +568,8 @@ namespace Blazor_Server.Services
                         continue; // Bỏ qua nếu học sinh không được phân công thi bài này
 
                     // Tìm bản review test nếu có
-                    var reviewTest = reviewTests.FirstOrDefault(rt => rt.Student_Id == student.Id && rt.Test_Id == test.Id);
+                    //var reviewTest = reviewTests.FirstOrDefault(rt => rt.Student_Id == student.Id && rt.Test_Id == test.Id);
+                    var reviewTest = await Task.Run(() => reviewTests?.FirstOrDefault(rt => rt.Test_Id == test.Id && rt.Student_Id == student?.Id));
 
                     double score = 0;
                     DateTime checkTime = DateTime.MinValue;
@@ -1216,34 +1217,55 @@ namespace Blazor_Server.Services
         {
             try
             {
-                var ersAll = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get")
-                             ?? new List<Exam_Room_Student>();
+                var ersAll = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get") ?? new();
                 var ersReviewed = ersAll
-                    .Where(x => x.Student_Id == studentId && x.Is_Check_Review == 1 && x.Test_Id == testId)
+                    .Where(x => x.Student_Id == studentId && x.Test_Id == testId && x.Is_Check_Review == 1)
                     .ToList();
                 if (!ersReviewed.Any()) return new();
 
-                var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get")
-                            ?? new List<Data_Base.Models.T.Test>();
-                var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get")
-                                    ?? new List<Exam_HisTory>();
-                var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new List<User>();
-                var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new List<Student>();
-                var scoreAll = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new List<Score>();
-                var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get") ?? new List<Review_Test>();
+                var tests = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.T.Test>>("/api/Test/Get") ?? new();
+                var examHistories = await _httpClient.GetFromJsonAsync<List<Exam_HisTory>>("/api/Exam_HisTory/Get") ?? new();
+                var users = await _httpClient.GetFromJsonAsync<List<User>>("/api/User/Get") ?? new();
+                var students = await _httpClient.GetFromJsonAsync<List<Student>>("/api/Student/Get") ?? new();
+                var scoreAll = await _httpClient.GetFromJsonAsync<List<Score>>("/api/Score/Get") ?? new();
+                var reviewTests = await _httpClient.GetFromJsonAsync<List<Review_Test>>("/api/Review_Tests/Get") ?? new();
 
                 var student = students.FirstOrDefault(s => s.Id == studentId);
                 var studentName = users.FirstOrDefault(u => u.Id == student?.User_Id)?.Full_Name ?? "N/A";
 
                 var result = new List<listTest>();
-                foreach (var ers in ersReviewed)
+
+                foreach (var ersNew in ersReviewed)
                 {
-                    var test = tests.FirstOrDefault(t => t.Id == ers.Test_Id);
+                    var test = tests.FirstOrDefault(t => t.Id == ersNew.Test_Id);
                     if (test == null) continue;
 
-                    var his = examHistories.FirstOrDefault(h => h.Exam_Room_Student_Id == ers.Id);
+                    // ExamHistory MỚI (sau phúc khảo)
+                    var newHis = examHistories
+                        .Where(h => h.Exam_Room_Student_Id == ersNew.Id)
+                        .OrderByDescending(h => h.Create_Time)
+                        .FirstOrDefault();
+
                     var scoreRecord = scoreAll.FirstOrDefault(s => s.Student_Id == studentId && s.Test_Id == test.Id);
                     var review = reviewTests.FirstOrDefault(rt => rt.Student_Id == studentId && rt.Test_Id == test.Id);
+
+                    // === TÌM Exam_Room_Student CŨ (trước phúc khảo) ===
+                    var ersOld = ersAll
+                        .Where(x => x.Student_Id == studentId && x.Test_Id == test.Id && x.Is_Check_Review == 0)
+                        // ưu tiên bài gần nhất theo Check_Time (nếu null thì theo Id)
+                        .OrderByDescending(x => x.Check_Time)
+                        .ThenByDescending(x => x.Id)
+                        .FirstOrDefault();
+
+                    // Exam_HisTory CŨ
+                    Exam_HisTory? oldHis = null;
+                    if (ersOld != null)
+                    {
+                        oldHis = examHistories
+                            .Where(h => h.Exam_Room_Student_Id == ersOld.Id)
+                            .OrderByDescending(h => h.Create_Time)
+                            .FirstOrDefault();
+                    }
 
                     result.Add(new listTest
                     {
@@ -1254,15 +1276,22 @@ namespace Blazor_Server.Services
                         Status = test.Status,
                         statustest = review?.Status ?? 0,
                         Name_Student = studentName,
-                        score = his?.Score ?? 0,            // điểm sau phúc khảo (do CreateDraft tạo Exam_HisTory mới)
-                        Point = scoreRecord?.Point ?? 0,    // điểm hiện tại trong bảng Score
-                        Check_Time = ConvertLong.ConvertLongToDateTime(ers.Check_Time),
-                        End_Time = his != null ? ConvertLong.ConvertLongToDateTime(his.Create_Time) : DateTime.MinValue,
-                        ExamRoomStudentId = ers.Id
+
+                        // Điểm/giờ SAU phúc khảo
+                        score = newHis?.Score ?? 0,
+                        Point = scoreRecord?.Point ?? 0,
+                        Check_Time = ConvertLong.ConvertLongToDateTime(ersNew.Check_Time),
+                        End_Time = newHis != null ? ConvertLong.ConvertLongToDateTime(newHis.Create_Time) : DateTime.MinValue,
+                        ExamRoomStudentId = ersNew.Id,
+
+                        // ====== THÔNG TIN CŨ ======
+                        OldScore = oldHis?.Score,
+                        OldEnd_Time = oldHis != null ? ConvertLong.ConvertLongToDateTime(oldHis.Create_Time) : (DateTime?)null,
+                        OldExamRoomStudentId = ersOld?.Id,
+                        OldExamHistoryId = oldHis?.Id
                     });
                 }
 
-                // Sắp xếp mới nhất trước
                 return result.OrderByDescending(x => x.End_Time).ToList();
             }
             catch
@@ -1270,6 +1299,7 @@ namespace Blazor_Server.Services
                 return null;
             }
         }
+
 
         public async Task<List<listquestion>> GetQuestionsByExamRoomStudentId(int examRoomStudentId)
         {
@@ -1377,6 +1407,11 @@ namespace Blazor_Server.Services
 
             public int? Teacher_Id { get; set; }
             public int ExamRoomStudentId { get; set; }
+            public double? OldScore { get; set; }
+            public DateTime? OldEnd_Time { get; set; }
+            public int? OldExamRoomStudentId { get; set; }
+            public int? OldExamHistoryId { get; set; }
+
         }
         public class listquestion
         {

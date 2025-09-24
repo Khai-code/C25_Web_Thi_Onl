@@ -594,9 +594,8 @@
                                     <tr class="text-center">
                                         <th>Lần phúc khảo</th>
                                         <th>Mã bài thi</th>
-                                        <th>Điểm (bản phúc khảo)</th>
-                                        <th>Điểm hiện tại</th>
-                                        <th>Thời gian nộp</th>
+                                        <th>Điểm trước phúc khảo</th>
+                                        <th>Điểm hiện tại</th>                                 
                                         <th></th>
                                     </tr>
                                 </thead>
@@ -607,9 +606,8 @@
                                         <tr class="text-center">
                                             <td>@(i + 1)</td>
                                             <td>@t.Test_Code</td>
-                                            <td>@($"{t.score:0.00}")</td>
+                                            <td>@($"{t.OldScore:0.00}")</td>
                                             <td>@($"{t.Point:0.00}")</td>
-                                            <td>@t.End_Time</td>
                                             <td>
                                                 <button class="btn btn-sm btn-primary"
                                                         title="Xem chi tiết bản phúc khảo"
