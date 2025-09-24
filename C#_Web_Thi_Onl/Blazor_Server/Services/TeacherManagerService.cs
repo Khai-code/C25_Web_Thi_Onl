@@ -18,6 +18,14 @@ namespace Blazor_Server.Services
         {
             _httpClient = httpClient;
         }
+        public async Task<int> GetPositionAsync(int id)
+        {
+            var listTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get");
+            //if (listTeacher == null) return null;
+            var position = listTeacher
+                .FirstOrDefault(t => t.User_Id == id).Position;
+            return position;
+        }
         public async Task<bool> CheckAccTeacher(listteacher user, int? currentId = null)
         {
             try

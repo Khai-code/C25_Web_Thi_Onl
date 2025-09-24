@@ -150,7 +150,8 @@ namespace Blazor_Server.Services
                     {
                         Teacher_Id = t.Id,
                         Teacher_Name = UserDict.TryGetValue(t.User_Id, out var use) ? use.Full_Name : "N/A",
-                        Subject_Id = t.Subject_Id
+                        Subject_Id = t.Subject_Id,
+                        Position = t.Position
                     };
                 }).ToList();
 
@@ -867,6 +868,7 @@ namespace Blazor_Server.Services
             public int Teacher_Id { get; set; }
             public string Teacher_Name { get; set; }
             public int? Subject_Id { get; set; }
+            public int Position { get; set; }
         }
         public class PackageInactive
         {

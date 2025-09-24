@@ -266,6 +266,7 @@ namespace Blazor_Server.Services
                 packageModel.Teacher_Id = packageTestADO.TeacherPackage_Id;
                 packageModel.Um_Lock = 0;
                 packageModel.Point_Type_Id = packageTestADO.Point_Type_Id;
+                packageModel.Teacher_Mark_Id = packageTestADO.TeacherMark_Id;
 
                 var package = await _httpClient.PutAsJsonAsync($"https://localhost:7187/api/Package/Pus/{packageTestADO.Id}", packageModel);
 

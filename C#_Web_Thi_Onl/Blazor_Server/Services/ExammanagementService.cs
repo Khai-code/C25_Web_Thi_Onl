@@ -1,4 +1,5 @@
-﻿using Data_Base.Filters;
+﻿using Blazor_Server.Pages;
+using Data_Base.Filters;
 using Data_Base.GenericRepositories;
 using Data_Base.Models.A;
 using Data_Base.Models.C;
@@ -9,19 +10,77 @@ using Data_Base.Models.R;
 using Data_Base.Models.S;
 using Data_Base.Models.T;
 using Data_Base.Models.U;
+using Data_Base.V_Model;
 using System.ComponentModel.DataAnnotations;
+using System.Drawing.Printing;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.HistoriesExam;
 namespace Blazor_Server.Services
 {
     public class ExammanagementService
     {
         private readonly HttpClient _httpClient;
+        public string Error { get; set; }
+        List<Exam_Room_Teacher> lstERT = new List<Exam_Room_Teacher>();
         public ExammanagementService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+        }
+        public class listcheck
+        {
+            public int Id_Teacher_1 { get; set; }
+            public int Id_Teacher_2 { get; set; }
+            public int Id_Teacher_3 { get; set; }
+            public int Id_Teacher_4 { get; set; }
+        }
+        public async Task<int> GetPositionAsync2(int id)
+        {
+            var listTeacher = await _httpClient.GetFromJsonAsync<List<Teacher>>("/api/Teacher/Get");
+            //if (listTeacher == null) return null;
+            var position = listTeacher
+                .FirstOrDefault(t => t.User_Id == id).Position;
+            return position;
+        }
+        public async Task<listcheck> GetPositionAsync(int id, int idpackage)
+        {
+            try
+            {
+
+
+                var filterRequest = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        { "Id", idpackage.ToString() }
+                    },
+                };
+
+                var packageGetResponse = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterRequest);
+
+                if (!packageGetResponse.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var package = (await packageGetResponse.Content.ReadFromJsonAsync<List<V_Package>>()).FirstOrDefault();
+
+                listcheck check = new listcheck
+                {
+                    Id_Teacher_1 = package.TeacherPackage_User_Id,
+                    Id_Teacher_2 = package.GV1_User_Id,
+                    Id_Teacher_3 = package.GV2_User_Id,
+                    Id_Teacher_4 = package.TeacherMark_Id ?? 0,
+                };
+
+                return check;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
         public async Task<bool> cancelexam(int id, int packagecode)
         {
@@ -63,7 +122,7 @@ namespace Blazor_Server.Services
             try
             {
                 var result = new List<listexam>();
-                var listExam = await _httpClient.GetFromJsonAsync<List<Exam>>("/api/Exam/Get") ?? new List<Exam>();
+                var listExam = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.E.Exam>>("/api/Exam/Get") ?? new List<Data_Base.Models.E.Exam>();
                 var examRooms = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
                 var roomPackages = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get") ?? new List<Exam_Room_Package>();
                 var packages = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get") ?? new List<Data_Base.Models.P.Package>();
@@ -119,7 +178,7 @@ namespace Blazor_Server.Services
             try
             {
                 var result = new List<listexam>();
-                var ListExam = await _httpClient.GetFromJsonAsync<List<Exam>>("/api/Exam/Get") ?? new List<Exam>();
+                var ListExam = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.E.Exam>>("/api/Exam/Get") ?? new List<Data_Base.Models.E.Exam>();
                 foreach (var exam in ListExam)
                 {
                     var examroom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get") ?? new List<Exam_Room>();
@@ -151,70 +210,158 @@ namespace Blazor_Server.Services
                 return null;
             }
         }
-        public async Task<List<listpackage>> GetallPackage(int id, DateTime? from=null, DateTime? to=null)
+
+        public  async Task<List<listpackage>> GetAllVPackage(int id, DateTime? from = null, DateTime? to = null)
         {
+            List<listpackage> lstpackage = new List<listpackage>();
             try
             {
-                var listPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get")
-                              ?? new List<Data_Base.Models.P.Package>();
-
-                var tasks = listPackage.Select(async package =>
+                var filterPackage = new CommonFilterRequest
                 {
-                    var listExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get")
-                                              ?? new List<Exam_Room_Package>();
-                    var exrPackage = listExamRoomPackage.FirstOrDefault(x => x.Package_Id == package.Id);
-                    if (exrPackage == null) return null;
-
-                    var listExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")
-                                        ?? new List<Exam_Room>();
-                    var examRoom = listExamRoom.FirstOrDefault(x => x.Id == exrPackage.Exam_Room_Id && x.Exam_Id == id);
-                    if (examRoom == null) return null;
-
-                    var listExamRoomTeachers = await _httpClient.GetFromJsonAsync<List<Exam_Room_Teacher>>("/api/Exam_Room_Teacher/Get")
-                               ?? new List<Exam_Room_Teacher>();
-
-                    var proctorIds = listExamRoomTeachers
-                        .Where(x => x.Exam_Room_Id == examRoom.Id)
-                        .Select(x => x.Teacher_Id)
-                        .ToList();
-
-                    var confirmedProctorIds = listExamRoomTeachers
-                        .Where(x => x.Exam_Room_Id == examRoom.Id && x.Confirm_The_Test == 1)
-                        .Select(x => x.Teacher_Id)
-                        .ToList();
-
-                    var startTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time);
-                    if (from != null && startTime < from) return null;
-                    if (to != null && startTime > to) return null;
-
-                    var listRoom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get") ?? new List<Room>();
-                    var room = listRoom.FirstOrDefault(x => x.ID == examRoom.Room_Id);
-                    if (room == null) return null;
-
-                    return new listpackage
+                    Filters = new Dictionary<string, string>
                     {
-                        Id = package.Id,
-                        Idexam = examRoom.Id,
-                        NamePackage = package.Package_Name,
-                        StartTime = startTime,
-                        EndTime = ConvertLong.ConvertLongToDateTime(examRoom.End_Time),
-                        RoomName = room.Room_Name,
-                        PackageTypeID = package.Package_Type_Id,
-                        TeacherId = package.Teacher_Id,
-                        ConfirmTheTest = 0,
-                        ProctorTeacherIds = proctorIds,
-                        ConfirmedProctorTeacherIds = confirmedProctorIds,
-                    };
-                });
+                         { "Exam_Id", id.ToString()},
+                    },
+                };
 
-                var results = await Task.WhenAll(tasks);
-                return results.Where(x => x != null).Distinct().ToList();
+                var packageReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterPackage);
+
+                if (!packageReport.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var packages = await packageReport.Content.ReadFromJsonAsync<List<V_Package>>();
+
+                foreach (var item in packages)
+                {
+                    listpackage listpackage = new listpackage();
+                    listpackage.Id = item.Id;
+                    listpackage.Idexam = item.Exam_Id;
+                    listpackage.NamePackage = item.Package_Name;
+                    listpackage.PackageCode = item.Package_Code;
+                    listpackage.StartTime = ConvertLong.ConvertLongToDateTime(item.Start_Time);
+                    listpackage.EndTime = ConvertLong.ConvertLongToDateTime(item.End_Time);
+                    listpackage.RoomName = item.Room_Name;
+                    listpackage.PackageTypeID = item.Package_Type_Id;
+                    listpackage.TeacherId = item.TeacherPackage_Id;
+                    listpackage.TeacherIdMark = item.TeacherMark_Id ?? 0;
+                    listpackage.ConfirmTheTest = 0;
+
+                    lstERT = await GetFillExamRoom(item.Exam_Room_Id);
+                    listpackage.ProctorTeacherIds = lstERT.Select(x => x.Teacher_Id).ToList();
+                    listpackage.ConfirmedProctorTeacherIds = lstERT.Where(x => x.Confirm_The_Test == 1).Select(x => x.Teacher_Id).ToList();
+
+                    lstpackage.Add(listpackage);
+                }
+
+                return lstpackage;
             }
             catch (Exception ex)
             {
                 return null;
             }
         }
+
+        public async Task<List<Exam_Room_Teacher>> GetFillExamRoom(int ExamRoomId)
+        {
+            try
+            {
+                var filter = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Exam_Room_Id",  ExamRoomId.ToString()}
+                    }
+                };
+
+                var ERPReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Teacher/common/get", filter);
+
+                if (!ERPReport.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var listExamRoomTeachers = await ERPReport.Content.ReadFromJsonAsync<List<Exam_Room_Teacher>>();
+                if (listExamRoomTeachers == null || listExamRoomTeachers.Count == 0)
+                {
+                    return null;
+                }
+
+                return listExamRoomTeachers ?? new List<Exam_Room_Teacher>();
+            }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+        }
+        //public async Task<List<listpackage>> GetallPackage(int id, DateTime? from=null, DateTime? to=null)
+        //{
+        //    try
+        //    {
+        //        var listPackage = await _httpClient.GetFromJsonAsync<List<Data_Base.Models.P.Package>>("/api/Package/Get")
+        //                      ?? new List<Data_Base.Models.P.Package>();
+
+        //        var tasks = listPackage.Select(async package =>
+        //        {
+        //            var listExamRoomPackage = await _httpClient.GetFromJsonAsync<List<Exam_Room_Package>>("/api/Exam_Room_Package/Get")
+        //                                      ?? new List<Exam_Room_Package>();
+        //            var exrPackage = listExamRoomPackage.FirstOrDefault(x => x.Package_Id == package.Id);
+        //            if (exrPackage == null) return null;
+
+        //            var listExamRoom = await _httpClient.GetFromJsonAsync<List<Exam_Room>>("/api/Exam_Room/Get")
+        //                                ?? new List<Exam_Room>();
+        //            var examRoom = listExamRoom.FirstOrDefault(x => x.Id == exrPackage.Exam_Room_Id && x.Exam_Id == id);
+        //            if (examRoom == null) return null;
+
+        //            var listExamRoomTeachers = await _httpClient.GetFromJsonAsync<List<Exam_Room_Teacher>>("/api/Exam_Room_Teacher/Get")
+        //                       ?? new List<Exam_Room_Teacher>();
+
+        //            var proctorIds = listExamRoomTeachers
+        //                .Where(x => x.Exam_Room_Id == examRoom.Id)
+        //                .Select(x => x.Teacher_Id)
+        //                .ToList();
+
+        //            var confirmedProctorIds = listExamRoomTeachers
+        //                .Where(x => x.Exam_Room_Id == examRoom.Id && x.Confirm_The_Test == 1)
+        //                .Select(x => x.Teacher_Id)
+        //                .ToList();
+
+        //            var startTime = ConvertLong.ConvertLongToDateTime(examRoom.Start_Time);
+        //            if (from != null && startTime < from) return null;
+        //            if (to != null && startTime > to) return null;
+
+        //            var listRoom = await _httpClient.GetFromJsonAsync<List<Room>>("/api/Room/Get") ?? new List<Room>();
+        //            var room = listRoom.FirstOrDefault(x => x.ID == examRoom.Room_Id);
+        //            if (room == null) return null;
+
+        //            return new listpackage
+        //            {
+        //                Id = package.Id,
+        //                Idexam = examRoom.Id,
+        //                NamePackage = package.Package_Name,
+        //                PackageCode = package.Package_Code,
+        //                StartTime = startTime,
+        //                EndTime = ConvertLong.ConvertLongToDateTime(examRoom.End_Time),
+        //                RoomName = room.Room_Name,
+        //                PackageTypeID = package.Package_Type_Id,
+        //                TeacherId = package.Teacher_Id,
+        //                ConfirmTheTest = 0,
+        //                ProctorTeacherIds = proctorIds,
+        //                ConfirmedProctorTeacherIds = confirmedProctorIds,
+        //                TeacherIdMark = package.Teacher_Mark_Id ?? 0
+        //            };
+        //        });
+
+        //        var results = await Task.WhenAll(tasks);
+        //        return results.Where(x => x != null).Distinct().ToList();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return null;
+        //    }
+        //}
         public async Task<List<listStudent>> GetAllStudent(int Id)
         {
             try
@@ -310,18 +457,18 @@ namespace Blazor_Server.Services
                         {
                             var history = Listexhistories.FirstOrDefault(h => h.Exam_Room_Student_Id == exstd.Id);
 
-                            if (history?.Create_Time != null)
-                            {
-                                status = "Bài thi có cảnh báo gian lận nhưng đã được hoàn thành";
-                            }
-                            else if (exstd != null && exroom.Start_Time <= exstd.Check_Time && exstd.Check_Time < exroom.End_Time)
-                            {
-                                status = "Đang thi (có cảnh báo gian lận)";
-                            }
-                            else
-                            {
+                            //if (history?.Create_Time != null)
+                            //{
+                            //    status = "Bài thi có cảnh báo gian lận nhưng đã được hoàn thành";
+                            //}
+                            //else if (exstd != null && exroom.Start_Time <= exstd.Check_Time && exstd.Check_Time < exroom.End_Time)
+                            //{
+                            //    status = "Đang thi (có cảnh báo gian lận)";
+                            //}
+                            //else
+                            //{
                                 status = "Đã phát hiện cảnh báo gian lận được giáo viên xác nhận";
-                            }
+                            //}
                         }
                         else if (isCheat == 3)
                         {
@@ -398,9 +545,15 @@ namespace Blazor_Server.Services
                     return false;
                 }
                 existingTest.Reason = info;
+                existingTest.Is_Check_Cheat = 0;
                 var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
-
-                return response.IsSuccessStatusCode;
+                var getallexamstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var examstudent = getallexamstudent.FirstOrDefault(x => x.Test_Id == id);
+                if (examstudent == null)
+                    return false;
+                examstudent.Is_Check_Out = 1;
+                var response1 = await _httpClient.PutAsJsonAsync($"/api/Exam_Room_Student/Pus/{examstudent.Id}", examstudent);
+                return response.IsSuccessStatusCode && response1.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
@@ -471,7 +624,7 @@ namespace Blazor_Server.Services
         }
 
 
-        public async Task<Exam> AddExam(Exam exam)
+        public async Task<Data_Base.Models.E.Exam> AddExam(Data_Base.Models.E.Exam exam)
         {
             try
             {
@@ -481,7 +634,7 @@ namespace Blazor_Server.Services
                     return null;
 
                 // Giải mã nội dung từ phản hồi thành đối tượng Exam
-                var examResult = await addexam.Content.ReadFromJsonAsync<Exam>();
+                var examResult = await addexam.Content.ReadFromJsonAsync<Data_Base.Models.E.Exam>();
 
                 return examResult; // Trả về đối tượng Exam đã giải mã
             }
@@ -892,7 +1045,78 @@ namespace Blazor_Server.Services
             }
         }
 
+        //public async Task<List<Teacher>> GetTeacherFillToken(int IdTeacher)
+        //{
+        //    try
+        //    {
+        //        var filterTeacher = new CommonFilterRequest
+        //        {
+        //            Filters = new Dictionary<string, string>
+        //        {
+        //             { "Teacher_Id", IdTeacher.ToString()},
+        //        },
+        //        };
 
+        //        var teacherReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Teacher/common/get", filterTeacher);
+        //        if (!teacherReport.IsSuccessStatusCode)
+        //        {
+        //            Error = string.Format("Lỗi call API");
+        //            return null;
+        //        }
+
+        //        var teacher = (await teacherReport.Content.ReadFromJsonAsync<List<Teacher>>())();
+
+        //        if (teacher == null)
+        //        {
+        //            Error = string.Format("Không có giáo viên tương ứng với tài khoản{0}", IdTeacher);
+        //            return null;
+        //        }
+
+        //        return teacher;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Error = ex.ToString();
+        //        return null;
+        //    }
+        //}
+     
+        public async Task<V_Package> GetByPackage(int idPackage)
+        {
+            try
+            {
+                var filterPackage = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                {
+                     { "Id", idPackage.ToString()},
+                },
+                };
+
+                var packageReport = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/V_Package/common/get", filterPackage);
+
+                if (!packageReport.IsSuccessStatusCode)
+                {
+                    Error = string.Format("Lỗi gọi Api lấy dữ liệu gói đề");
+                    return null;
+                }
+
+                V_Package vPackage = (await packageReport.Content.ReadFromJsonAsync<List<V_Package>>()).FirstOrDefault();
+
+                if (vPackage == null)
+                {
+                    Error = string.Format("Không tìm thấy gói đề tương ứng");
+                    return null;
+                }
+
+                return vPackage;
+            }
+            catch (Exception ex)
+            {
+                Error = ex.ToString();
+                return null;
+            }
+        }
 
         public class listexam
         {
@@ -912,6 +1136,7 @@ namespace Blazor_Server.Services
             public int Id { get; set; }
             public int Idexam { get; set; }
             public string NamePackage { get; set; }
+            public int PackageCode { get; set; }
             public DateTime StartTime { get; set; }
             public DateTime EndTime { get; set; }
             public string RoomName {  get; set; }
@@ -922,6 +1147,7 @@ namespace Blazor_Server.Services
             // Chỉ dùng để hiện thị lên trên view
             public List<int> ProctorTeacherIds { get; set; } = new();
             public List<int> ConfirmedProctorTeacherIds { get; set; } = new();
+            public int TeacherIdMark { get; set; } // Id từ bảng Teacher
 
         }
         public class listStudent

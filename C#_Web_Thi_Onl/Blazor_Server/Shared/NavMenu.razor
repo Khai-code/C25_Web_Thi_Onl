@@ -213,6 +213,9 @@
         await SessionStorage.DeleteAsync("userRole");
         await SessionStorage.DeleteAsync("Full_Name");
         await SessionStorage.DeleteAsync("Picture");
+        await SessionStorage.DeleteAsync("studentCode");
+        await SessionStorage.DeleteAsync("selectedExamId");
+        await SessionStorage.DeleteAsync("studentSearch");
         navigation.NavigateTo("/", forceLoad: true, replace: true);
     }
     private string GetInitial(string name)

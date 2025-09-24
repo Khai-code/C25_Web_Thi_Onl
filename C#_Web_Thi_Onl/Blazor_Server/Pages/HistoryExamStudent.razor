@@ -168,7 +168,7 @@
                                                         }
                                                         else if (r.Status == 1)
                                                         {
-                                                            
+
                                                             if (r.statustest == 1)
                                                             {
                                                                 <span class="badge bg-secondary">⏳ Đã gửi yêu cầu phúc khảo, đang chờ xem xét</span>
@@ -379,13 +379,13 @@
                                                     {
                                                         <strong>@letter.</strong> <span>Sai</span>
 
-                                                       
+
                                                     }
                                                     else
                                                     {
                                                         <strong>@letter.</strong> @ans.Answers_Name
                                                     }
-                                                    
+
                                                 }
                                                 else if (item.Questions.Question_Type_Id == 4 || item.Questions.Question_Type_Id == 5)
                                                 {
@@ -507,14 +507,14 @@
             StateHasChanged();
         }
     }
-    
+
     protected override async Task OnInitializedAsync()
     {
-        
-        
+
+
 
         // Lấy testCode từ query string
-        
+
     }
     private async Task Getreview(int idstudent,int idtest,int? status,int idreview){
         isClosing = false;
@@ -527,6 +527,7 @@
         selectdStudentId = idstudent;
         selectedTestId = idtest;
         statusssss = status;
+        StateHasChanged();
     }
     private async Task updatereview(int id){
         try{

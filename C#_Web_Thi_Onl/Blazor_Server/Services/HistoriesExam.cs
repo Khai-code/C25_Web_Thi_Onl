@@ -611,8 +611,9 @@ namespace Blazor_Server.Services
 
         public async Task<Review_Test> Getinforreview(int idstudent, int idtest)
         {
+
             var result = await _httpClient.GetFromJsonAsync<List<Review_Test>>($"/api/Review_Tests/Get");
-            return result.FirstOrDefault(x => x.Student_Id == idstudent && x.Test_Id == idtest);
+            return result.Where(x => x.Student_Id == idstudent && x.Test_Id == idtest).OrderByDescending(x=> x.Id).FirstOrDefault();
 
         }
         public async Task<Student> GetStudentByUserIdAsync(int userId)
@@ -721,7 +722,7 @@ namespace Blazor_Server.Services
                     return resu;
                 }
 
-                var examHis = (await lstExamHist.Content.ReadFromJsonAsync<List<Exam_HisTory>>()).SingleOrDefault();
+                var examHis = (await lstExamHist.Content.ReadFromJsonAsync<List<Exam_HisTory>>()).FirstOrDefault();
 
                 Exam_HisTory eh = new Exam_HisTory();
                 eh.Exam_Room_Student_Id = ERA;

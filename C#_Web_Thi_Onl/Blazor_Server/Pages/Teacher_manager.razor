@@ -11,12 +11,12 @@
 @inject ProtectedSessionStorage SessionStorage
 @inject Blazored.Toast.Services.IToastService toastService
 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-    @if (status == "0")
-    {
+@*     @if (status == "0")
+    { *@
         <button class="btn btn-success" type="button" data-bs-target="#offcanvasWithBothOptions" aria-controls="offcanvasWithBothOptions" @onclick="ShowAddForm">
             <i class="bi bi-plus-circle"></i> Thêm giáo viên
         </button>
-    }
+@*     } *@
     <div class="input-group w-25 ms-auto">
         <span class="input-group-text bg-white border-end-0">
             <i class="bi bi-search"></i>
@@ -299,6 +299,8 @@
     private List<Subject> allSubject = new List<Subject>();
     private string searchText = "";
     private string status;
+    private string ID;
+    private int statuss;
     private string teacher_code;
     private List<listteacher> FilteredTeachers => string.IsNullOrWhiteSpace(searchText)
      ? allTeachers
@@ -306,43 +308,16 @@
          t.Full_Name.Contains(searchText, StringComparison.OrdinalIgnoreCase)||
          t.Phone_Number.Contains(searchText, StringComparison.OrdinalIgnoreCase)
      ).ToList();
-    private async Task LoadStudentCodeAndFullName()
-    {
-        var result = await SessionStorage.GetAsync<string>("authToken");
-
-        if (result.Success && !string.IsNullOrEmpty(result.Value))
-        {
-            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
-            var jsonToken = handler.ReadToken(result.Value) as System.IdentityModel.Tokens.Jwt.JwtSecurityToken;
-
-            if (jsonToken != null)
-            {
-                var userIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "Id");
-
-
-                if (userIdClaim != null && int.TryParse(userIdClaim.Value, out int userId))
-                {
-                    var students = await TeacherMangersee.GetAllTeacher();
-                    var matchedStudent = students.FirstOrDefault(s => s.Id == userId);
-                    if (matchedStudent != null)
-                    {
-                        teacher_code = matchedStudent.Teacher_Code;
-                    }
-                    else
-                    {
-                        toastService.ShowWarning("lỗi");
-                    }
-                }
-            }
-        }
-    }
     protected override async Task OnInitializedAsync()
     {
         try
         {
-           await LoadStudentCodeAndFullName();
             allTeachers = await TeacherMangersee.GetAllTeacher();
             allSubject = await TeacherMangersee.GetAllSubject();
+            var result = await SessionStorage.GetAsync<string>("Id");
+            ID = result.Success ? result.Value : string.Empty;
+            statuss = await TeacherMangersee.GetPositionAsync(int.Parse(ID));
+
         }
         catch
         {
