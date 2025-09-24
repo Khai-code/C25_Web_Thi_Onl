@@ -255,16 +255,27 @@
                                         <i class="fas fa-times me-2"></i> Hủy thi
                                     </button>
                                 }
-                               @*  @if ((student.Is_cheat == 1 || student.Is_cheat == 3) && student.Is_checkOut == 0)
-                                { *@
-                                    <!-- Nút Kích hoạt thi -->
+                                @if (statuss == "0")
+                                {
+                                    <button @onclick="() => openModalTests(student.IdTest)"
+                                    type="button"
+                                    class="btn btn-success btn-sm shadow-sm d-flex align-items-center px-3">
+                                        <i class="bi bi-play-circle-fill me-2"></i>
+                                        xác nhận yêu cầu
+                                    </button>
+                                }
+                                else
+                                {
                                     <button @onclick="() => openModalTests(student.IdTest)"
                                             type="button"
                                             class="btn btn-success btn-sm shadow-sm d-flex align-items-center px-3">
                                         <i class="bi bi-play-circle-fill me-2"></i>
                                         Kích hoạt
                                     </button>
-                                @* } *@
+
+                                }
+
+                                   
 
                             </div>
                         </li>
@@ -567,7 +578,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Nội dung</label>
                         <InputText class="form-control form-control-lg border-danger shadow-sm"
-                        placeholder="Nhập tên học sinh..."
+                        placeholder="Nhập nội dung xác nhận..."
                         @bind-Value="studentModel.Name" 
                         required
                         oninvalid="this.setCustomValidity('Vui lòng nhập thông tin')"
@@ -609,7 +620,7 @@
                 <div class="modal-header bg-warning text-white">
                     <h5 class="modal-title fw-bold" id="fadeModalLabel">
                         <i class="bi bi-exclamation-triangle me-2"></i>
-                        Xác nhận kích hoạt bài thi
+                        Gửi yêu cầu kích hoạt bài thi
                     </h5>
 
                 </div>
@@ -619,7 +630,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Nội dung</label>
                         <InputText class="form-control form-control-lg border-danger shadow-sm"
-                        placeholder="Nhập thông tin..."
+                        placeholder="Nhập nội dung yêu cầu..."
                         @bind-Value="studentModel.Name"
                         required
                         oninvalid="this.setCustomValidity('Vui lòng nhập thông tin')"
@@ -627,7 +638,7 @@
                     </div>
                     <div class="alert alert-warning d-flex align-items-center mt-3" role="alert">
                         <i class="bi bi-info-circle-fill me-2"></i>
-                        Vui lòng xác nhận xử lý vi phạm gian lận trước khi tiếp tục.
+                        Vui lòng nhập thông tin để tiếp tục.
                     </div>
                 </div>
 
@@ -637,7 +648,7 @@
                         <i class="bi bi-x-circle me-1"></i> Đóng
                     </button>
                     <button type="submit" class="btn btn-success px-4 rounded-pill">
-                        <i class="bi bi-check2-circle me-1 "></i> Lưu xử lý
+                        <i class="bi bi-check2-circle me-1 "></i> Gửi yêu cầu
                     </button>
                 </div>
 
@@ -762,12 +773,13 @@
     }
 
     private List<Room> AllRooms = new List<Room>();
-
+    string statuss;
     protected override async Task OnInitializedAsync()
     {
         try
         {
-
+            var result = await SessionStorage.GetAsync<string>("Status");
+            statuss = result.Success ? result.Value : string.Empty;
             _timer = new System.Threading.Timer(async _ => await RefreshData(), null, 0, 5000);
             await LoadCurrentTeacherAsync();
             exams = await exammanagement.GetallExam();
@@ -955,14 +967,14 @@
     }
     private async Task openTest()
     {
-        var result= exammanagement.UpdateOpenTest(idtest, studentModel.Name);
+        var result=await exammanagement.UpdateOpenTest(idtest, studentModel.Name);
         if (result != null)
         {
-            toastService.ShowSuccess("Kích hoạt thi thành công!");
+            toastService.ShowSuccess("Gửi yêu cầu kích hoạt thi thành công!");
             CheatModalOpen = false;
         }
         else
-            toastService.ShowError("Kích hoạt thi thất bại!");
+            toastService.ShowError("Gửi yêu cầu kích hoạt thi thất bại!");
     }
 
     private int idtest;

@@ -362,6 +362,32 @@ namespace Blazor_Server.Services
                 return new List<listStudent>();
             }
         }
+        public async Task<bool> ConfimTestAdmin(int id, string? info)
+        {
+            try
+            {
+                var existingTest = await _httpClient.GetFromJsonAsync<Data_Base.Models.T.Test>($"/api/Test/GetBy/{id}");
+                if (existingTest == null)
+                {
+                    return false;
+                }
+                existingTest.Reason = info;
+                existingTest.Is_Check_Cheat = 0;
+                var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
+                var getallexamstudent = await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
+                var examstudent = getallexamstudent.FirstOrDefault(x => x.Test_Id == id);
+                if (examstudent == null)
+                    return false;
+                examstudent.Is_Check_Out = 1;
+                var response1 = await _httpClient.PutAsJsonAsync($"/api/Exam_Room_Student/Pus/{examstudent.Id}", examstudent);
+                return response.IsSuccessStatusCode && response1.IsSuccessStatusCode;
+            }
+            catch (Exception ex)
+            {
+                return false;
+
+            }
+        }
         public async Task<bool> UpdateOpenTest(int id, string? info)
         {
             try
@@ -373,13 +399,8 @@ namespace Blazor_Server.Services
                 }
                 existingTest.Reason = info;
                 var response = await _httpClient.PutAsJsonAsync($"/api/Test/Pus/{id}", existingTest);
-                var getallexamstudent= await _httpClient.GetFromJsonAsync<List<Exam_Room_Student>>("/api/Exam_Room_Student/Get");
-                var examstudent = getallexamstudent.FirstOrDefault(x => x.Test_Id == id);
-                if (examstudent == null)
-                    return false;
-                examstudent.Is_Check_Out = 1;
-                var response1 = await _httpClient.PutAsJsonAsync($"/api/Exam_Room_Student/Pus/{examstudent.Id}", examstudent);
-                return response.IsSuccessStatusCode && response1.IsSuccessStatusCode;
+
+                return response.IsSuccessStatusCode;
             }
             catch (Exception ex)
             {
