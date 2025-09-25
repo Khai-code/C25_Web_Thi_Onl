@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Net.WebSockets;
 using static Blazor_Server.Services.ExammanagementService;
 using static Blazor_Server.Services.PackageManager;
+using static Blazor_Server.Services.ReviewExam;
 
 namespace Blazor_Server.Services
 {
@@ -81,6 +82,181 @@ namespace Blazor_Server.Services
                 }
 
                 return result;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        public async Task<List<listTest>> GetFillTesst(int packageId)
+        {
+            try
+            {
+                var fi = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Package_Id", packageId.ToString() }
+                    }
+                };
+
+                var response = await _httpClient.PostAsJsonAsync("/api/Test/common/get", fi);
+                if (!response.IsSuccessStatusCode)
+                    return null;
+                var tests = await response.Content.ReadFromJsonAsync<List<Data_Base.Models.T.Test>>();
+
+                var lstTestId = tests.Select(o => o.Id).ToList();
+
+                var fiERS = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Test_Id", string.Join(",", lstTestId) }
+                    }
+                };
+
+                var lstExamRoomStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_Room_Student/common/get", fiERS);
+
+                if (!lstExamRoomStudent.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var examRoomStudent = await lstExamRoomStudent.Content.ReadFromJsonAsync<List<Exam_Room_Student>>();
+
+                var ERRS = examRoomStudent.Select(o => o.Student_Id).ToList();
+
+                var fiStudent = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Id", string.Join(",", ERRS) }
+                    }
+                };
+
+                var lstStudent = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Student/common/get", fiStudent);
+
+                if (!lstStudent.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var lstStudents = await lstStudent.Content.ReadFromJsonAsync<List<Student>>();
+
+                var fiUser = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Id", string.Join(",", lstStudents.Select(o => o.User_Id).ToList()) }
+                    }
+                };
+
+                var lstUser = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/User/common/get", fiUser);
+
+                if (!lstStudent.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var lstUsers = await lstUser.Content.ReadFromJsonAsync<List<User>>();
+
+                var fiHis = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Exam_Room_Student_Id", string.Join(",", examRoomStudent.Select(o => o.Id).ToList()) }
+                    }
+                };
+
+                var lstHis = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Exam_HisTory/common/get", fiHis);
+
+                if (!lstHis.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var lstHises = await lstHis.Content.ReadFromJsonAsync<List<Exam_HisTory>>();
+
+                var fiReview = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Test_Id", string.Join(",", lstTestId) }
+                    }
+                };
+
+                var lstReview = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Review_Tests/common/get", fiReview);
+
+                if (!lstReview.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var lstReviews = await lstReview.Content.ReadFromJsonAsync<List<Review_Test>>();
+
+                var latestReviews = lstReviews
+    .GroupBy(r => r.Test_Id)
+    .Select(g => g.OrderByDescending(r => r.Id).FirstOrDefault())
+    .ToList();
+
+
+                var fiScore = new CommonFilterRequest
+                {
+                    Filters = new Dictionary<string, string>
+                    {
+                        {"Test_Id", string.Join(",", lstTestId) }
+                    }
+                };
+
+                var lstScore = await _httpClient.PostAsJsonAsync("https://localhost:7187/api/Score/common/get", fiScore);
+
+                if (!lstScore.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var lstScores = await lstScore.Content.ReadFromJsonAsync<List<Score>>();
+
+                var result = (from test in tests
+                              join ers in examRoomStudent on test.Id equals ers.Test_Id
+                              where ers.Is_Check_Review == 0
+                              join st in lstStudents on ers.Student_Id equals st.Id
+                              join us in lstUsers on st.User_Id equals us.Id
+                              join his in lstHises on ers.Id equals his.Exam_Room_Student_Id into hisGroup
+                              from his in hisGroup.DefaultIfEmpty()
+                              join rev in latestReviews on test.Id equals rev.Test_Id into revGroup
+                              from rev in revGroup.DefaultIfEmpty()
+                              join sc in lstScores on test.Id equals sc.Test_Id into scGroup
+                              from sc in scGroup.DefaultIfEmpty()
+                              select new listTest
+                              {
+                                  Id = test.Id,
+                                  IdReview = rev?.Id ?? 0,
+                                  comenttest = rev?.Reason_For_Sending,
+                                  comenteacher = rev?.Reason_For_Refusal,
+                                  studnetid = st.Id,
+                                  Idpackage = test.Package_Id,
+                                  Test_Code = test.Test_Code,
+                                  statustest = rev?.Status,
+                                  Status = test.Status,
+                                  Name_Student = us.Full_Name,
+                                  score = his?.Score ?? 0,
+                                  Point = sc?.Point ?? 0,
+                                  Check_Time = ConvertLong.ConvertLongToDateTime(ers.Check_Time),
+                                  End_Time = his?.Create_Time != null
+                                                ? ConvertLong.ConvertLongToDateTime(his.Create_Time)
+                                                : DateTime.MinValue,
+                                  Teacher_Id = rev?.Teacher_Id,
+                                  ExamRoomStudentId = ers.Id,
+                                  OldScore = null,
+                                  OldEnd_Time = null,
+                                  OldExamRoomStudentId = null,
+                                  OldExamHistoryId = null
+                              }).ToList();
+
+                return result;
+
             }
             catch (Exception ex)
             {

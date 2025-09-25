@@ -798,7 +798,7 @@
 
     private async Task LoadListTests(int examId)
     {
-        listTests = await HistoriesExam.GetTests(examId);
+        listTests = await HistoriesExam.GetFillTesst(examId);
         teachers = await HistoriesExam.GetListTeacherSubJect(examId);
         StateHasChanged();
     }
@@ -1068,7 +1068,7 @@
     {
         try
         {
-            listTests = await HistoriesExam.GetTests(id);
+            listTests = await HistoriesExam.GetFillTesst(id);
             teachers = await HistoriesExam.GetListTeacherSubJect(id); // 🔹 nạp danh sách GV của package
         }
         catch (Exception ex)

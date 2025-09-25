@@ -17,6 +17,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 
 namespace ASP.NET.Controllers.G
@@ -75,6 +76,8 @@ namespace ASP.NET.Controllers.G
                     return await HandleUser(request.Filters);
                 case "Exam_Room_Student_Answer_HisTory":
                     return await HandleExamRoomStudentAnswerHisToryFilter(request.Filters);
+                case "Review_Test":
+                    return await HandleReviewTest(request.Filters);
                 default:
                     return BadRequest($"Không hỗ trợ entity type: {request.Entity}");
             }
@@ -449,9 +452,15 @@ namespace ASP.NET.Controllers.G
         private async Task<IActionResult> HandleStudentFilter(Dictionary<string, string> filters)
         {
             string? studentCode = filters.ContainsKey("Student_Code") ? filters["Student_Code"] : null;
+            //int? studentId = filters.ContainsKey("Id") ? int.Parse(filters["Id"]) : null;
+            List<int>? lstId = filters.ContainsKey("Id") && !string.IsNullOrEmpty(filters["Id"])
+                ? filters["Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
 
             var result = await _repository.GetWithFilterAsync<Student>(a =>
-                (!studentCode.Any() || a.Student_Code == studentCode)
+                (string.IsNullOrEmpty(studentCode) || a.Student_Code == studentCode) &&
+                //(!studentId.HasValue || a.Id == studentId)
+                (!lstId.Any() || lstId.Contains(a.Id))
+
             );
 
             return Ok(result);
@@ -547,14 +556,17 @@ namespace ASP.NET.Controllers.G
         {
             int? ExamRoomPackageId = filters.ContainsKey("Exam_Room_Package_Id") ? int.Parse(filters["Exam_Room_Package_Id"]) : null;
             int? studentId = filters.ContainsKey("Student_Id") ? int.Parse(filters["Student_Id"]) : null;
-            int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
+            //int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
             int? IsCheckOut = filters.ContainsKey("Is_Check_Out") ? int.Parse(filters["Is_Check_Out"]) : null;
+            List<int>? lstTesstId = filters.ContainsKey("Test_Id") && !string.IsNullOrEmpty(filters["Test_Id"])
+                ? filters["Test_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_Room_Student>(a =>
                 (!ExamRoomPackageId.HasValue || a.Exam_Room_Package_Id == ExamRoomPackageId) &&
                 (!studentId.HasValue || a.Student_Id == studentId) &&
-                (!testId.HasValue || a.Test_Id == testId) &&
-                (!IsCheckOut.HasValue || a.Is_Check_Out == IsCheckOut)
+                //(!testId.HasValue || a.Test_Id == testId) &&
+                (!IsCheckOut.HasValue || a.Is_Check_Out == IsCheckOut) &&
+                (!lstTesstId.Any() || lstTesstId.Contains(a.Test_Id))
             );
 
             return Ok(result);
@@ -575,24 +587,29 @@ namespace ASP.NET.Controllers.G
             int? subjectId = filters.ContainsKey("Subject_Id") ? int.Parse(filters["Subject_Id"]) : null;
             int? pointTypeId = filters.ContainsKey("Point_Type_Id") ? int.Parse(filters["Point_Type_Id"]) : null;
             int? summaryId = filters.ContainsKey("Summary_Id") ? int.Parse(filters["Summary_Id"]) : null;
-            int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
-
+            //int? testId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
+            List<int>? lstTestId = filters.ContainsKey("Test_Id") && !string.IsNullOrEmpty(filters["Test_Id"])
+    ? filters["Test_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.S.Score>(a =>
                 (!studentId.HasValue || a.Student_Id == studentId) &&
                 (!subjectId.HasValue || a.Subject_Id == subjectId) &&
                 (!pointTypeId.HasValue || a.Point_Type_Id == pointTypeId) &&
                 (!summaryId.HasValue || a.Summary_Id == summaryId) &&
-                (!testId.HasValue || a.Test_Id == testId)
+                //(!testId.HasValue || a.Test_Id == testId)
+                (!lstTestId.Any() || lstTestId.Contains(a.Test_Id ?? 0))
             );
 
             return Ok(result);
         }
         private async Task<IActionResult> HandleExamHisToryFilter(Dictionary<string, string> filters)
         {
-            int? Exam_Room_Student_Id = filters.ContainsKey("Exam_Room_Student_Id") ? int.Parse(filters["Exam_Room_Student_Id"]) : null;
+            //int? Exam_Room_Student_Id = filters.ContainsKey("Exam_Room_Student_Id") ? int.Parse(filters["Exam_Room_Student_Id"]) : null;
+            List<int>? lstERSId = filters.ContainsKey("Exam_Room_Student_Id") && !string.IsNullOrEmpty(filters["Exam_Room_Student_Id"])
+    ? filters["Exam_Room_Student_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.E.Exam_HisTory>(a =>
-                (!Exam_Room_Student_Id.HasValue || a.Exam_Room_Student_Id == Exam_Room_Student_Id)
+                //(!Exam_Room_Student_Id.HasValue || a.Exam_Room_Student_Id == Exam_Room_Student_Id)
+                (!lstERSId.Any() || lstERSId.Contains(a.Exam_Room_Student_Id))
             );
 
             return Ok(result);
@@ -632,9 +649,27 @@ namespace ASP.NET.Controllers.G
         private async Task<IActionResult> HandleUser(Dictionary<string, string> filters)
         {
             int? Role_Id = filters.ContainsKey("Role_Id") ? int.Parse(filters["Role_Id"]) : null;
+            //int? userId = filters.ContainsKey("Id") ? int.Parse(filters["Id"]) : null;
+            List<int>? lstUserId = filters.ContainsKey("Id") && !string.IsNullOrEmpty(filters["Id"])
+    ? filters["Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
 
             var result = await _repository.GetWithFilterAsync<Data_Base.Models.U.User>(a =>
-                (!Role_Id.HasValue || a.Role_Id == Role_Id)
+                (!Role_Id.HasValue || a.Role_Id == Role_Id) &&
+                (!lstUserId.Any() || lstUserId.Contains(a.Id))
+            );
+
+            return Ok(result);
+        }
+
+        private async Task<IActionResult> HandleReviewTest(Dictionary<string, string> filters)
+        {
+            //int? TestId = filters.ContainsKey("Test_Id") ? int.Parse(filters["Test_Id"]) : null;
+            List<int>? lstTestId = filters.ContainsKey("Test_Id") && !string.IsNullOrEmpty(filters["Test_Id"])
+? filters["Test_Id"].Split(',').Where(x => !string.IsNullOrWhiteSpace(x)).Select(x => int.Parse(x.Trim())).ToList() : new List<int>();
+
+            var result = await _repository.GetWithFilterAsync<Data_Base.Models.R.Review_Test>(a =>
+                //(!TestId.HasValue || a.Test_Id == TestId)
+                ((!lstTestId.Any() || (a.Test_Id.HasValue && lstTestId.Contains(a.Test_Id.Value))))
             );
 
             return Ok(result);
